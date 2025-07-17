@@ -171,9 +171,9 @@
             margin-right: 15px;
             cursor: pointer;
         }
-        #vviqNextBtn, #vviqSubmitBtn {
+        #vviqSubmitBtn {
             display: block;
-            margin: 30px auto 10px auto; /* 'auto' on left/right handles the centering */
+            margin: 30px auto 10px auto;
             width: 200px;
         }
         .image-display { display: flex; align-items: center; justify-content: center; background-color: #eee; min-height: 30vh; max-height:100%; width: 100%;}
@@ -261,38 +261,9 @@
             background-color: #007bff;
             transition: width 0.2s ease-in-out; /* Smooth animation for the bar */
         }
-        
-        #globalProgressContainer {
-            position: fixed; /* Stick to the top of the viewport */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 8px; /* A thin bar */
-            background-color: #e9ecef; /* A light background color */
-            z-index: 999; /* High z-index to be on top of most things */
-        }
-
-        #globalProgressBar {
-            height: 100%;
-            width: 0%; /* Start at 0% */
-            background-color: #007bff; /* The same blue as your buttons */
-            transition: width 0.3s ease; /* Smooth animation */
-        }
-
-        .back-button {
-            display: none !important; /* Hide by default, !important to override other styles */
-        }
-
-        #parameterSelector .back-button {
-            display: inline-block !important; /* Re-show the button only on this screen */
-        }
     </style>
 </head>
 <body id="htmlTag" lang="en">
-
-    <div id="globalProgressContainer" class="hidden">
-        <div id="globalProgressBar"></div>
-    </div>
 
     <div id="languageSelector">
         <button data-lang="en">English</button>
@@ -692,9 +663,6 @@
             ]
         };
 
-        let totalSteps = 0;
-        let completedSteps = 0; 
-        
         let parameterStartTime = null;
         
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkcpn2kATIjVlfgGAT6um4sN2LOcTU6Qde2vj8mKzd19VtfVxHynh3KR-qMBuNeanSkQ/exec';
@@ -770,19 +738,6 @@
         const howToScreen = document.getElementById('howToScreen');
 
         // --- Utility Functions ---
-
-        function updateProgressBar() {
-            if (totalSteps === 0) return; // Don't do anything if we haven't set up the steps
-
-            completedSteps++;
-            const percent = (completedSteps / totalSteps) * 100;
-            
-            const bar = document.getElementById('globalProgressBar');
-            if (bar) {
-                bar.style.width = `${percent}%`;
-            }
-        }
-
         function getUrlParameter(name) {
             name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
             var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
@@ -888,7 +843,6 @@
         
         function resetFullTaskState() { 
             if (vviqScreen) vviqScreen.classList.add('hidden');
-            document.getElementById('globalProgressContainer').classList.add('hidden');
             currentTrialData = null;
             currentTrialResponses = {};
             currentTaskMode = null;
@@ -949,13 +903,11 @@
             }
         }
 
-        // REPLACE your existing showDiv function with this one
-
         function showDiv(divToShow) { 
             // This list now includes all possible screens that can be shown.
             [mainMenuDiv, welcomeScreen, howToScreen, document.getElementById('readyScreen'),
             parameterSelectorDiv, vimTaskInterfaceDiv, resultsDisplayDiv, 
-            preVimScreenContainerDiv, conditionInstructionScreenDiv, vviqScreen].forEach(div => {
+            preVimScreenContainerDiv, conditionInstructionScreenDiv].forEach(div => {
                 if(div) div.classList.add('hidden');
             });
 
@@ -964,31 +916,18 @@
             }
             currentFocusableElements = []; currentFocusedIndex = -1;
 
-            // --- THIS IS THE NEW LOGIC ---
-            // Get a reference to the language selector
-            const langSelector = document.getElementById('languageSelector');
-
             if (divToShow) {
                 divToShow.classList.remove('hidden');
-
-                // Check if the screen being shown is the main menu
-                if (divToShow === mainMenuDiv) {
-                    langSelector.classList.remove('hidden'); // Show language buttons
-                    setupMainMenuFocus();
-                } else {
-                    langSelector.classList.add('hidden'); // Hide language buttons on all other screens
+                if (divToShow === mainMenuDiv) setupMainMenuFocus();
+                else if (divToShow === parameterSelectorDiv) setupParameterSelectorFocus();
+                else if (divToShow === conditionInstructionScreenDiv) {
+                    currentFocusableElements = [startTrialFromInstructionsBtn];
+                    updateKeyboardFocus(0);
+                } else if (divToShow === vimTaskInterfaceDiv && !coarseStepDiv.classList.contains('hidden')) {
+                    setupCoarseStepFocus();
                 }
-                
-                // The rest of the focus setup logic
-                if (divToShow === parameterSelectorDiv) setupParameterSelectorFocus();
-                else if (divToShow === conditionInstructionScreenDiv) { currentFocusableElements = [startTrialFromInstructionsBtn]; updateKeyboardFocus(0); } 
-                else if (divToShow === vimTaskInterfaceDiv && !coarseStepDiv.classList.contains('hidden')) { setupCoarseStepFocus(); }
-            } else {
-                // If we are hiding everything (e.g., between trials), also hide the language selector
-                langSelector.classList.add('hidden');
             }
         }
-
         // --- LANGUAGE SWITCHING ---
         function setLanguage(lang) {
             currentLanguage = lang;
@@ -1337,11 +1276,6 @@
                 base_image_id: "tutorial" 
             };
             beginVimRating();
-
-            // --- NEW PROGRESS BAR LOGIC ---
-            completedSteps = 0;
-            totalSteps = 1; // The tutorial has only one parameter to rate
-            document.getElementById('globalProgressContainer').classList.remove('hidden');
         }
 
         function showReadyScreen() {
@@ -1388,16 +1322,6 @@
             });
             console.log("Trials with an attention check:", attentionCheckIndices);
             currentSessionTrials = shuffleArray(currentSessionTrials);
-            
-            // --- NEW PROGRESS BAR LOGIC ---
-            completedSteps = 0;
-            // Calculate total steps: 6 real params * 12 trials + 3 attention check params
-            totalSteps = (6 * 12) + 3; 
-            if (vviqEnabled) {
-                totalSteps += 32; // Add the 32 VVIQ items
-            }
-            document.getElementById('globalProgressContainer').classList.remove('hidden');
-            
             currentGlobalTrialIndex = 0;
             allCollectedResponses = []; 
             showConditionInstructions(currentSessionTrials[0]);
@@ -1508,8 +1432,6 @@
                 currentTrialResponses.parameter_responses[currentParameterKey].rt = responseTime;
             }
             
-            updateProgressBar(); 
-
             // Advance to the next parameter
             currentParameterIndexInTask++;
             loadNextParameterInVim();
@@ -1670,7 +1592,6 @@
             if (vviqCurrentStep >= 3 && vviqCurrentStep - 3 < vviqItems.length) {
                 if (vviqCurrentResponse !== null) {
                     vviqResponses.push({ id: vviqItems[vviqCurrentStep - 3].id, response: vviqCurrentResponse });
-                    updateProgressBar();
                 }
             }
             
@@ -1762,11 +1683,6 @@
         // --- EVENT LISTENERS ---
 
         document.getElementById('testVVIQBtn').addEventListener('click', () => {
-            // --- NEW PROGRESS BAR LOGIC ---
-            completedSteps = 0;
-            totalSteps = 32; // The VVIQ test has 32 items
-            document.getElementById('globalProgressContainer').classList.remove('hidden');
-            
             // We just need to call the function that starts the VVIQ
             startVVIQ();
         });
