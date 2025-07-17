@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIM Prototype - Phase 1 (No Mask, Corrected Naming)</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; background-color: #f4f4f4; }
+        .main-container { border: 1px solid #ccc; padding: 20px; text-align: center; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 90%; max-width: 800px; margin-top: 20px; }
+        .image-display { margin-bottom: 20px; display: flex; align-items: center; justify-content: center; background-color: #eee; min-height: 30vh; max-height:60vh; width: 100%;}
+        .image-display img { max-width: 100%; max-height: 58vh; border: 1px solid black; object-fit: contain; }
+        .image-display p.preview-instruction { padding: 20px; color: #555; }
+
+        button { margin: 5px; padding: 10px 15px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        .control-group { margin-bottom: 15px; }
+        .coarse-selection button { background-color: #6c757d;}
+        .coarse-selection button:hover { background-color: #5a6268;}
+        .fine-tuning input[type="range"] { width: 80%; max-width: 400px; margin-top: 10px;}
+        .hidden { display: none !important; }
+        #mainMenu button, #parameterSelector button { margin-bottom:10px; width: 200px;}
+        #resultsDisplay ul { list-style-type: none; padding: 0;}
+        #resultsDisplay li { margin-bottom: 5px;}
+        .back-button { background-color: #6c757d; margin-top: 20px; }
+        .back-button:hover { background-color: #545b62; }
+        
+        #fixationScreen, #preVimImageScreenDiv, #holdImageInstructionScreen, #conditionInstructionScreen { 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 60vh; 
+            font-size: 18px; 
+            line-height: 1.6;
+        }
+        #conditionInstructionScreen p { max-width: 80%; margin-bottom: 20px; }
+        #fixationCross { font-size: 48px; }
+        /* maskScreen CSS removed */
+        #preVimImageScreenDiv img { 
+            max-width: 90%;
+            max-height: 50vh; 
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        .keyboard-focus {
+            outline: 2px solid blue; /* Or a distinct border, background-color change */
+            box-shadow: 0 0 5px blue;
+        }
+                /* For Main Menu button focus */
+        #mainMenu button.keyboard-focus {
+            outline: 2px solid dodgerblue; /* Different color for main menu focus */
+            box-shadow: 0 0 5px dodgerblue;
+        }
+
+        /* For Parameter Selector button layout and focus */
+        #paramButtonsContainer {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            align-items: center; /* Center them */
+        }
+        #paramButtonsContainer button {
+            width: 80%; /* Make buttons take good width */
+            margin-bottom: 10px;
+        }
+        #paramButtonsContainer button.keyboard-focus {
+            outline: 2px solid green; /* Different focus for clarity */
+            box-shadow: 0 0 5px green;
+        }
+
+        /* For Coarse Selection button focus */
+        #coarseStep button.keyboard-focus {
+            outline: 2px solid darkorange;
+            box-shadow: 0 0 5px darkorange;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="mainMenu" class="main-container">
+        <h1>Visual Quality Rating Task</h1>
+        <p>Welcome! Please read general instructions here if this were the full experiment.</p>
+        <button id="testParameterBtn">Test Single Parameter</button><br>
+        <button id="startActualTaskBtn">Start Full Task (9 Trials)</button>
+    </div>
+
+    <div id="parameterSelector" class="main-container hidden">
+        <h2>Select Parameter to Test</h2>
+        <div id="paramButtonsContainer"></div>
+        <button id="backToMenuFromTestSelectBtn" class="back-button">Back to Main Menu</button>
+    </div>
+
+    <div id="conditionInstructionScreen" class="main-container hidden">
+        <h2 id="conditionInstructionTitle">Instructions</h2>
+        <p id="conditionInstructionText"></p>
+        <button id="startTrialFromInstructionsBtn">Continue to Trial</button>
+    </div>
+
+    <div id="preVimScreenContainer" class="main-container hidden"> 
+        <div id="fixationScreen" class="hidden">
+            <div id="fixationCross">+</div>
+        </div>
+        <div id="preVimImageScreenDiv" class="hidden"> 
+            <img id="originalImageDisplay" src="" alt="Original Image">
+        </div>
+        <!-- maskScreen div REMOVED -->
+        <div id="holdImageInstructionScreen" class="hidden">
+             <p id="holdImagePrompt">Please keep the image you just saw in your mind. Press Continue when ready.</p>
+             <button id="holdImageContinueBtn">Continue</button>
+        </div>
+    </div>
+    
+    <div id="vimTaskInterface" class="main-container hidden">
+        <h2 id="currentParamDisplay">Parameter: <span></span></h2>
+        <p id="vimGeneralInstruction">Please keep the image of your mental scene in mind.</p> 
+        
+        <div id="coarseStep" class="coarse-selection control-group">
+            <p>Select the image that best represents the overall level for <strong id="coarseParamName"></strong>:</p>
+            <button data-level-key="low">Low <span class="param-name-inline"></span></button>
+            <button data-level-key="mid">Medium <span class="param-name-inline"></span></button>
+            <button data-level-key="high">High <span class="param-name-inline"></span></button>
+            <div class="image-display" id="coarseImageDisplay">
+                <p class="preview-instruction"><em>Hover over buttons to preview, click to select.</em></p> 
+                <img id="coarsePreviewImg" src="" alt="Press Arrow/Hover Mouse">
+            </div>
+        </div>
+        <div id="fineTuneStep" class="fine-tuning control-group hidden">
+            <p>Now, fine-tune your selection for <strong id="fineTuneParamName"></strong> using the slider:</p>
+            <div class="image-display">
+                <img id="fineTuneImg" src="" alt="Fine-tuned image">
+            </div>
+            <input type="range" id="fineTuneSlider" min="1" max="7" value="4">
+            <p>Selected Level: <span id="fineTuneLevelDisplay"></span></p>
+            <button id="backToCoarseBtn">Back to Coarse Selection</button>
+            <button id="confirmSelectionBtn">Confirm This Level</button>
+        </div>
+        <button id="backToMenuFromTaskBtn" class="back-button">Back to Main Menu (Exit Task)</button>
+    </div>
+
+    <div id="resultsDisplay" class="main-container hidden">
+        <h2>Trial Results</h2>
+        <ul id="resultsList"></ul>
+        <button id="backToMenuFromResultsBtn" class="back-button">Back to Main Menu</button>
+    </div>
+
+        <script>
+        // --- Configuration ---
+        const PARAMETERS = { 
+            saturation:   { name: "Saturation",      levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: "how colorful or saturated it was." },
+            brightness:   { name: "Brightness",      levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: "how bright or dim it appeared." },
+            contrast:     { name: "Contrast",        levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: "the difference between light and dark areas." },
+            blurriness:   { name: "Blurriness",      levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: "how sharp or out-of-focus it was." },
+            detailedness: { name: "Detailedness",    levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: "how rich in fine features and textures it was." },
+            precision:    { name: "Color Precision", levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: "how specific or ambiguous the colors were." }
+        };
+        const imageBaseFolder = "images"; 
+        const imageExtension = ".png";
+        const fineTuneRange = 3; 
+
+        // --- Trial Data (Expanded to 9 example trials) ---
+        const allTrialsMasterList = [
+            { 
+                trial_id: 1, 
+                condition: "perceptual_recall", 
+                base_image_id: "image01", // Forest, road, multicolored foliage, no people (OUTDOORS; NO PEOPLE)
+                original_image_filename: "image01.png", 
+                condition_instruction: "In the next step, you will be shown an image for a few seconds. Please observe it carefully. After it disappears, try to keep a vivid mental picture of that image in your mind. You will then be asked to rate different visual qualities of your mental image." 
+            },
+            { 
+                trial_id: 2, 
+                condition: "episodic_recall",   
+                base_image_id: "image02", // Living room, sofa, table, window, 2-3 people (INDOORS; PEOPLE)
+                original_image_filename: "image02.png", // Not shown pre-VIM for this condition
+                condition_instruction: "Please recall a recent and vivid memory of being in a LIVING ROOM with a sofa, a small table, a window, and 2 or 3 people present. Form a clear mental image of this scene, then press Continue."
+            },
+            { 
+                trial_id: 3, 
+                condition: "scene_imagination", 
+                base_image_id: "image03", // Classroom, blackboard, desk, empty chairs, no people (INDOORS; NO PEOPLE)
+                original_image_filename: "image03.png", // Not shown pre-VIM
+                condition_instruction: "Please take a moment to imagine a CLASSROOM with a blackboard, desks, and empty chairs, with no people present. Form a clear mental image of this scene, then press Continue."
+            },
+            { 
+                trial_id: 4, 
+                condition: "perceptual_recall", 
+                base_image_id: "image04", // Supermarket aisle, people shopping (INDOORS; PEOPLE)
+                original_image_filename: "image04.png",
+                condition_instruction: "In the next step, you will be shown an image for a few seconds. Please observe it carefully. After it disappears, try to keep a vivid mental picture of that image in your mind. You will then be asked to rate different visual qualities of your mental image." 
+            },
+            { 
+                trial_id: 5, 
+                condition: "episodic_recall",   
+                base_image_id: "image05", // Supermarket aisle, no people (INDOORS; NO PEOPLE)
+                original_image_filename: "image05.png", 
+                condition_instruction: "Please recall a recent and vivid memory of being in an empty SUPERMARKET AISLE, perhaps early in the morning or late at night, with no other shoppers around. Form a clear mental image of this scene, then press Continue."
+            },
+            { 
+                trial_id: 6, 
+                condition: "scene_imagination", 
+                base_image_id: "image06", // Park, grass, trees, a father playing with son (OUTDOORS; PEOPLE)
+                original_image_filename: "image06.png",
+                condition_instruction: "Please take a moment to imagine a PARK with green grass and trees, where a father is playing with his son on a pleasant day. Form a clear mental image of this scene, then press Continue."
+            },
+            { 
+                trial_id: 7, 
+                condition: "perceptual_recall", 
+                base_image_id: "image07", // Snowy farm, house in background, no people (OUTDOORS; NO PEOPLE)
+                original_image_filename: "image07.png", 
+                condition_instruction: "In the next step, you will be shown an image for a few seconds. Please observe it carefully. After it disappears, try to keep a vivid mental picture of that image in your mind. You will then be asked to rate different visual qualities of your mental image." 
+            },
+            { 
+                trial_id: 8, 
+                condition: "episodic_recall",   
+                base_image_id: "image08", // Living room, sofa, desk, lamp, no people (INDOORS; NO PEOPLE)
+                original_image_filename: "image08.png", 
+                condition_instruction: "Please recall a recent and vivid memory of being in a quiet LIVING ROOM with a sofa, a desk, and a lamp, with no other people present. Form a clear mental image of this scene, then press Continue."
+            },
+            { 
+                trial_id: 9, 
+                condition: "scene_imagination", 
+                base_image_id: "image09", // Farm, trees, animals, people (OUTDOORS; PEOPLE)
+                original_image_filename: "image09.png",
+                condition_instruction: "Please take a moment to imagine a FARM scene with trees, some farm animals (like cows or chickens), and a few people working or interacting. Form a clear mental image of this scene, then press Continue."
+            }
+            // If you use image10:
+            // { 
+            //     trial_id: 10, // or re-number if only 9 trials
+            //     condition: "perceptual_recall", // Example condition
+            //     base_image_id: "image10", // Classroom with teacher and children (INDOORS; PEOPLE)
+            //     original_image_filename: "image10.png", 
+            //     condition_instruction: "Observe the image carefully..." 
+            // }
+        ];
+        let currentSessionTrials = []; 
+        let currentGlobalTrialIndex = 0; 
+
+        let currentTrialData = null;     
+        let currentTrialResponses = {};  
+        let allCollectedResponses = [];  
+
+        let currentTaskMode = null; 
+        let currentParameterKey = null;
+        let currentParameterConfig = null;
+        let actualTaskOrder = []; 
+        let currentParameterIndexInTask = 0; 
+
+        let currentFocusableElements = []; // Array of currently focusable button elements
+        let currentFocusedIndex = -1;      // Index of the currently focused element in the array
+        const KEYBOARD_FOCUS_CLASS = 'keyboard-focus'; // CSS class for visual indication
+
+        // --- DOM Elements ---
+        const mainMenuDiv = document.getElementById('mainMenu');
+        const parameterSelectorDiv = document.getElementById('parameterSelector');
+        const paramButtonsContainer = document.getElementById('paramButtonsContainer');
+        const vimTaskInterfaceDiv = document.getElementById('vimTaskInterface');
+        const resultsDisplayDiv = document.getElementById('resultsDisplay');
+        const conditionInstructionScreenDiv = document.getElementById('conditionInstructionScreen');
+        const conditionInstructionTitleH2 = document.getElementById('conditionInstructionTitle');
+        const conditionInstructionTextP = document.getElementById('conditionInstructionText');
+        const startTrialFromInstructionsBtn = document.getElementById('startTrialFromInstructionsBtn');
+        const preVimScreenContainerDiv = document.getElementById('preVimScreenContainer');
+        const fixationScreenDiv = document.getElementById('fixationScreen');
+        const preVimImageScreenDiv = document.getElementById('preVimImageScreenDiv');
+        const originalImageDisplayImg = document.getElementById('originalImageDisplay');
+        const holdImageInstructionScreenDiv = document.getElementById('holdImageInstructionScreen');
+        const holdImagePromptP = document.getElementById('holdImagePrompt');
+        const holdImageContinueBtn = document.getElementById('holdImageContinueBtn');
+        const vimGeneralInstructionP = document.getElementById('vimGeneralInstruction');
+        const currentParamDisplay = document.getElementById('currentParamDisplay').querySelector('span');
+        const coarseStepDiv = document.getElementById('coarseStep');
+        const coarseParamNameStrong = document.getElementById('coarseParamName');
+        const coarseButtons = coarseStepDiv.querySelectorAll('button');
+        const coarsePreviewImg = document.getElementById('coarsePreviewImg');
+        const coarseImageDisplayP = coarseStepDiv.querySelector('#coarseImageDisplay p.preview-instruction'); 
+        const paramNameInlineSpans = document.querySelectorAll('.param-name-inline');
+        const fineTuneStepDiv = document.getElementById('fineTuneStep');
+        const fineTuneParamNameStrong = document.getElementById('fineTuneParamName');
+        const fineTuneImg = document.getElementById('fineTuneImg');
+        const fineTuneSlider = document.getElementById('fineTuneSlider');
+        const fineTuneLevelDisplay = document.getElementById('fineTuneLevelDisplay');
+        const backToCoarseBtn = document.getElementById('backToCoarseBtn');
+        const confirmSelectionBtn = document.getElementById('confirmSelectionBtn');
+        const resultsListUl = document.getElementById('resultsList');
+        const backToMenuFromTestSelectBtn = document.getElementById('backToMenuFromTestSelectBtn');
+        const backToMenuFromTaskBtn = document.getElementById('backToMenuFromTaskBtn');
+        const backToMenuFromResultsBtn = document.getElementById('backToMenuFromResultsBtn');
+
+        let currentCoarseSelectionLevel = null;
+        let sliderToActualLevelMap = [];
+
+        // --- Utility Functions ---
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        function getVariantImagePath(baseImageId, paramKey, level) { 
+            const levelStr = level < 10 ? '0' + level : level.toString();
+            return `${imageBaseFolder}/${paramKey}/${baseImageId}_${paramKey}_${levelStr}${imageExtension}`;
+        }
+        function getOriginalImagePath(originalFilename) { 
+            return `${imageBaseFolder}/originals/${originalFilename}`;
+         }
+        function showDiv(divToShow) { 
+            [mainMenuDiv, parameterSelectorDiv, vimTaskInterfaceDiv, resultsDisplayDiv, 
+            preVimScreenContainerDiv, fixationScreenDiv, preVimImageScreenDiv,
+            holdImageInstructionScreenDiv, conditionInstructionScreenDiv].forEach(div => {
+                if(div) div.classList.add('hidden');
+            });
+
+            if (currentFocusableElements && currentFocusableElements[currentFocusedIndex]) {
+                currentFocusableElements[currentFocusedIndex].classList.remove(KEYBOARD_FOCUS_CLASS);
+            }
+            currentFocusableElements = []; // Always reset before setting up new focus
+            currentFocusedIndex = -1;
+
+            if (divToShow) {
+                divToShow.classList.remove('hidden');
+                if (divToShow === mainMenuDiv) {
+                    setupMainMenuFocus();
+                } else if (divToShow === parameterSelectorDiv) {
+                    // populateParameterSelector calls setupParameterSelectorFocus, so this is redundant
+                    // but ensure it is indeed called after buttons are in DOM by populateParameterSelector
+                    if(paramButtonsContainer.querySelectorAll('button').length > 0){ // check if buttons exist
+                        setupParameterSelectorFocus();
+                    }
+                } else if (divToShow === vimTaskInterfaceDiv) {
+                    if (!coarseStepDiv.classList.contains('hidden')) {
+                        setupCoarseStepFocus();
+                    } else if (!fineTuneStepDiv.classList.contains('hidden')) {
+                        fineTuneSlider.focus(); 
+                        currentFocusableElements = [fineTuneSlider, backToCoarseBtn, confirmSelectionBtn];
+                        updateKeyboardFocus(0); 
+                    }
+                }
+            }
+        }
+        
+        function resetFullTaskState() { 
+            currentTrialData = null;
+            currentTrialResponses = {};
+            currentTaskMode = null;
+            currentParameterKey = null;
+            currentParameterConfig = null;
+            actualTaskOrder = [];
+            currentParameterIndexInTask = 0;
+            currentSessionTrials = [];
+            currentGlobalTrialIndex = 0;
+            allCollectedResponses = []; 
+            console.log("Full task state reset.");
+        }
+
+        function updateKeyboardFocus(newIndex) {
+            // Remove focus from previously focused element
+            if (currentFocusedIndex >= 0 && currentFocusableElements[currentFocusedIndex]) {
+                currentFocusableElements[currentFocusedIndex].classList.remove(KEYBOARD_FOCUS_CLASS);
+            }
+            
+            currentFocusedIndex = newIndex;
+
+            // Add focus to new element
+            if (currentFocusedIndex >= 0 && currentFocusableElements[currentFocusedIndex]) {
+                currentFocusableElements[currentFocusedIndex].classList.add(KEYBOARD_FOCUS_CLASS);
+                // Optional: Scroll into view if needed
+                // currentFocusableElements[currentFocusedIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+        // --- Setting Up Focusable Elements for Each Screen ---
+        function setupMainMenuFocus() {
+            console.log("Setting up Main Menu focus"); // DEBUG
+            currentFocusableElements = [
+                document.getElementById('testParameterBtn'),
+                document.getElementById('startActualTaskBtn')
+            ];
+            updateKeyboardFocus(0); // Focus the first button
+        }
+        function setupParameterSelectorFocus() {
+            currentFocusableElements = Array.from(paramButtonsContainer.querySelectorAll('button'));
+            if (currentFocusableElements.length > 0) {
+                updateKeyboardFocus(0); // Focus the first button
+            } else {
+                updateKeyboardFocus(-1); // No focusable elements
+            }
+        }
+
+        function setupParameterSelectorFocus() {
+            console.log("Setting up Parameter Selector focus"); // DEBUG
+            // Buttons are dynamically created, so query them after populateParameterSelector has run
+            currentFocusableElements = Array.from(paramButtonsContainer.querySelectorAll('button'));
+            if (currentFocusableElements.length > 0) {
+                updateKeyboardFocus(0); 
+            } else {
+                updateKeyboardFocus(-1); 
+            }
+        }
+        
+
+        // --- Condition Instruction Display ---
+        function showConditionInstructions(trialDataObject) { 
+            if (!trialDataObject) { // Guard clause
+                console.error("showConditionInstructions called with undefined trialDataObject!");
+                resetFullTaskState(); 
+                showDiv(mainMenuDiv);
+                return;
+            }
+            currentTrialData = trialDataObject; // Set the global currentTrialData with the passed object
+
+            console.log("Showing instructions for trial/test:", currentTrialData.trial_id, "Condition:", currentTrialData.condition);
+            let titlePrefix = currentTaskMode === 'test' ? "Test Mode" : `Trial ${currentGlobalTrialIndex + 1} of ${currentSessionTrials.length}`;
+            conditionInstructionTitleH2.textContent = `${titlePrefix}: ${currentTrialData.condition.replace('_', ' ')} Task`;
+            conditionInstructionTextP.textContent = currentTrialData.condition_instruction;
+            showDiv(conditionInstructionScreenDiv);
+        }
+
+        startTrialFromInstructionsBtn.addEventListener('click', () => {
+            console.log("Start trial from instructions button clicked. CurrentTaskMode:", currentTaskMode, "Trial ID:", currentTrialData ? currentTrialData.trial_id : "N/A");
+            if (!currentTrialData) {
+                console.error("Cannot start, currentTrialData is not set from instructions.");
+                resetFullTaskState(); showDiv(mainMenuDiv); return;
+            }
+
+            if (currentTaskMode === 'test') {
+                 showDiv(null); // Hide instruction screen
+                 startVimParameterRating(); 
+            } else if (currentTaskMode === 'actual_task_full') {
+                if (currentTrialData.condition === "perceptual_recall") {
+                    startPreVimPhase(currentTrialData); // This has the fixation and image display
+                } else { // For episodic_recall & scene_imagination, go directly to VIM
+                    console.log("Episodic/Imagination: Skipping pre-VIM image display, going to VIM rating for trial:", currentTrialData.trial_id);
+                     // Initialize responses for this trial before starting VIM
+                    currentTrialResponses = { 
+                        trial_id: currentTrialData.trial_id,
+                        condition: currentTrialData.condition,
+                        image_id: currentTrialData.base_image_id,
+                        parameter_responses: {}
+                    };
+                    showDiv(null); // Hide instruction screen
+                    startVimParameterRating();
+                }
+            } else {
+                console.error("Unknown currentTaskMode in startTrialFromInstructionsBtn:", currentTaskMode);
+                resetFullTaskState(); showDiv(mainMenuDiv);
+            }
+        });
+        
+                // --- Pre-VIM Task Flow ---
+                // --- Pre-VIM Task Flow ---
+        function startPreVimPhase(trialData) {
+            console.log("startPreVimPhase for trial:", trialData.trial_id, "Condition:", trialData.condition);
+            currentTrialResponses = { 
+                trial_id: trialData.trial_id,
+                condition: trialData.condition,
+                image_id: trialData.base_image_id,
+                parameter_responses: {}
+            };
+
+            showDiv(preVimScreenContainerDiv); 
+            preVimImageScreenDiv.classList.add('hidden'); 
+            holdImageInstructionScreenDiv.classList.add('hidden'); 
+            
+            if (trialData.condition === "perceptual_recall") {
+                fixationScreenDiv.classList.remove('hidden'); 
+                holdImageContinueBtn.classList.add('hidden'); // Ensure Continue is hidden initially
+
+                setTimeout(() => { // After 1s initial fixation
+                    console.log("Fixation 1 ended for trial:", trialData.trial_id); 
+                    fixationScreenDiv.classList.add('hidden');
+                    preVimImageScreenDiv.classList.remove('hidden');
+                    originalImageDisplayImg.src = getOriginalImagePath(trialData.original_image_filename);
+                    originalImageDisplayImg.classList.remove('hidden');
+                    
+                    setTimeout(() => { // Original image display duration (e.g., 4s)
+                        console.log("Perceptual recall: Original image display ended for trial:", trialData.trial_id); 
+                        preVimImageScreenDiv.classList.add('hidden');
+                        originalImageDisplayImg.src = ""; 
+                        
+                        // Show "Hold Image" instruction screen WITHOUT the button initially
+                        holdImageInstructionScreenDiv.classList.remove('hidden');
+                        holdImagePromptP.textContent = "Please keep the image you just saw in your mind."; // Instruction only
+                        // Continue button is still hidden
+
+                        setTimeout(() => { // Delay for holding the image (e.g., 3 seconds)
+                            console.log("Perceptual recall: Hold duration ended, showing Continue button for trial:", trialData.trial_id);
+                            holdImagePromptP.textContent = "Please keep the image you just saw in your mind. Press Continue when ready."; // Or keep it same
+                            holdImageContinueBtn.classList.remove('hidden'); // Now show the continue button
+                        }, 3000); // Duration to just show the "hold" instruction
+
+                    }, 4000); // Original image display duration
+                }, 1000); // Initial fixation duration
+            } else { // episodic_recall & scene_imagination
+                fixationScreenDiv.classList.add('hidden'); 
+                preVimImageScreenDiv.classList.add('hidden'); 
+                holdImageInstructionScreenDiv.classList.remove('hidden');
+                holdImagePromptP.textContent = "Once you have formed a clear mental image of the scene as instructed, press Continue."; 
+                holdImageContinueBtn.classList.remove('hidden'); // Continue button visible immediately for these
+            }
+        }
+
+        holdImageContinueBtn.addEventListener('click', () => {
+            console.log("Hold image continue button clicked for trial:", currentTrialData ? currentTrialData.trial_id : "N/A");
+            showDiv(null); 
+            startVimParameterRating(); 
+        });
+
+        // --- VIM Parameter Rating Functions ---
+        function startVimParameterRating() { 
+            console.log("startVimParameterRating - Mode:", currentTaskMode, "Trial ID:", currentTrialData.trial_id);
+            if(currentTaskMode === 'test' && currentParameterKey){ 
+                 actualTaskOrder = [currentParameterKey]; 
+                 console.log("Test mode, actualTaskOrder:", actualTaskOrder);
+            } else if (currentTaskMode && currentTaskMode.startsWith('actual')) { 
+                 actualTaskOrder = shuffleArray(Object.keys(PARAMETERS)); 
+                 console.log("Actual task mode, actualTaskOrder (shuffled):", actualTaskOrder);
+            } else {
+                console.error("startVimParameterRating called with invalid task mode or missing paramKey for test:", currentTaskMode, currentParameterKey);
+                resetFullTaskState();
+                showDiv(mainMenuDiv);
+                return;
+            }
+            currentParameterIndexInTask = 0;
+            vimGeneralInstructionP.textContent = `Please keep the image of your [${currentTrialData.condition === "perceptual_recall" ? "recalled photo" : "mental scene"}] in your mind.`;
+            loadNextParameterInVim();
+         }
+
+        function loadNextParameterInVim() { 
+            console.log("loadNextParameterInVim - Mode:", currentTaskMode, "Param Index:", currentParameterIndexInTask, "Order length:", actualTaskOrder.length, "Trial ID for VIM:", currentTrialData ? currentTrialData.trial_id : "N/A");
+             if (currentParameterIndexInTask < actualTaskOrder.length) {
+                // ... (rest of the logic is same)
+                currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
+                currentParameterConfig = PARAMETERS[currentParameterKey];
+                console.log("Showing vimTaskInterfaceDiv for param:", currentParameterKey, "Trial ID:", currentTrialData.trial_id);
+                showDiv(vimTaskInterfaceDiv); 
+                setupCoarseStepVim(); 
+            } else {
+                console.log("All parameters done for current trial/test. Mode:", currentTaskMode, "Trial ID:", currentTrialData.trial_id);
+                if (currentTaskMode === 'test') {
+                    alert("Test complete for the selected parameter."); 
+                    showDiv(parameterSelectorDiv);
+                } else if (currentTaskMode === 'actual_task_full') { 
+                    allCollectedResponses.push({...currentTrialResponses}); 
+                    console.log("Stored responses for trial:", currentTrialData.trial_id, JSON.stringify(currentTrialResponses));
+                    currentGlobalTrialIndex++;
+                    if (currentGlobalTrialIndex < currentSessionTrials.length) {
+                        console.log("Proceeding to next global trial:", currentGlobalTrialIndex);
+                        // Get the next trial data and pass it to showConditionInstructions
+                        let nextTrial = currentSessionTrials[currentGlobalTrialIndex];
+                        showConditionInstructions(nextTrial); 
+                    } else {
+                        console.log("All global trials complete. Displaying full results.");
+                        displayFullResults(); 
+                    }
+                }
+            }
+         }
+        
+         function setupCoarseStepFocus() {
+            console.log("Setting up Coarse Step focus. Current Param:", currentParameterKey, "Trial Data Image:", currentTrialData ? currentTrialData.base_image_id : "N/A");
+            currentFocusableElements = Array.from(coarseStepDiv.querySelectorAll('button[data-level-key]'));
+            let initialFocus = -1;
+            if (currentFocusableElements.length > 1) {
+                initialFocus = 1; 
+            } else if (currentFocusableElements.length === 1) {
+                initialFocus = 0; 
+            }
+            
+            updateKeyboardFocus(initialFocus);
+
+            if (initialFocus !== -1 && currentFocusableElements[initialFocus] && !isTouchDevice) {
+                const button = currentFocusableElements[initialFocus];
+                // Manually trigger preview logic for initial focus
+                if (currentParameterConfig && currentTrialData && currentParameterKey) { // Added currentParameterKey check
+                    const levelStr = button.dataset.level;
+                    if (!levelStr) {
+                        console.error("Initial focused button is missing data-level attribute:", button);
+                        return;
+                    }
+                    const level = parseInt(levelStr);
+                    let baseImgToUse = currentTrialData.base_image_id;
+                    if (!baseImgToUse) { 
+                        baseImgToUse = allTrialsMasterList.length > 0 ? allTrialsMasterList[0].base_image_id : "image01";
+                    }
+                    console.log("Initial Coarse Preview: Base:", baseImgToUse, "Param:", currentParameterKey, "Level:", level);
+                    coarsePreviewImg.src = getVariantImagePath(baseImgToUse, currentParameterKey, level);
+                    if(coarseImageDisplayP) coarseImageDisplayP.classList.add('hidden');
+                } else {
+                    console.warn("Skipping initial coarse preview: Missing config, trial data, or param key.");
+                }
+            } else if (isTouchDevice && coarseImageDisplayP) { 
+                coarseImageDisplayP.classList.add('hidden');
+            } else if (coarseImageDisplayP) { // If not touch and no initial focus, ensure text is shown
+                coarseImageDisplayP.classList.remove('hidden');
+                coarsePreviewImg.src = ""; // Clear preview image
+            }
+        }
+
+        function setupCoarseStepVim() { /* ... same ... */ 
+            currentParamDisplay.textContent = currentParameterConfig.name;
+            coarseParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction; 
+            paramNameInlineSpans.forEach(span => span.textContent = currentParameterConfig.name.toLowerCase());
+            coarseButtons.forEach(button => {
+                const levelKey = button.dataset.levelKey;
+                button.dataset.level = currentParameterConfig.coarse[levelKey];
+            });
+            coarsePreviewImg.src = "";
+            if(coarseImageDisplayP) coarseImageDisplayP.classList.remove('hidden'); // Ensure text is visible initially
+            coarsePreviewImg.src = ""; // Clear preview initially
+            coarseStepDiv.classList.remove('hidden');
+            fineTuneStepDiv.classList.add('hidden');
+            setupCoarseStepFocus(); // ADD THIS LINE
+        }
+        function setupFineTuneStepVim(coarseLevelValue) { /* ... same ... */
+            currentCoarseSelectionLevel = coarseLevelValue;
+            fineTuneParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction; 
+            const totalParamLevels = currentParameterConfig.levels;
+            let minL = Math.max(1, coarseLevelValue - fineTuneRange);
+            let maxL = Math.min(totalParamLevels, coarseLevelValue + fineTuneRange);
+            sliderToActualLevelMap = [];
+            for (let i = minL; i <= maxL; i++) { sliderToActualLevelMap.push(i); }
+            fineTuneSlider.min = 1;
+            fineTuneSlider.max = sliderToActualLevelMap.length;
+            const initialSliderIndex = sliderToActualLevelMap.indexOf(coarseLevelValue);
+            fineTuneSlider.value = initialSliderIndex !== -1 ? initialSliderIndex + 1 : Math.ceil(sliderToActualLevelMap.length / 2);
+            updateFineTuneImageVim(fineTuneSlider.value);
+            coarseStepDiv.classList.add('hidden');
+            fineTuneStepDiv.classList.remove('hidden');
+            fineTuneSlider.focus(); // Give slider focus for arrow keys
+            currentFocusableElements = [fineTuneSlider, backToCoarseBtn, confirmSelectionBtn]; // Define focusable elements if needed for tabbing
+            updateKeyboardFocus(0); // Focus the slider initially
+         }
+        function updateFineTuneImageVim(sliderValStr) { /* ... same ... */ 
+            const sliderValue = parseInt(sliderValStr);
+            const actualLevel = sliderToActualLevelMap[sliderValue - 1];
+            if (actualLevel !== undefined && currentTrialData && currentParameterKey) { 
+                fineTuneImg.src = getVariantImagePath(currentTrialData.base_image_id, currentParameterKey, actualLevel);
+                fineTuneLevelDisplay.textContent = actualLevel;
+            }
+        }
+        
+        // --- Parameter Test Mode ---
+        function startParameterTest(paramKey) {  
+            console.log("startParameterTest initiated for key:", paramKey);
+            resetFullTaskState(); 
+            currentTaskMode = 'test';
+            currentParameterKey = paramKey; 
+            currentParameterConfig = PARAMETERS[paramKey]; 
+            
+            let testContextTrialDataObj; 
+            if (allTrialsMasterList.length > 0) {
+                testContextTrialDataObj = {
+                    ...allTrialsMasterList[0], 
+                    trial_id: "TestRun-" + paramKey, 
+                    condition: "Parameter Test", 
+                    base_image_id: allTrialsMasterList[0].base_image_id, 
+                    condition_instruction: `You are testing the '${PARAMETERS[paramKey].name}' parameter. Familiarize yourself with the VIM task.`
+                }; 
+            } else { 
+                testContextTrialDataObj = { trial_id: "TestRun-" + paramKey, condition: "test", base_image_id: "image01", condition_instruction: `Testing ${PARAMETERS[paramKey].name}.` }; 
+            }
+            // currentTrialData will be set by showConditionInstructions when it's called with testContextTrialDataObj
+
+            console.log("Calling showConditionInstructions for test mode, param:", paramKey, "using base_image_id:", testContextTrialDataObj.base_image_id);
+            showConditionInstructions(testContextTrialDataObj); // Pass the object
+            
+            // The onclick for startTrialFromInstructionsBtn is already globally defined and will use currentTaskMode.
+        }
+        function populateParameterSelector() {
+            paramButtonsContainer.innerHTML = ''; 
+            const paramKeys = Object.keys(PARAMETERS);
+            paramKeys.forEach(key => { // Iterate using the keys
+                const button = document.createElement('button');
+                button.textContent = `Test ${PARAMETERS[key].name}`;
+                button.addEventListener('click', () => startParameterTest(key));
+                paramButtonsContainer.appendChild(button);
+            });
+            setupParameterSelectorFocus(); // Call AFTER buttons are in the DOM
+        }
+        
+        // --- Actual Task (Full 9 Trials) ---
+        document.getElementById('startActualTaskBtn').addEventListener('click', () => {
+            console.log("Start Full Actual Task button clicked"); 
+            resetFullTaskState(); 
+            currentTaskMode = 'actual_task_full';
+            currentSessionTrials = shuffleArray([...allTrialsMasterList]); 
+            currentGlobalTrialIndex = 0;
+            allCollectedResponses = []; 
+            
+            if (currentSessionTrials.length > 0) {
+                let firstTrial = currentSessionTrials[currentGlobalTrialIndex];
+                console.log("Starting first global trial, calling showConditionInstructions for trial_id:", firstTrial.trial_id); 
+                showConditionInstructions(firstTrial); // Pass the first trial data
+            } else {
+                alert("No trials defined in master list.");
+            }
+        });
+        
+        function displayFullResults() { /* ... same ... */
+            resultsListUl.innerHTML = ''; 
+            allCollectedResponses.forEach(trialResp => {
+                const trialHeader = document.createElement('li');
+                trialHeader.innerHTML = `<strong>Trial ${trialResp.trial_id} (${trialResp.condition}, Image: ${trialResp.image_id})</strong>`;
+                resultsListUl.appendChild(trialHeader);
+
+                for (const paramKeyInResp in trialResp.parameter_responses) { // Iterate over keys in parameter_responses
+                    const listItem = document.createElement('li');
+                    listItem.style.paddingLeft = "20px";
+                    listItem.textContent = `${PARAMETERS[paramKeyInResp].name}: Level ${trialResp.parameter_responses[paramKeyInResp]}`;
+                    resultsListUl.appendChild(listItem);
+                }
+                resultsListUl.appendChild(document.createElement('hr')); 
+            });
+            showDiv(resultsDisplayDiv);
+            console.log("All Collected Responses:", JSON.stringify(allCollectedResponses, null, 2));
+         }
+
+        // --- Event Listeners ---
+        document.getElementById('testParameterBtn').addEventListener('click', () => {
+            console.log("Test Single Parameter button clicked"); // DEBUG
+            resetFullTaskState(); 
+            populateParameterSelector();
+            showDiv(parameterSelectorDiv);
+        });
+        
+        backToMenuFromTestSelectBtn.addEventListener('click', () => { resetFullTaskState(); showDiv(mainMenuDiv); });
+        backToMenuFromTaskBtn.addEventListener('click', () => {
+            console.log("Back to menu from VIM task clicked. Mode:", currentTaskMode); // DEBUG
+            if (currentTaskMode && currentTaskMode.startsWith('actual')) {
+                if (confirm("Are you sure you want to exit the current task and return to the main menu? Progress will be lost.")) {
+                    resetFullTaskState();
+                    showDiv(mainMenuDiv); 
+                }
+            } else { // For test mode, just go back
+                resetFullTaskState();
+                showDiv(mainMenuDiv);
+            }
+        }); 
+        backToMenuFromResultsBtn.addEventListener('click', () => { resetFullTaskState(); showDiv(mainMenuDiv); });
+
+        coarseButtons.forEach(button => { /* ... same ... */
+            button.addEventListener('mouseover', () => {
+                if (!currentParameterConfig || coarseStepDiv.classList.contains('hidden') || !currentTrialData) return;
+                const level = parseInt(button.dataset.level);
+                let baseImgToUse = currentTrialData.base_image_id;
+                coarsePreviewImg.src = getVariantImagePath(baseImgToUse, currentParameterKey, level);
+                if(coarseImageDisplayP) coarseImageDisplayP.classList.add('hidden');
+            });
+            button.addEventListener('click', () => {
+                if (!currentParameterConfig) return;
+                const level = parseInt(button.dataset.level);
+                setupFineTuneStepVim(level); 
+            });
+         });
+        fineTuneSlider.addEventListener('input', (event) => { /* ... same ... */
+            if (currentTrialData && currentParameterKey) { 
+                updateFineTuneImageVim(event.target.value); 
+            }
+        });
+        backToCoarseBtn.addEventListener('click', setupCoarseStepVim); 
+
+        confirmSelectionBtn.addEventListener('click', () => {  
+            const currentSliderValue = parseInt(fineTuneSlider.value);
+            const finalLevel = sliderToActualLevelMap[currentSliderValue - 1];
+            console.log("Confirm button clicked. Mode:", currentTaskMode, "Param:", currentParameterKey, "Selected Level:", finalLevel, "Trial ID:", currentTrialData ? currentTrialData.trial_id : "N/A"); // DEBUG
+
+            if (!currentTrialData || !currentParameterKey) {
+                console.error("Trial data or parameter key is missing for confirm selection.");
+                resetFullTaskState(); showDiv(mainMenuDiv); 
+                return;
+            }
+            
+            // Ensure parameter_responses object exists for currentTrialResponses
+            if (!currentTrialResponses.parameter_responses) {
+                currentTrialResponses.parameter_responses = {};
+            }
+            currentTrialResponses.parameter_responses[currentParameterKey] = finalLevel;
+            
+            if (currentTaskMode === 'test') {
+                currentParameterIndexInTask++; // To signal completion of this one parameter
+                loadNextParameterInVim(); 
+            } else if (currentTaskMode === 'actual_task_full') { 
+                currentParameterIndexInTask++; 
+                loadNextParameterInVim(); 
+            }
+        });
+
+        // --- Keyboard Navigation ---
+    // --- Global keydown Event Listener (Updated) ---
+    document.addEventListener('keydown', function(event) {
+        console.log("Key pressed:", event.key, "CurrentFocusableElements:", currentFocusableElements.length, "FocusedIndex:", currentFocusedIndex);
+
+        if (event.key === "Escape") {
+            event.preventDefault(); 
+            if (!mainMenuDiv.classList.contains('hidden')) { return; }
+            let confirmExit = true;
+            if (!vimTaskInterfaceDiv.classList.contains('hidden') || 
+                !preVimScreenContainerDiv.classList.contains('hidden') ||
+                !conditionInstructionScreenDiv.classList.contains('hidden')) {
+                if (currentTaskMode && currentTaskMode.startsWith('actual')) {
+                     confirmExit = confirm("Return to Main Menu? Current trial progress will be lost.");
+                }
+            }
+            if(confirmExit){
+                resetFullTaskState();
+                showDiv(mainMenuDiv); // This will call setupMainMenuFocus
+            }
+            return;
+        }
+
+        // Contextual Key Handling
+        if (!mainMenuDiv.classList.contains('hidden')) {
+            handleMainMenuKeys(event);
+        } else if (!parameterSelectorDiv.classList.contains('hidden')) {
+            handleParameterSelectorKeys(event);
+        } else if (!conditionInstructionScreenDiv.classList.contains('hidden')) {
+            if (event.key === "Enter") {
+                event.preventDefault(); startTrialFromInstructionsBtn.click();
+            }
+        } else if (!preVimScreenContainerDiv.classList.contains('hidden')) {
+            if (!holdImageInstructionScreenDiv.classList.contains('hidden') && event.key === "Enter") {
+                event.preventDefault(); holdImageContinueBtn.click();
+            }
+        } else if (!vimTaskInterfaceDiv.classList.contains('hidden')) {
+            handleVimTaskInterfaceKeys(event);
+        }
+    });
+
+    function handleMainMenuKeys(event) {
+        if (currentFocusableElements.length === 0) return;
+        let handled = false;
+        switch (event.key) {
+            case "ArrowUp":
+                updateKeyboardFocus(currentFocusedIndex > 0 ? currentFocusedIndex - 1 : currentFocusableElements.length - 1);
+                handled = true;
+                break;
+            case "ArrowDown":
+                updateKeyboardFocus(currentFocusedIndex < currentFocusableElements.length - 1 ? currentFocusedIndex + 1 : 0);
+                handled = true;
+                break;
+            case "Enter":
+                if (currentFocusedIndex >= 0 && currentFocusableElements[currentFocusedIndex]) {
+                    currentFocusableElements[currentFocusedIndex].click();
+                    handled = true;
+                }
+                break;
+        }
+        if (handled) event.preventDefault();
+    }
+
+    function handleParameterSelectorKeys(event) {
+        if (currentFocusableElements.length === 0) return;
+        let handled = false;
+        switch (event.key) {
+            case "ArrowUp":
+                updateKeyboardFocus(currentFocusedIndex > 0 ? currentFocusedIndex - 1 : currentFocusableElements.length - 1);
+                handled = true;
+                break;
+            case "ArrowDown":
+                updateKeyboardFocus(currentFocusedIndex < currentFocusableElements.length - 1 ? currentFocusedIndex + 1 : 0);
+                handled = true;
+                break;
+            case "Enter":
+                if (currentFocusedIndex >= 0 && currentFocusableElements[currentFocusedIndex]) {
+                    currentFocusableElements[currentFocusedIndex].click();
+                    handled = true;
+                }
+                break;
+            case "Backspace": 
+                backToMenuFromTestSelectBtn.click();
+                handled = true;
+                break;
+        }
+        if (handled) event.preventDefault();
+    }
+
+        function handleVimTaskInterfaceKeys(event) {
+            let handled = false;
+            if (!coarseStepDiv.classList.contains('hidden')) { 
+                console.log("In coarseStep key handler. Focusable elements:", currentFocusableElements.length, "Focused index:", currentFocusedIndex);
+
+                if (!currentFocusableElements || currentFocusableElements.length === 0) { 
+                    console.log("Coarse step: No focusable elements. Returning.");
+                    return; 
+                }
+                
+                let newFocusIndex = currentFocusedIndex;
+                let arrowPressed = false;
+
+                if (event.key === "ArrowLeft") {
+                    newFocusIndex = currentFocusedIndex > 0 ? currentFocusedIndex - 1 : currentFocusableElements.length - 1;
+                    arrowPressed = true;
+                    handled = true;
+                    console.log("ArrowLeft pressed, newFocusIndex:", newFocusIndex);
+                } else if (event.key === "ArrowRight") {
+                    newFocusIndex = currentFocusedIndex < currentFocusableElements.length - 1 ? currentFocusedIndex + 1 : 0;
+                    arrowPressed = true;
+                    handled = true;
+                    console.log("ArrowRight pressed, newFocusIndex:", newFocusIndex);
+                }
+
+                if (arrowPressed) {
+                    console.log("Arrow was pressed, updating focus and attempting preview.");
+                    updateKeyboardFocus(newFocusIndex); 
+
+                    const focusedButton = currentFocusableElements[currentFocusedIndex]; 
+
+                    // MODIFIED CONDITION HERE: Keyboard arrow navigation should trigger preview
+                    if (focusedButton) { 
+                        console.log("Attempting preview for button (keyboard):", focusedButton.textContent.trim());
+                        if (!currentParameterConfig || !currentTrialData || !currentParameterKey) {
+                            console.error("Cannot trigger coarse preview via keyboard: Missing context. ParamConfig:", currentParameterConfig, "TrialData:", currentTrialData, "ParamKey:", currentParameterKey);
+                            // Do not return here, let focus update happen. Preview just won't load.
+                        } else {
+                            const levelStr = focusedButton.dataset.level; 
+                            if (!levelStr) {
+                                console.error("Focused button is missing data-level attribute:", focusedButton);
+                            } else {
+                                const level = parseInt(levelStr);
+                                let baseImgToUse = currentTrialData.base_image_id;
+                                if (!baseImgToUse) { 
+                                    baseImgToUse = allTrialsMasterList.length > 0 ? allTrialsMasterList[0].base_image_id : "image01";
+                                    console.warn("Using fallback baseImgToUse for coarse preview:", baseImgToUse);
+                                }
+
+                                console.log("Keyboard Coarse Preview Trigger: Base:", baseImgToUse, "Param:", currentParameterKey, "Level:", level);
+                                
+                                const imagePath = getVariantImagePath(baseImgToUse, currentParameterKey, level);
+                                coarsePreviewImg.src = imagePath;
+                                if(coarseImageDisplayP) coarseImageDisplayP.classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        console.log("No focused button found after updateKeyboardFocus for keyboard arrow.");
+                    }
+                } else if (event.key === "Enter") { 
+                     console.log("Enter key in coarse step.");
+                    if (currentFocusedIndex >= 0 && currentFocusableElements[currentFocusedIndex]) {
+                        currentFocusableElements[currentFocusedIndex].click(); 
+                        handled = true;
+                    }
+                }
+            } else if (!fineTuneStepDiv.classList.contains('hidden')) { 
+                console.log("In fineTuneStep key handler.");
+                const sliderStep = 1; 
+                const sliderIsActiveFocus = document.activeElement === fineTuneSlider || 
+                                           (currentFocusableElements[currentFocusedIndex] === fineTuneSlider);
+                switch (event.key) {
+                    case "ArrowLeft":
+                        if (sliderIsActiveFocus) {
+                            fineTuneSlider.value = parseInt(fineTuneSlider.value) - sliderStep;
+                            fineTuneSlider.dispatchEvent(new Event('input')); 
+                            handled = true;
+                        }
+                        break;
+                    case "ArrowRight":
+                         if (sliderIsActiveFocus) {
+                            fineTuneSlider.value = parseInt(fineTuneSlider.value) + sliderStep;
+                            fineTuneSlider.dispatchEvent(new Event('input')); 
+                            handled = true;
+                        }
+                        break;
+                    case "Enter":
+                        confirmSelectionBtn.click();
+                        handled = true;
+                        break;
+                    case "Backspace":
+                        backToCoarseBtn.click();
+                        handled = true;
+                        break;
+                }
+            } else {
+                console.log("Neither coarse nor fine tune step is active in VIM interface for key handling.");
+            }
+            if (handled) event.preventDefault();
+        }
+
+    // --- Touch Device Detection (Keep this at the top of script logic if not already) ---
+        let isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
+        // FOR PC TESTING - REMOVE OR MAKE CONDITIONAL FOR PRODUCTION
+        // isTouchDevice = false; 
+        // console.log("isTouchDevice (potentially overridden for testing):", isTouchDevice);
+
+        if (isTouchDevice) {
+            document.body.classList.add('touch-device');
+        }
+
+    // --- Initial State and other functions (populateParameterSelector, startPreVimPhase, etc.) ---
+    // ... (The rest of your JavaScript functions: populateParameterSelector, startPreVimPhase,
+    //      holdImageContinueBtn listener, startVimParameterRating, loadNextParameterInVim,
+    //      setupCoarseStepVim (make sure it calls setupCoarseStepFocus),
+    //      updateFineTuneImageVim, startParameterTest, startActualTaskBtn listener,
+    //      displayFullResults, other event listeners for buttons, resetFullTaskState) ...
+    // Make sure setupCoarseStepVim calls setupCoarseStepFocus() at the end.
+    // Make sure setupFineTuneStepVim calls fineTuneSlider.focus() and sets up its focus.
+
+    // Add this to your existing setupCoarseStepVim function
+    // function setupCoarseStepVim() {
+    //     ...
+    //     setupCoarseStepFocus(); // Ensure this is called
+    // }
+
+    // Add this to your existing setupFineTuneStepVim function
+    // function setupFineTuneStepVim(coarseLevelValue) {
+    //     ...
+    //     fineTuneSlider.focus();
+    //     currentFocusableElements = [fineTuneSlider, backToCoarseBtn, confirmSelectionBtn];
+    //     updateKeyboardFocus(0); // Conceptually focus slider
+    // }
+
+        // --- Initial State ---
+        resetFullTaskState(); 
+        showDiv(mainMenuDiv);
+
+    </script>
+</body>
+</html>

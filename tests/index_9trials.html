@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlTag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIM Prototype - Final Corrected</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; background-color: #f4f4f4; }
+        .main-container { border: 1px solid #ccc; padding: 20px; text-align: center; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 90%; max-width: 800px; margin-top: 20px; }
+        /* This is the new top-level wrapper for our split-screen view */
+        /* REPLACEMENT CSS RULES */
+
+        .split-container {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch; /* Make panels equal height */
+            justify-content: center;
+            gap: 20px;
+            width: 100%; /* Use the full browser width */
+            height: calc(100vh - 40px); /* Fill the full screen height, minus some padding */
+            padding: 20px;
+            box-sizing: border-box; /* Include padding in the width/height calculation */
+        }
+
+        /* We also need to remove the fixed height from the image panel to let it be flexible */
+        /*.image-panel {
+            flex: 1; /* This is the key: it will grow to fill all available horizontal space */
+            /*display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #eee;
+            border-radius: 8px;
+            /* The explicit height is removed. It will now be controlled by the parent. */
+        /*}
+
+        /* This is the new LEFT panel, which will hold the image */
+        .image-panel {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #eee;
+            height: 90vh; /* Increased from 85vh */
+            border-radius: 8px;
+            /* padding: 10px;  <-- REMOVED to maximize space */
+        }
+
+        /* This is the new RIGHT panel, for all our text and buttons */
+        .controls-panel {
+            /* --- Your existing properties --- */
+            flex: 0 0 400px; 
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            height: 85vh; 
+            overflow-y: auto; 
+            text-align: center;
+            
+            /* --- The new properties to add --- */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* This is the generic "spacer" that will push content apart.
+        This is the most important missing piece. */
+        .flex-spacer {
+            flex-grow: 1; /* This makes the element take up all available empty vertical space */
+        }
+
+        /* This styles the container for the buttons at the bottom */
+        .controls-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* We need to update the existing .image-display rules to work inside the new panels */
+        /*.image-display {
+            width: 100%;
+            height: 100%; 
+            margin-bottom: 0; /* No longer need margin */
+        /* }
+
+        .image-display img {
+            max-width: 100%;
+            max-height: 100%; 
+            border: 1px solid black;
+            object-fit: contain;
+        /*} */
+
+        .confidence-rating {
+            margin-top: 20px;
+        }
+
+        .likert-scale {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0 5px 0;
+        }
+
+        .likert-button {
+            padding: 10px;
+            min-width: 40px; /* Give buttons a consistent width */
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+
+        .likert-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Style for the selected confidence button */
+        .likert-button.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .likert-labels {
+            display: flex;
+            justify-content: space-between;
+            max-width: 350px;
+            margin: 0 auto;
+            font-size: 14px;
+            color: #555;
+        }
+        .image-display { display: flex; align-items: center; justify-content: center; background-color: #eee; min-height: 30vh; max-height:100%; width: 100%;}
+        .image-display img { max-width: 100%; max-height: 100%; border: 1px solid black; object-fit: contain; }
+        .slider-value-display {
+            display: none;
+        }
+        .image-display p.preview-instruction { padding: 20px; color: #555; }
+        button { margin: 5px; padding: 10px 15px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        .control-group { margin-bottom: 15px; }
+        .coarse-selection button { background-color: #6c757d;}
+        .coarse-selection button:hover { background-color: #5a6268;}
+        .fine-tuning input[type="range"] { width: 80%; max-width: 400px; margin-top: 10px;}
+        .hidden { display: none !important; }
+        #mainMenu button, #parameterSelector button { margin-bottom:10px; width: 200px;}
+        #resultsDisplay ul { list-style-type: none; padding: 0;}
+        #resultsDisplay li { margin-bottom: 5px; text-align: left; }
+        #resultsDisplay li strong { display: block; margin-top: 10px; }
+        .back-button { background-color: #6c757d; margin-top: 20px; }
+        .back-button:hover { background-color: #545b62; }
+        #fixationScreen, #preVimImageScreenDiv, #holdImageInstructionScreen, #conditionInstructionScreen { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; min-height: 60vh; font-size: 18px; line-height: 1.6;
+        }
+        #conditionInstructionScreen p { max-width: 80%; margin-bottom: 20px; }
+        #fixationCross { font-size: 48px; }
+        #preVimImageScreenDiv img { 
+            max-width: 100%; 
+            max-height: 100%; /* Allows image to fill the panel's height */
+            border: 1px solid #ddd; 
+            object-fit: contain; /* Ensures aspect ratio is maintained */
+        }
+        .keyboard-focus { outline: 3px solid dodgerblue; box-shadow: 0 0 8px dodgerblue; }
+        #paramButtonsContainer { display: flex; flex-direction: column; align-items: center; }
+        #paramButtonsContainer button { width: 80%; margin-bottom: 10px; }
+        #languageSelector { position: absolute; bottom: 10px; right: 10px; z-index: 100; }
+        #languageSelector button { font-size: 14px; padding: 5px 10px; width: auto; background-color: #f8f9fa; color: #333; border: 1px solid #ddd; }
+        #languageSelector button.active-lang { background-color: #007bff; color: white; border-color: #007bff;}
+        /* --- NEW --- */
+        #downloadResultsBtn { background-color: #28a745; margin-top: 20px; }
+        #downloadResultsBtn:hover { background-color: #218838; }
+        /* ADD THIS NEW RULE */
+        #fineTuneActionButtons {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body id="htmlTag" lang="en">
+
+    <div id="languageSelector">
+        <button data-lang="en">English</button>
+        <button data-lang="es">Español</button>
+    </div>
+
+    <div id="mainMenu" class="main-container">
+        <h1 data-lang-key="mainMenuTitle"></h1>
+        <p data-lang-key="mainMenuWelcome"></p>
+        <button id="testParameterBtn" data-lang-key="testParamButton"></button><br>
+        <button id="startActualTaskBtn" data-lang-key="startTaskButton"></button>
+    </div>
+
+    <div id="parameterSelector" class="main-container hidden">
+        <h2 data-lang-key="paramSelectorTitle"></h2>
+        <div id="paramButtonsContainer"></div>
+        <button id="backToMenuFromTestSelectBtn" class="back-button" data-lang-key="backToMenuButton"></button>
+    </div>
+
+    <div id="conditionInstructionScreen" class="main-container hidden">
+        <h2 id="conditionInstructionTitle"></h2>
+        <p id="conditionInstructionText"></p>
+        <button id="startTrialFromInstructionsBtn" data-lang-key="trialContinueButton"></button>
+    </div>
+
+    <!-- This container now uses the 'split-container' class for the two-panel layout -->
+    <div id="preVimScreenContainer" class="split-container hidden">
+
+        <!-- The LEFT panel will hold the visual stimuli (fixation and image) -->
+        <div class="image-panel">
+            <div id="fixationScreen" class="hidden"><div id="fixationCross">+</div></div>
+            <div id="preVimImageScreenDiv" class="hidden"><img id="originalImageDisplay" src="" alt="Original Image"></div>
+        </div>
+
+        <!-- The RIGHT panel will hold the text prompt and button -->
+        <div class="controls-panel">
+            <div id="holdImageInstructionScreen" class="hidden">
+                <p id="holdImagePrompt" style="margin-top: 20vh;"></p> <!-- Added style to vertically center the prompt a bit -->
+                <button id="holdImageContinueBtn" data-lang-key="trialContinueButton"></button>
+            </div>
+        </div>
+
+    </div>
+    
+    <div id="vimTaskInterface" class="split-container hidden">
+
+        <!-- 1. The new LEFT panel for the image -->
+        <div class="image-panel">
+            
+            <!-- MOVE THE COARSE IMAGE DISPLAY HERE -->
+            <div class="image-display" id="coarseImageDisplay">
+                <p class="preview-instruction" data-lang-key="coarsePreviewText"></p> 
+                <img id="coarsePreviewImg" src="" alt="Press Arrow/Hover Mouse">
+            </div>
+
+            <!-- MOVE THE FINE-TUNE IMAGE DISPLAY HERE (and hide it) -->
+            <div class="image-display hidden" id="fineTuneImageDisplay">
+                <img id="fineTuneImg" src="" alt="Fine-tuned image">
+            </div>
+
+        </div>
+
+        <!-- 2. The new RIGHT panel for the controls -->
+        <div class="controls-panel">
+            <!-- TOP SECTION -->
+            <h2 id="currentParamDisplay">Parameter: <span></span></h2>
+            <p id="vimGeneralInstruction"></p> 
+
+            <!-- ADD THIS FIRST SPACER to push the middle section down -->
+            <div class="flex-spacer"></div>
+
+            <!-- MIDDLE SECTION (Interactive Elements) -->
+            <div id="coarseStep" class="coarse-selection control-group">
+                <p><span data-lang-key="vimCoarsePrompt"></span> <strong id="coarseParamName"></strong>:</p>
+                <button data-level-key="low"><span data-lang-key="coarseButtonLow"></span></button>
+                <button data-level-key="mid"><span data-lang-key="coarseButtonMid"></span></button>
+                <button data-level-key="high"><span data-lang-key="coarseButtonHigh"></span></button>
+            </div>
+
+            <div id="fineTuneStep" class="fine-tuning control-group hidden">
+                <p><span data-lang-key="fineTunePrompt"></span> <strong id="fineTuneParamName"></strong>:</p>
+                <input type="range" id="fineTuneSlider" min="1" max="7" value="4">
+                <!-- This is the line you correctly fixed -->
+                <p class="slider-value-display"><span id="fineTuneLevelDisplay"></span></p>
+                <!-- NOTE: The two buttons that were here have been moved to the bottom -->
+            </div>
+
+            <!-- ADD THIS ENTIRE NEW BLOCK -->
+            <div id="confidenceStep" class="confidence-rating control-group hidden">
+                <p id="confidencePrompt"></p>
+                <div class="likert-scale">
+                    <button class="likert-button" data-value="1">1</button>
+                    <button class="likert-button" data-value="2">2</button>
+                    <button class="likert-button" data-value="3">3</button>
+                    <button class="likert-button" data-value="4">4</button>
+                    <button class="likert-button" data-value="5">5</button>
+                    <button class="likert-button" data-value="6">6</button>
+                    <button class="likert-button" data-value="7">7</button>
+                </div>
+                <div class="likert-labels">
+                    <span id="likertLabelLow"></span>
+                    <span id="likertLabelHigh"></span>
+                </div>
+            </div>
+
+            <!-- This new spacer element pushes everything below it to the bottom -->
+            <div class="flex-spacer"></div>
+
+            <!-- BOTTOM SECTION (Action Buttons) -->
+            <div class="controls-bottom">
+                <!-- This new wrapper will hold the side-by-side buttons -->
+                <div id="fineTuneActionButtons">
+                    <button id="backToCoarseBtn" data-lang-key="backToCoarseButton"></button>
+                    <button id="confirmSelectionBtn" data-lang-key="confirmLevelButton"></button>
+                    <button id="confirmConfidenceBtn" data-lang-key="confirmConfidenceButton" class="hidden"></button>
+                </div>
+                <button id="backToMenuFromTaskBtn" class="back-button" data-lang-key="exitTaskButton"></button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="resultsDisplay" class="main-container hidden">
+        <h2 data-lang-key="resultsTitle"></h2>
+        <ul id="resultsList"></ul>
+        <!-- --- NEW --- -->
+        <p id="saveStatus" style="font-style: italic; color: #555;"></p>
+        <button id="downloadResultsBtn" data-lang-key="downloadResultsButton">Download Results</button>
+        <button id="backToMenuFromResultsBtn" class="back-button hidden" data-lang-key="backToMenuButton"></button>
+    </div>
+
+    <script>
+        // --- CONFIGURATION AND STATE MANAGEMENT ---
+        const DEBUG_SHOW_RESULTS = false; // Set to true to show results for debugging
+        
+        const LANG_STRINGS = {
+            "en": {
+                mainMenuTitle: "Visual Quality Rating Task", mainMenuWelcome: "Welcome! Please read the general instructions before starting.", testParamButton: "Test Single Parameter", startTaskButton: "Start Full Task (9 Trials)", paramSelectorTitle: "Select Parameter to Test", conditionInstructionTitle: "Instructions: {condition} Task", trialContinueButton: "Continue", holdImagePrompt_recall: "Please keep the image you just saw in your mind. Press Continue when ready.", holdImagePrompt_imagine: "Once you have formed a clear mental image of the scene as instructed, press Continue.", vimGeneralInstruction: "Please keep the image of your {sceneType} in your mind.", vimCoarsePrompt: "Select the image that best represents the overall level for", coarseButtonLow: "Low", coarseButtonMid: "Medium", coarseButtonHigh: "High", coarsePreviewText: "Hover over buttons to preview, click to select.", fineTunePrompt: "Now, fine-tune your selection for", selectedLevelLabel: "Selected Level:", backToCoarseButton: "Back to Coarse Selection", confirmLevelButton: "Confirm This Level", backToMenuButton: "Back to Main Menu", exitTaskButton: "Back to Main Menu (Exit Task)", exitConfirmMessage: "Are you sure you want to exit the current task and return to the main menu? Progress will be lost.", resultsTitle: "Trial Results",
+                downloadResultsButton: "Download Results",
+                // New confidence strings
+                confidencePrompt: "How confident are you in your selection?",
+                likertLabelLow: "Not at all confident",
+                likertLabelHigh: "Completely confident",
+                confirmConfidenceButton: "Confirm Confidence"
+            },
+            "es": {
+                mainMenuTitle: "Tarea de Calificación de Calidad Visual", mainMenuWelcome: "¡Bienvenido/a! Por favor, lea las instrucciones generales antes de comenzar.", testParamButton: "Probar un Parámetro", startTaskButton: "Comenzar Tarea Completa (9 Ensayos)", paramSelectorTitle: "Seleccione el Parámetro a Probar", conditionInstructionTitle: "Instrucciones: Tarea de {condition}", trialContinueButton: "Continuar", holdImagePrompt_recall: "Por favor, mantenga la imagen que acaba de ver en su mente. Presione Continuar cuando esté listo/a.", holdImagePrompt_imagine: "Una vez que haya formado una imagen mental clara de la escena como se le indicó, presione Continuar.", vimGeneralInstruction: "Por favor, mantenga la imagen de su {sceneType} en su mente.", vimCoarsePrompt: "Seleccione la imagen que mejor represente el nivel general para", coarseButtonLow: "Bajo", coarseButtonMid: "Medio", coarseButtonHigh: "Alto", coarsePreviewText: "Pase el cursor sobre los botones para previsualizar, haga clic para seleccionar.", fineTunePrompt: "Ahora, ajuste su selección para", selectedLevelLabel: "Nivel Seleccionado:", backToCoarseButton: "Volver a Selección General", confirmLevelButton: "Confirmar este Nivel", backToMenuButton: "Volver al Menú Principal", exitTaskButton: "Volver al Menú Principal (Salir de la Tarea)", exitConfirmMessage: "¿Está seguro/a de que desea salir de la tarea actual y volver al menú principal? El progreso se perderá.", resultsTitle: "Resultados de los Ensayos",
+                downloadResultsButton: "Descargar Resultados",
+                // New confidence strings
+                confidencePrompt: "¿Qué tan seguro/a está de su selección?",
+                likertLabelLow: "Nada seguro/a",
+                likertLabelHigh: "Completamente seguro/a",
+                confirmConfidenceButton: "Confirmar Confianza"
+            }
+        };
+        const PARAMETERS = {
+            saturation:   { name: {en: "Saturation", es: "Saturación"}, levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: {en: "how colorful or saturated it was.", es: "qué tan colorido o saturado era."}},
+            brightness:   { name: {en: "Brightness", es: "Brillo"}, levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: {en: "how bright or dim it appeared.", es: "qué tan brillante u oscuro parecía."}},
+            contrast:     { name: {en: "Contrast", es: "Contraste"}, levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: {en: "the difference between light and dark areas.", es: "la diferencia entre áreas claras y oscuras."}},
+            blurriness:   { name: {en: "Blurriness", es: "Desenfoque"}, levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: {en: "how sharp or out-of-focus it was.", es: "qué tan nítido o desenfocado estaba."}},
+            detailedness: { name: {en: "Detailedness", es: "Nivel de Detalle"}, levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: {en: "how rich in fine features and textures it was.", es: "qué tan rico en detalles finos y texturas era."}},
+            precision:    { name: {en: "Color Precision", es: "Precisión de Color"}, levels: 21, coarse: { low: 4, mid: 11, high: 18 }, parameter_specific_instruction: {en: "how specific or ambiguous the colors were.", es: "qué tan específicos o ambiguos eran los colores."}}
+        };
+        const allTrialsMasterList = [
+            { trial_id: 1, condition: "perceptual_recall", base_image_id: "image01", original_image_filename: "image01.png", condition_instruction: {en: "You will be shown an image for a few seconds. Please observe it carefully. After it disappears, try to keep a vivid mental picture of that image in your mind.", es: "Se le mostrará una imagen por unos segundos. Por favor, obsérvela con atención. Cuando desaparezca, intente mantener una imagen mental vívida de esa imagen en su mente."}},
+            { trial_id: 2, condition: "episodic_recall",   base_image_id: "image02", original_image_filename: "image02.png", condition_instruction: {en: "Please recall a recent, vivid memory of being in a LIVING ROOM with other people present. Form a clear mental image of this scene, then press Continue.", es: "Por favor, recuerde una memoria reciente y vívida de estar en una SALA DE ESTAR con otras personas presentes. Forme una imagen mental clara de esta escena, y luego presione Continuar."}},
+            { trial_id: 3, condition: "scene_imagination", base_image_id: "image03", original_image_filename: "image03.png", condition_instruction: {en: "Please imagine a CLASSROOM with desks and empty chairs, with no people present. Form a clear mental image of this scene, then press Continue.", es: "Por favor, imagine un AULA con escritorios y sillas vacías, sin gente. Forme una imagen mental clara de esta escena, y luego presione Continuar."}},
+            { trial_id: 4, condition: "perceptual_recall", base_image_id: "image04", original_image_filename: "image04.png", condition_instruction: {en: "You will be shown an image for a few seconds. Please observe it carefully. After it disappears, try to keep a vivid mental picture of that image in your mind.", es: "Se le mostrará una imagen por unos segundos. Por favor, obsérvela con atención. Cuando desaparezca, intente mantener una imagen mental vívida de esa imagen en su mente."}},
+            { trial_id: 5, condition: "episodic_recall",   base_image_id: "image05", original_image_filename: "image05.png", condition_instruction: {en: "Please recall a recent and vivid memory of being in an empty SUPERMARKET AISLE. Form a clear mental image of this scene, then press Continue.", es: "Por favor, recuerde una memoria reciente y vívida de estar en un PASILLO DE SUPERMERCADO vacío. Forme una imagen mental clara de esta escena, y luego presione Continuar."}},
+            { trial_id: 6, condition: "scene_imagination", base_image_id: "image06", original_image_filename: "image06.png", condition_instruction: {en: "Please imagine a PARK with green grass, where people are present. Form a clear mental image of this scene, then press Continue.", es: "Por favor, imagine un PARQUE con césped verde, donde hay gente presente. Forme una imagen mental clara de esta escena, y luego presione Continuar."}},
+            { trial_id: 7, condition: "perceptual_recall", base_image_id: "image07", original_image_filename: "image07.png", condition_instruction: {en: "You will be shown an image for a few seconds. Please observe it carefully. After it disappears, try to keep a vivid mental picture of that image in your mind.", es: "Se le mostrará una imagen por unos segundos. Por favor, obsérvela con atención. Cuando desaparezca, intente mantener una imagen mental vívida de esa imagen en su mente."}},
+            { trial_id: 8, condition: "episodic_recall",   base_image_id: "image08", original_image_filename: "image08.png", condition_instruction: {en: "Please recall a recent and vivid memory of being in a quiet LIVING ROOM with no other people present. Form a clear mental image of this scene, then press Continue.", es: "Por favor, recuerde una memoria reciente y vívida de estar en una SALA DE ESTAR tranquila sin otras personas presentes. Forme una imagen mental clara de esta escena, y luego presione Continuar."}},
+            { trial_id: 9, condition: "scene_imagination", base_image_id: "image09", original_image_filename: "image09.png", condition_instruction: {en: "Please imagine a FARM scene with trees, animals, and people. Form a clear mental image of this scene, then press Continue.", es: "Por favor, imagine una escena de GRANJA con árboles, animales y personas. Forme una imagen mental clara de esta escena, y luego presione Continuar."}}
+        ];
+        
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkcpn2kATIjVlfgGAT6um4sN2LOcTU6Qde2vj8mKzd19VtfVxHynh3KR-qMBuNeanSkQ/exec';
+        const saveStatus = document.getElementById('saveStatus');
+
+        let currentLanguage = 'en';
+        const imageBaseFolder = "images"; 
+        const imageExtension = ".png";
+        const fineTuneRange = 3; 
+        let currentSessionTrials = []; 
+        let currentGlobalTrialIndex = 0; 
+        let currentTrialData = null;     
+        let currentTrialResponses = {};  
+        let allCollectedResponses = [];  
+        let currentTaskMode = null; 
+        // --- NEW ---
+        let sessionID = null;
+        let currentParameterKey = null;
+        let currentParameterConfig = null;
+        let actualTaskOrder = []; 
+        let currentParameterIndexInTask = 0; 
+        let currentFocusableElements = [];
+        let currentFocusedIndex = -1;      
+        const KEYBOARD_FOCUS_CLASS = 'keyboard-focus';
+        const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+
+        // --- DOM Elements ---
+        const mainMenuDiv = document.getElementById('mainMenu');
+        const parameterSelectorDiv = document.getElementById('parameterSelector');
+        const paramButtonsContainer = document.getElementById('paramButtonsContainer');
+        const vimTaskInterfaceDiv = document.getElementById('vimTaskInterface');
+        const resultsDisplayDiv = document.getElementById('resultsDisplay');
+        // --- NEW ---
+        const downloadResultsBtn = document.getElementById('downloadResultsBtn');
+        const conditionInstructionScreenDiv = document.getElementById('conditionInstructionScreen');
+        const conditionInstructionTitleH2 = document.getElementById('conditionInstructionTitle');
+        const conditionInstructionTextP = document.getElementById('conditionInstructionText');
+        const startTrialFromInstructionsBtn = document.getElementById('startTrialFromInstructionsBtn');
+        const preVimScreenContainerDiv = document.getElementById('preVimScreenContainer');
+        const fixationScreenDiv = document.getElementById('fixationScreen');
+        const preVimImageScreenDiv = document.getElementById('preVimImageScreenDiv');
+        const originalImageDisplayImg = document.getElementById('originalImageDisplay');
+        const holdImageInstructionScreenDiv = document.getElementById('holdImageInstructionScreen');
+        const holdImagePromptP = document.getElementById('holdImagePrompt');
+        const holdImageContinueBtn = document.getElementById('holdImageContinueBtn');
+        const vimGeneralInstructionP = document.getElementById('vimGeneralInstruction');
+        const currentParamDisplay = document.getElementById('currentParamDisplay').querySelector('span');
+        const coarseStepDiv = document.getElementById('coarseStep');
+        const coarseParamNameStrong = document.getElementById('coarseParamName');
+        const coarseButtons = coarseStepDiv.querySelectorAll('button');
+        const coarsePreviewImg = document.getElementById('coarsePreviewImg');
+        const coarseImageDisplayP = document.querySelector('#coarseImageDisplay p.preview-instruction');
+        const paramNameInlineSpans = document.querySelectorAll('.param-name-inline');
+        const fineTuneStepDiv = document.getElementById('fineTuneStep');
+        const fineTuneParamNameStrong = document.getElementById('fineTuneParamName');
+        const fineTuneImg = document.getElementById('fineTuneImg');
+        const fineTuneSlider = document.getElementById('fineTuneSlider');
+        const fineTuneLevelDisplay = document.getElementById('fineTuneLevelDisplay');
+        const backToCoarseBtn = document.getElementById('backToCoarseBtn');
+        const confirmSelectionBtn = document.getElementById('confirmSelectionBtn');
+        const resultsListUl = document.getElementById('resultsList');
+        const backToMenuFromTestSelectBtn = document.getElementById('backToMenuFromTestSelectBtn');
+        const backToMenuFromTaskBtn = document.getElementById('backToMenuFromTaskBtn');
+        const backToMenuFromResultsBtn = document.getElementById('backToMenuFromResultsBtn');
+
+        let currentCoarseSelectionLevel = null;
+        let sliderToActualLevelMap = [];
+
+        // ADD these new variable definitions at the top of the script
+        const confidenceStepDiv = document.getElementById('confidenceStep');
+        const likertButtons = document.querySelectorAll('.likert-button');
+        const confirmConfidenceBtn = document.getElementById('confirmConfidenceBtn');
+        let currentConfidenceSelection = null;
+
+        // --- Utility Functions ---
+        function shuffleArray(array) { 
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function getVariantImagePath(baseImageId, paramKey, level) { 
+            const levelStr = level < 10 ? '0' + level : level.toString();
+            return `${imageBaseFolder}/${paramKey}/${baseImageId}_${paramKey}_${levelStr}${imageExtension}`;
+        }
+
+        function getOriginalImagePath(originalFilename) { 
+            return `${imageBaseFolder}/originals/${originalFilename}`;
+         }
+        
+        function resetFullTaskState() { 
+            currentTrialData = null;
+            currentTrialResponses = {};
+            currentTaskMode = null;
+            // --- MODIFIED ---
+            sessionID = null; 
+            currentParameterKey = null;
+            currentParameterConfig = null;
+            actualTaskOrder = [];
+            currentParameterIndexInTask = 0;
+            currentSessionTrials = [];
+            currentGlobalTrialIndex = 0;
+            allCollectedResponses = []; 
+            console.log("Full task state reset.");
+        }
+
+        function updateKeyboardFocus(newIndex) {
+            if (currentFocusableElements && currentFocusableElements[currentFocusedIndex]) {
+                currentFocusableElements[currentFocusedIndex].classList.remove(KEYBOARD_FOCUS_CLASS);
+            }
+            currentFocusedIndex = newIndex;
+            if (currentFocusableElements && currentFocusableElements[currentFocusedIndex]) {
+                currentFocusableElements[currentFocusedIndex].classList.add(KEYBOARD_FOCUS_CLASS);
+                currentFocusableElements[currentFocusedIndex].focus(); // Also set browser focus
+            }
+        }
+
+        function setupMainMenuFocus() {
+            currentFocusableElements = [document.getElementById('testParameterBtn'), document.getElementById('startActualTaskBtn')];
+            updateKeyboardFocus(0);
+        }
+        
+        function setupParameterSelectorFocus() {
+            currentFocusableElements = Array.from(paramButtonsContainer.querySelectorAll('button'));
+            updateKeyboardFocus(currentFocusableElements.length > 0 ? 0 : -1);
+        }
+        
+        function setupCoarseStepFocus() {
+            currentFocusableElements = Array.from(coarseStepDiv.querySelectorAll('button[data-level-key]'));
+            let initialFocus = currentFocusableElements.length > 1 ? 1 : (currentFocusableElements.length === 1 ? 0 : -1);
+            updateKeyboardFocus(initialFocus);
+            if (initialFocus !== -1 && !isTouchDevice) {
+                currentFocusableElements[initialFocus].dispatchEvent(new Event('mouseover'));
+            }
+        }
+
+        
+        function showDiv(divToShow) { 
+            [mainMenuDiv, parameterSelectorDiv, vimTaskInterfaceDiv, resultsDisplayDiv, 
+            preVimScreenContainerDiv, conditionInstructionScreenDiv].forEach(div => {
+                if(div) div.classList.add('hidden');
+            });
+
+            if (currentFocusableElements && currentFocusableElements[currentFocusedIndex]) {
+                currentFocusableElements[currentFocusedIndex].classList.remove(KEYBOARD_FOCUS_CLASS);
+            }
+            currentFocusableElements = []; currentFocusedIndex = -1;
+
+            if (divToShow) {
+                divToShow.classList.remove('hidden');
+                if (divToShow === mainMenuDiv) setupMainMenuFocus();
+                else if (divToShow === parameterSelectorDiv) setupParameterSelectorFocus();
+                else if (divToShow === conditionInstructionScreenDiv) {
+                    currentFocusableElements = [startTrialFromInstructionsBtn];
+                    updateKeyboardFocus(0);
+                } else if (divToShow === vimTaskInterfaceDiv && !coarseStepDiv.classList.contains('hidden')) {
+                    setupCoarseStepFocus();
+                }
+            }
+        }
+        
+        // --- LANGUAGE SWITCHING ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.getElementById('htmlTag').lang = lang; 
+
+            document.querySelectorAll('#languageSelector button').forEach(btn => {
+                btn.classList.toggle('active-lang', btn.dataset.lang === lang);
+            });
+
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.dataset.langKey;
+                if (LANG_STRINGS[currentLanguage] && LANG_STRINGS[currentLanguage][key]) {
+                    el.textContent = LANG_STRINGS[currentLanguage][key];
+                }
+            });
+
+            if (!parameterSelectorDiv.classList.contains('hidden')) {
+                populateParameterSelector();
+            }
+
+            document.getElementById('confidencePrompt').textContent = LANG_STRINGS[lang].confidencePrompt;
+            document.getElementById('likertLabelLow').textContent = LANG_STRINGS[lang].likertLabelLow;
+            document.getElementById('likertLabelHigh').textContent = LANG_STRINGS[lang].likertLabelHigh;
+        }
+
+        // --- Core Application Logic ---
+
+        function showConditionInstructions(trialDataObject) {
+            currentTrialData = trialDataObject; 
+            if (!currentTrialData) {
+                console.error("showConditionInstructions called with invalid trialData!");
+                return;
+            }
+
+            const conditionName = {
+                en: currentTrialData.condition.replace(/_/g, ' '),
+                es: currentTrialData.condition === "perceptual_recall" ? "Recuerdo Perceptual" : 
+                    currentTrialData.condition === "episodic_recall" ? "Recuerdo Episódico" : "Imaginación de Escena"
+            }[currentLanguage];
+
+            let titlePrefix = currentTaskMode === 'test' ? "Test Mode" : `Trial ${currentGlobalTrialIndex + 1} of ${currentSessionTrials.length}`;
+            conditionInstructionTitleH2.textContent = `${titlePrefix}: ${conditionName}`;
+            conditionInstructionTextP.textContent = currentTrialData.condition_instruction[currentLanguage];
+            showDiv(conditionInstructionScreenDiv);
+            currentFocusableElements = [startTrialFromInstructionsBtn];
+            updateKeyboardFocus(0);
+        }
+
+        startTrialFromInstructionsBtn.addEventListener('click', () => {
+            if (!currentTrialData) return;
+            if (currentTaskMode === 'test') {
+                 showDiv(null); 
+                 startVimParameterRating(); 
+            } else if (currentTaskMode === 'actual_task_full') {
+                if (currentTrialData.condition === "perceptual_recall") {
+                    startPreVimPhase(currentTrialData);
+                } else { 
+                    currentTrialResponses = { 
+                        trial_id: currentTrialData.trial_id, condition: currentTrialData.condition,
+                        image_id: currentTrialData.base_image_id, parameter_responses: {}
+                    };
+                    showDiv(null);
+                    startVimParameterRating();
+                }
+            }
+        });
+
+        // --- Pre-VIM Task Flow ---
+        function startPreVimPhase(trialData) {
+            currentTrialResponses = { 
+                trial_id: trialData.trial_id, condition: trialData.condition,
+                image_id: trialData.base_image_id, parameter_responses: {}
+            };
+            showDiv(preVimScreenContainerDiv);
+            holdImageInstructionScreenDiv.classList.add('hidden');
+            preVimImageScreenDiv.classList.add('hidden');
+            fixationScreenDiv.classList.remove('hidden'); 
+            
+            setTimeout(() => { 
+                fixationScreenDiv.classList.add('hidden');
+                preVimImageScreenDiv.classList.remove('hidden');
+                originalImageDisplayImg.src = getOriginalImagePath(trialData.original_image_filename);
+                
+                setTimeout(() => { 
+                    preVimImageScreenDiv.classList.add('hidden');
+                    originalImageDisplayImg.src = ""; 
+                    holdImageInstructionScreenDiv.classList.remove('hidden');
+                    holdImagePromptP.textContent = LANG_STRINGS[currentLanguage].holdImagePrompt_recall;
+                    holdImageContinueBtn.classList.remove('hidden');
+                }, 1000); // Image display duration
+            }, 2000); // Initial fixation duration
+        }
+
+        // MODIFIED
+        holdImageContinueBtn.addEventListener('click', advanceFromHoldScreen);
+
+        // ADD THIS NEW FUNCTION
+        function advanceFromHoldScreen() {
+            showDiv(null); 
+            startVimParameterRating(); 
+        }
+
+        // --- VIM Parameter Rating Functions ---
+        function startVimParameterRating() { 
+            if(currentTaskMode === 'test' && currentParameterKey){ 
+                 actualTaskOrder = [currentParameterKey]; 
+            } else if (currentTaskMode && currentTaskMode.startsWith('actual')) { 
+                 actualTaskOrder = shuffleArray(Object.keys(PARAMETERS)); 
+            } else {
+                resetFullTaskState(); showDiv(mainMenuDiv); return;
+            }
+            const sceneTypeString = {
+                en: currentTrialData.condition === "perceptual_recall" ? "recalled photo" : "mental scene",
+                es: currentTrialData.condition === "perceptual_recall" ? "foto recordada" : "escena mental"
+            }[currentLanguage];
+            vimGeneralInstructionP.textContent = LANG_STRINGS[currentLanguage].vimGeneralInstruction.replace('{sceneType}', sceneTypeString);
+            currentParameterIndexInTask = 0;
+            loadNextParameterInVim();
+        }
+
+        function loadNextParameterInVim() { 
+             if (currentParameterIndexInTask < actualTaskOrder.length) {
+                currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
+                currentParameterConfig = PARAMETERS[currentParameterKey];
+                showDiv(vimTaskInterfaceDiv); 
+                setupCoarseStepVim(); 
+            } else {
+                if (currentTaskMode === 'test') {
+                    alert(`Test complete for ${PARAMETERS[currentParameterKey].name[currentLanguage]}`);
+                    showDiv(parameterSelectorDiv);
+                } else if (currentTaskMode === 'actual_task_full') { 
+                    allCollectedResponses.push({...currentTrialResponses}); 
+                    currentGlobalTrialIndex++;
+                    if (currentGlobalTrialIndex < currentSessionTrials.length) {
+                        showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]); 
+                    } else {
+                        displayFullResults(); 
+                    }
+                }
+            }
+        }
+        
+        // REPLACE this function
+        function setupCoarseStepVim() { 
+            const paramName = currentParameterConfig.name[currentLanguage];
+            currentParamDisplay.textContent = paramName;
+            coarseParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction[currentLanguage]; 
+            fineTuneParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction[currentLanguage];
+            coarseButtons.forEach(button => {
+                const levelKey = button.dataset.levelKey;
+                button.dataset.level = currentParameterConfig.coarse[levelKey];
+            });
+
+            // Show/hide controls in RIGHT panel
+            coarseStepDiv.classList.remove('hidden');
+            fineTuneStepDiv.classList.add('hidden');
+            confidenceStepDiv.classList.add('hidden'); // Also hide confidence step
+
+            // Show/hide images in LEFT panel
+            document.getElementById('coarseImageDisplay').classList.remove('hidden');
+            document.getElementById('fineTuneImageDisplay').classList.add('hidden');
+
+            // --- THIS IS THE FIX ---
+            // Hide ALL action buttons at the bottom initially for the coarse step
+            backToCoarseBtn.classList.add('hidden');
+            confirmSelectionBtn.classList.add('hidden');
+            confirmConfidenceBtn.classList.add('hidden');
+            
+            // Reset preview
+            coarsePreviewImg.src = ""; 
+            if (coarseImageDisplayP) coarseImageDisplayP.classList.remove('hidden');
+            setupCoarseStepFocus();
+        }
+
+        // REPLACE your existing setupFineTuneStepVim function with this one
+
+        function setupFineTuneStepVim(coarseLevelValue) {
+            currentCoarseSelectionLevel = coarseLevelValue;
+            fineTuneParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction[currentLanguage]; 
+            const totalParamLevels = currentParameterConfig.levels;
+            
+            // --- THIS LOGIC IS UNCHANGED ---
+            // Determine the min and max levels for the slider range
+            let minL, maxL;
+            if (coarseLevelValue === PARAMETERS[currentParameterKey].coarse.low) {
+                minL = 1;
+                maxL = 7;
+            } else if (coarseLevelValue === PARAMETERS[currentParameterKey].coarse.mid) {
+                minL = 8;
+                maxL = 14;
+            } else { // High
+                minL = 15;
+                maxL = 21;
+            }
+            
+            sliderToActualLevelMap = [];
+            for (let i = minL; i <= maxL; i++) {
+                sliderToActualLevelMap.push(i);
+            }
+
+            // --- THIS LOGIC IS NEW (FOR RANDOMIZATION) ---
+            // Instead of centering on the coarse value, pick a random starting index for the slider.
+            const randomSliderIndex = Math.floor(Math.random() * sliderToActualLevelMap.length); // Get a random index from 0 to length-1
+            const initialSliderValue = randomSliderIndex + 1; // Slider values are 1-based
+
+            // --- THIS LOGIC IS NOW UPDATED TO USE THE RANDOM VALUE ---
+            fineTuneSlider.min = 1;
+            fineTuneSlider.max = sliderToActualLevelMap.length;
+            fineTuneSlider.value = initialSliderValue; // Set the slider to the random position
+
+            updateFineTuneImageVim(fineTuneSlider.value);
+            
+            // --- THIS LOGIC IS UNCHANGED ---
+            coarseStepDiv.classList.add('hidden');
+            fineTuneStepDiv.classList.remove('hidden');
+            document.getElementById('coarseImageDisplay').classList.add('hidden');
+            document.getElementById('fineTuneImageDisplay').classList.remove('hidden');
+            
+            backToCoarseBtn.classList.remove('hidden');
+            confirmSelectionBtn.classList.remove('hidden');
+            
+            fineTuneSlider.focus(); 
+            currentFocusableElements = [fineTuneSlider, backToCoarseBtn, confirmSelectionBtn];
+            updateKeyboardFocus(0); 
+        }
+
+        function updateFineTuneImageVim(sliderValStr) { 
+            const sliderValue = parseInt(sliderValStr);
+            const actualLevel = sliderToActualLevelMap[sliderValue - 1];
+            if (actualLevel !== undefined && currentTrialData && currentParameterKey) { 
+                fineTuneImg.src = getVariantImagePath(currentTrialData.base_image_id, currentParameterKey, actualLevel);
+                fineTuneLevelDisplay.textContent = actualLevel;
+            }
+        }
+       
+        // --- Start/Setup Functions ---
+        function populateParameterSelector() { 
+            paramButtonsContainer.innerHTML = ''; 
+            Object.keys(PARAMETERS).forEach(key => {
+                const button = document.createElement('button');
+                button.textContent = `${LANG_STRINGS[currentLanguage].testParamButton.split(' ')[0]} ${PARAMETERS[key].name[currentLanguage]}`;
+                button.addEventListener('click', () => startParameterTest(key));
+                paramButtonsContainer.appendChild(button);
+            });
+            setupParameterSelectorFocus(); 
+        }
+
+        function startParameterTest(paramKey) {  
+            resetFullTaskState(); 
+            currentTaskMode = 'test';
+            currentParameterKey = paramKey; 
+            currentParameterConfig = PARAMETERS[paramKey]; 
+            
+            currentTrialData = {
+                trial_id: "TestRun",
+                condition: "Parameter Test",
+                base_image_id: allTrialsMasterList.length > 0 ? allTrialsMasterList[0].base_image_id : "image01"
+            };
+            
+            const sceneTypeString = "test scene";
+            vimGeneralInstructionP.textContent = LANG_STRINGS[currentLanguage].vimGeneralInstruction.replace('{sceneType}', sceneTypeString);
+
+            showDiv(vimTaskInterfaceDiv);
+            setupCoarseStepVim();
+        }
+
+        // --- MODIFIED ---
+        function startActualTask() {
+            resetFullTaskState(); 
+            currentTaskMode = 'actual_task_full';
+            sessionID = Date.now(); // Generate a unique session ID
+            currentSessionTrials = shuffleArray(allTrialsMasterList); 
+            currentGlobalTrialIndex = 0;
+            allCollectedResponses = []; 
+            if (currentSessionTrials.length > 0) {
+                showConditionInstructions(currentSessionTrials[0]); 
+            } else { alert("No trials defined in master list."); }
+        }
+
+        // REPLACE your existing displayFullResults function with this one
+
+        function displayFullResults() {
+            // --- This section is now conditional ---
+            if (DEBUG_SHOW_RESULTS) {
+                resultsListUl.innerHTML = ''; 
+                allCollectedResponses.forEach(trialResp => {
+                    const trialHeader = document.createElement('li');
+                    trialHeader.innerHTML = `<strong>Trial ${trialResp.trial_id} (${trialResp.condition}, Image: ${trialResp.image_id})</strong>`;
+                    resultsListUl.appendChild(trialHeader);
+
+                    for (const paramKeyInResp in trialResp.parameter_responses) {
+                        const listItem = document.createElement('li');
+                        listItem.style.paddingLeft = "20px";
+                        listItem.textContent = `${PARAMETERS[paramKeyInResp].name[currentLanguage]}: Level ${trialResp.parameter_responses[paramKeyInResp]}`;
+                        resultsListUl.appendChild(listItem);
+                    }
+                    resultsListUl.appendChild(document.createElement('hr')); 
+                });
+            } else {
+                // If not debugging, ensure the list and title are hidden
+                resultsListUl.style.display = 'none';
+                document.querySelector('[data-lang-key="resultsTitle"]').style.display = 'none';
+            }
+            
+            showDiv(resultsDisplayDiv);
+            console.log("All Collected Responses:", JSON.stringify({ sessionID, results: allCollectedResponses }, null, 2));
+
+            sendDataToGoogleSheet();
+        }
+
+        // --- NEW ---
+        function downloadResults() {
+            if (!sessionID || allCollectedResponses.length === 0) {
+                alert("No data to download.");
+                return;
+            }
+
+            // 1. Structure the data with the session ID
+            const dataToDownload = {
+                sessionID: sessionID,
+                results: allCollectedResponses
+            };
+
+            // 2. Convert the data object to a JSON string
+            const jsonString = JSON.stringify(dataToDownload, null, 2);
+
+            // 3. Create a Blob from the JSON string
+            const blob = new Blob([jsonString], { type: "application/json" });
+
+            // 4. Create a temporary URL for the Blob
+            const url = URL.createObjectURL(blob);
+
+            // 5. Create a temporary anchor element to trigger the download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `VIM_results_session_${sessionID}.json`; // Set the filename
+            document.body.appendChild(a); // Append to body to ensure it's clickable
+            a.click(); // Programmatically click the link
+
+            // 6. Clean up by removing the temporary anchor and URL
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Add this entire new function to your script
+
+        // REPLACE your existing sendDataToGoogleSheet function with this one:
+
+        async function sendDataToGoogleSheet() {
+            if (!sessionID || allCollectedResponses.length === 0) {
+                // If there's no data, just show the button immediately.
+                backToMenuFromResultsBtn.classList.remove('hidden');
+                return; 
+            }
+
+            saveStatus.textContent = LANG_STRINGS[currentLanguage].resultsTitle === "Trial Results" ? "Saving data..." : "Guardando datos...";
+            
+            try {
+                const dataToPost = {
+                    sessionID: sessionID,
+                    results: allCollectedResponses
+                };
+
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    redirect: 'follow',
+                    body: JSON.stringify(dataToPost)
+                });
+
+                saveStatus.textContent = LANG_STRINGS[currentLanguage].resultsTitle === "Trial Results" ? "Data saved successfully. Thank you!" : "Datos guardados con éxito. ¡Gracias!";
+                saveStatus.style.color = 'green';
+                console.log("Data submission successful (assumed).");
+
+            } catch (error) {
+                saveStatus.textContent = LANG_STRINGS[currentLanguage].resultsTitle === "Trial Results" ? "Error: Could not save data. Please use the download button." : "Error: No se pudieron guardar los datos. Por favor, use el botón de descarga.";
+                saveStatus.style.color = 'red';
+                console.error("Error sending data to Google Sheet:", error);
+            } finally {
+                // --- THIS IS THE NEW PART ---
+                // This code will run after the 'try' or 'catch' block finishes.
+                // It ensures the user always gets a way to leave the screen.
+                backToMenuFromResultsBtn.classList.remove('hidden');
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            resetFullTaskState(); 
+            setLanguage('en'); 
+            showDiv(mainMenuDiv);
+            if(isTouchDevice) document.body.classList.add('touch-device');
+        });
+
+        // Language Buttons
+        document.querySelectorAll('#languageSelector button').forEach(button => {
+            button.addEventListener('click', () => setLanguage(button.dataset.lang));
+        });
+
+        // Main Menu Buttons
+        document.getElementById('testParameterBtn').addEventListener('click', () => {
+            resetFullTaskState(); 
+            populateParameterSelector();
+            showDiv(parameterSelectorDiv);
+        });
+        document.getElementById('startActualTaskBtn').addEventListener('click', startActualTask);
+        
+        // Back Buttons
+        backToMenuFromTestSelectBtn.addEventListener('click', () => { resetFullTaskState(); showDiv(mainMenuDiv); });
+        backToMenuFromTaskBtn.addEventListener('click', () => {
+            let confirmExit = currentTaskMode === 'test' ? true : confirm(LANG_STRINGS[currentLanguage].exitConfirmMessage);
+            if (confirmExit) {
+                resetFullTaskState();
+                showDiv(mainMenuDiv);
+            }
+        }); 
+        backToMenuFromResultsBtn.addEventListener('click', () => { resetFullTaskState(); showDiv(mainMenuDiv); });
+
+        // --- NEW --- Download Button
+        downloadResultsBtn.addEventListener('click', downloadResults);
+
+        // REPLACE this entire block to make it more robust
+
+        coarseButtons.forEach(button => {
+            button.addEventListener('mouseover', () => {
+                if (!currentParameterConfig || coarseStepDiv.classList.contains('hidden') || !currentTrialData) return;
+                
+                // This is the working preview logic
+                const level = parseInt(button.dataset.level);
+                coarsePreviewImg.src = getVariantImagePath(currentTrialData.base_image_id, currentParameterKey, level);
+                
+                // Safety check before using the variable
+                if(coarseImageDisplayP) coarseImageDisplayP.classList.add('hidden');
+            });
+            button.addEventListener('click', () => {
+                if (!currentParameterConfig) return;
+                setupFineTuneStepVim(parseInt(button.dataset.level)); 
+            });
+        });
+        
+        // ... (The rest of the JS code for keyboard handling, etc., remains unchanged) ...
+        document.addEventListener('keydown', (event) => {
+            if (document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'range') return;
+            
+            if (event.key === "Escape") {
+                event.preventDefault();
+                const visibleBackButton = document.querySelector('.main-container:not(.hidden) .back-button, .split-container:not(.hidden) .back-button');
+                if (visibleBackButton) visibleBackButton.click();
+                return;
+            }
+
+            // Route to specific handlers based on which screen is active
+            if (!mainMenuDiv.classList.contains('hidden')) handleMainMenuKeys(event);
+            else if (!parameterSelectorDiv.classList.contains('hidden')) handleParameterSelectorKeys(event);
+            else if (!conditionInstructionScreenDiv.classList.contains('hidden') && event.key === "Enter") { event.preventDefault(); startTrialFromInstructionsBtn.click(); }
+            else if (!preVimScreenContainerDiv.classList.contains('hidden') && !holdImageInstructionScreenDiv.classList.contains('hidden') && event.key === "Enter") {
+            event.preventDefault();
+            advanceFromHoldScreen(); // Call the new function directly instead of .click()
+        }
+            else if (!vimTaskInterfaceDiv.classList.contains('hidden')) handleVimTaskInterfaceKeys(event);
+        });
+
+        coarseButtons.forEach(button => {
+            button.addEventListener('mouseover', () => {
+                if(isTouchDevice) return;
+                const buttonIndex = Array.from(coarseButtons).indexOf(button);
+                if (buttonIndex !== currentFocusedIndex) updateKeyboardFocus(buttonIndex);
+                triggerCoarsePreview(button);
+            });
+            button.addEventListener('click', () => {
+                if (!currentParameterConfig) return;
+                setupFineTuneStepVim(parseInt(button.dataset.level)); 
+            });
+        });
+        
+        fineTuneSlider.addEventListener('input', (event) => { 
+            if (currentTrialData && currentParameterKey) updateFineTuneImageVim(event.target.value); 
+        });
+
+        backToCoarseBtn.addEventListener('click', setupCoarseStepVim); 
+
+        confirmSelectionBtn.addEventListener('click', () => {  
+            if (!currentTrialData || !currentParameterKey) {
+                console.error("Confirm button clicked with no trial/param context.");
+                return;
+            }
+            // Store the fine-tuned level
+            const currentSliderValue = parseInt(fineTuneSlider.value);
+            const finalLevel = sliderToActualLevelMap[currentSliderValue - 1];
+            
+            if (!currentTrialResponses.parameter_responses) {
+                currentTrialResponses.parameter_responses = {};
+            }
+            // We now store the response temporarily in a sub-object
+            currentTrialResponses.parameter_responses[currentParameterKey] = {
+                level: finalLevel
+            };
+            
+            // Now, transition to the confidence rating step
+            showConfidenceStep();
+        });
+
+        // ADD this new function to your script
+
+        // REPLACE this function
+        function showConfidenceStep() {
+            // Hide the fine-tune UI elements
+            fineTuneStepDiv.classList.add('hidden');
+            // --- THIS IS THE FIX ---
+            // Hide the individual buttons from the previous step
+            backToCoarseBtn.classList.add('hidden');
+            confirmSelectionBtn.classList.add('hidden');
+
+            // Show the confidence UI elements
+            confidenceStepDiv.classList.remove('hidden');
+            confirmConfidenceBtn.classList.remove('hidden'); 
+            confirmConfidenceBtn.disabled = true; 
+
+            // Reset previous selection
+            currentConfidenceSelection = null;
+            likertButtons.forEach(btn => btn.classList.remove('selected'));
+
+            // Set up keyboard focus
+            currentFocusableElements = Array.from(likertButtons).concat(confirmConfidenceBtn);
+            updateKeyboardFocus(3); // Start focus on button '4'
+        }
+
+        // ADD this new click handler to your script
+
+        // REPLACE the existing confirmConfidenceBtn click handler
+
+        confirmConfidenceBtn.addEventListener('click', () => {
+            if (currentConfidenceSelection === null) return;
+
+            // Save the confidence rating
+            currentTrialResponses.parameter_responses[currentParameterKey].confidence = currentConfidenceSelection;
+
+            // --- THIS IS THE FIX ---
+            // Hide the confidence UI elements
+            confidenceStepDiv.classList.add('hidden');
+            confirmConfidenceBtn.classList.add('hidden'); 
+            // Show the "Back" and "Confirm Level" buttons again in case the user goes back to this step later
+            document.getElementById('fineTuneActionButtons').classList.remove('hidden'); 
+
+            // Advance to the next parameter
+            currentParameterIndexInTask++;
+            loadNextParameterInVim();
+        });
+
+        // ADD this new event listener block for the Likert scale
+
+        likertButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove 'selected' from all buttons
+                likertButtons.forEach(btn => btn.classList.remove('selected'));
+                // Add 'selected' to the clicked button
+                button.classList.add('selected');
+                // Store the value
+                currentConfidenceSelection = parseInt(button.dataset.value);
+                // Enable the confirm button
+                confirmConfidenceBtn.disabled = false;
+                
+                // Update keyboard focus to the clicked button
+                const buttonIndex = Array.from(likertButtons).indexOf(button);
+                if (buttonIndex !== -1) {
+                    updateKeyboardFocus(buttonIndex);
+                }
+            });
+        });
+
+        function handleMainMenuKeys(event) {
+            if (currentFocusableElements.length === 0) return;
+            let handled = false;
+            switch (event.key) {
+                case "ArrowUp": case "ArrowDown":
+                    updateKeyboardFocus(currentFocusedIndex === 0 ? 1 : 0);
+                    handled = true;
+                    break;
+                case "Enter":
+                    if (currentFocusedIndex >= 0) currentFocusableElements[currentFocusedIndex].click();
+                    handled = true;
+                    break;
+            }
+            if (handled) event.preventDefault();
+        }
+
+        function handleParameterSelectorKeys(event) {
+            if (currentFocusableElements.length === 0) return;
+            let handled = false;
+            switch (event.key) {
+                case "ArrowUp":
+                    updateKeyboardFocus(currentFocusedIndex > 0 ? currentFocusedIndex - 1 : currentFocusableElements.length - 1);
+                    handled = true;
+                    break;
+                case "ArrowDown":
+                    updateKeyboardFocus(currentFocusedIndex < currentFocusableElements.length - 1 ? currentFocusedIndex + 1 : 0);
+                    handled = true;
+                    break;
+                case "Enter":
+                    if (currentFocusedIndex >= 0) currentFocusableElements[currentFocusedIndex].click();
+                    handled = true;
+                    break;
+                case "Backspace": 
+                    backToMenuFromTestSelectBtn.click();
+                    handled = true;
+                    break;
+            }
+            if (handled) event.preventDefault();
+        }
+
+        // REPLACE the existing handleVimTaskInterfaceKeys function with this one:
+        function handleVimTaskInterfaceKeys(event) {
+            let handled = false;
+            // Logic for Coarse Selection Step
+            if (!coarseStepDiv.classList.contains('hidden')) {
+                // ... (This part remains exactly the same as your working version) ...
+                if (!currentFocusableElements || currentFocusableElements.length === 0) return;
+                let newFocusIndex = currentFocusedIndex;
+                let arrowPressed = false;
+                if (event.key === "ArrowLeft") { newFocusIndex = currentFocusedIndex > 0 ? currentFocusedIndex - 1 : currentFocusableElements.length - 1; arrowPressed = true; handled = true; } 
+                else if (event.key === "ArrowRight") { newFocusIndex = currentFocusedIndex < currentFocusableElements.length - 1 ? currentFocusedIndex + 1 : 0; arrowPressed = true; handled = true; }
+                if (arrowPressed) {
+                    updateKeyboardFocus(newFocusIndex); 
+                    const focusedButton = currentFocusableElements[currentFocusedIndex]; 
+                    if (focusedButton) {
+                        const level = parseInt(focusedButton.dataset.level);
+                        if (!isNaN(level) && currentTrialData && currentParameterKey) {
+                            coarsePreviewImg.src = getVariantImagePath(currentTrialData.base_image_id, currentParameterKey, level);
+                            if (coarseImageDisplayP) coarseImageDisplayP.classList.add('hidden');
+                        }
+                    }
+                } else if (event.key === "Enter") { 
+                    if (currentFocusedIndex >= 0 && currentFocusableElements[currentFocusedIndex]) {
+                        currentFocusableElements[currentFocusedIndex].click(); 
+                        handled = true;
+                    }
+                }
+                if (handled) event.preventDefault();
+                return;
+            } 
+            // Logic for Fine-Tuning Step
+            else if (!fineTuneStepDiv.classList.contains('hidden')) {
+                // ... (This part remains exactly the same as your working version) ...
+                const sliderStep = 1; 
+                const sliderIsActiveFocus = document.activeElement === fineTuneSlider;
+                switch (event.key) {
+                    case "ArrowLeft": if (sliderIsActiveFocus) { fineTuneSlider.value = parseInt(fineTuneSlider.value) - sliderStep; fineTuneSlider.dispatchEvent(new Event('input')); handled = true; } break;
+                    case "ArrowRight": if (sliderIsActiveFocus) { fineTuneSlider.value = parseInt(fineTuneSlider.value) + sliderStep; fineTuneSlider.dispatchEvent(new Event('input')); handled = true; } break;
+                    case "Enter": confirmSelectionBtn.click(); handled = true; break;
+                    case "Backspace": backToCoarseBtn.click(); handled = true; break;
+                }
+                if (handled) event.preventDefault();
+            }
+            // --- NEW LOGIC for Confidence Step ---
+            else if (!confidenceStepDiv.classList.contains('hidden')) {
+                let newFocusIndex = currentFocusedIndex;
+                if (event.key === "ArrowLeft") {
+                    if (currentFocusedIndex > 0) newFocusIndex = currentFocusedIndex - 1;
+                    handled = true;
+                } else if (event.key === "ArrowRight") {
+                    if (currentFocusedIndex < currentFocusableElements.length - 1) newFocusIndex = currentFocusedIndex + 1;
+                    handled = true;
+                } else if (event.key === "Enter") {
+                    if (currentFocusedIndex >= 0) {
+                        currentFocusableElements[currentFocusedIndex].click(); // Select the button
+                        if (!confirmConfidenceBtn.disabled) {
+                            confirmConfidenceBtn.click(); // If a selection was made, also confirm
+                        }
+                    }
+                    handled = true;
+                }
+                if (newFocusIndex !== currentFocusedIndex) {
+                    updateKeyboardFocus(newFocusIndex);
+                }
+                if (handled) event.preventDefault();
+            }
+        }
+
+        // function triggerCoarsePreview(buttonElement) {
+        //     if (isTouchDevice) return; 
+
+        //     if (!currentParameterConfig || !currentTrialData) {
+        //         console.warn("Cannot trigger coarse preview: Missing trial context.");
+        //         return;
+        //     }
+            
+        //     const level = parseInt(buttonElement.dataset.level);
+        //     if(isNaN(level)) return;
+
+        //     const baseImgToUse = currentTrialData.base_image_id;
+            
+        //     coarsePreviewImg.src = getVariantImagePath(baseImgToUse, currentParameterKey, level);
+        //     if(coarseImageDisplayP) coarseImageDisplayP.classList.add('hidden');
+        // }
+
+    </script>
+</body>
+</html>
