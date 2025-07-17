@@ -1056,10 +1056,6 @@
         // This is your working function with the one necessary line added.
         function setupCoarseStepVim() { 
             clearAllFocus();
-            // 1. Clear the image from the previous fine-tuning step.
-            if (fineTuneImg) fineTuneImg.src = "";
-            // 2. Clear the image from the coarse preview.
-            if (coarsePreviewImg) coarsePreviewImg.src = "";
             const paramName = currentParameterConfig.name[currentLanguage];
             currentParamDisplay.textContent = paramName;
             coarseParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction[currentLanguage]; 
