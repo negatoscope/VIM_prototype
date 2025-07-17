@@ -249,6 +249,47 @@
             flex-direction: row;
             justify-content: center;
         }
+        #loadingOverlay {
+            position: fixed; /* Sit on top of everything */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+            z-index: 200; /* High z-index to be on top */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-box {
+            background-color: white;
+            padding: 30px 40px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        #loadingText {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+
+        .progress-bar-container {
+            width: 300px;
+            height: 20px;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            overflow: hidden; /* Keep the progress bar contained */
+        }
+
+        #progressBar {
+            width: 0%; /* Start at 0% width */
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.2s ease-in-out; /* Smooth animation for the bar */
+        }
     </style>
 </head>
 <body id="htmlTag" lang="en">
@@ -421,12 +462,24 @@
         <button id="backToMenuFromResultsBtn" class="back-button hidden" data-lang-key="backToMenuButton"></button>
     </div>
 
+    <div id="loadingOverlay" class="hidden">
+        <div class="loading-box">
+            <p id="loadingText">Loading trial...</p>
+            <div class="progress-bar-container">
+                <div id="progressBar" style="width: 0%;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- UNTIL HERE EVERYTHING WORKS -->
 
     <script>
 
         // --- CONFIGURATION AND STATE MANAGEMENT ---
         const DEBUG_SHOW_RESULTS = false; // Set to true to show results for debugging
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const progressBar = document.getElementById('progressBar');
+        const loadingText = document.getElementById('loadingText');
         
         // REPLACE your existing LANG_STRINGS object
 
@@ -727,36 +780,79 @@
         // --- Utility Functions ---
         // ADD THIS NEW FUNCTION
 
-        function preloadTrialImages(baseImageId) {
-            console.log(`Preloading images for trial with base image: ${baseImageId}`);
-            const realParameters = Object.keys(PARAMETERS).filter(p => p !== 'attention_check');
-            
-            realParameters.forEach(paramKey => {
-                // We only need to preload the 3 coarse levels and the 7 fine-tune levels around the middle.
-                // Preloading all 21 for every parameter is unnecessary and too much data.
-                const coarseLevels = Object.values(PARAMETERS[paramKey].coarse); // e.g., [4, 11, 18]
-                const fineTuneCenter = coarseLevels[1]; // The 'mid' value, e.g., 11
-                
-                let levelsToPreload = [...coarseLevels];
+        // REPLACE the old preloadTrialImages function with this new module
 
-                // Add the 7 fine-tune levels around the center
+        // --- Smart Preloader Module ---
+
+        async function preloadTrialAssets(trialData) {
+            // 1. Show the loading overlay and disable the continue button
+            const continueBtn = document.getElementById('startTrialFromInstructionsBtn');
+            if (continueBtn) continueBtn.disabled = true;
+            loadingOverlay.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            loadingText.textContent = "Loading...";
+
+            // 2. Create the list of all image URLs needed for this trial
+            let urlsToPreload = [];
+            
+            // For perceptual recall, the original image is the most important
+            if (trialData.condition === 'perceptual_recall') {
+                urlsToPreload.push(getOriginalImagePath(trialData.original_image_filename));
+            }
+
+            // Add all the VIM variant images needed
+            const realParameters = Object.keys(PARAMETERS).filter(p => p !== 'attention_check');
+            realParameters.forEach(paramKey => {
+                const coarseLevels = Object.values(PARAMETERS[paramKey].coarse);
+                const fineTuneCenter = coarseLevels[1];
+                let levels = [...coarseLevels];
                 for (let i = -3; i <= 3; i++) {
                     const level = fineTuneCenter + i;
-                    if (level >= 1 && level <= 21) {
-                        levelsToPreload.push(level);
-                    }
+                    if (level >= 1 && level <= 21) levels.push(level);
                 }
-                
-                // Remove duplicates and get a unique set of levels
-                const uniqueLevels = [...new Set(levelsToPreload)];
-
-                // Create image objects to trigger download
+                const uniqueLevels = [...new Set(levels)];
                 uniqueLevels.forEach(level => {
-                    const img = new Image();
-                    img.src = getVariantImagePath(baseImageId, paramKey, level);
+                    urlsToPreload.push(getVariantImagePath(trialData.base_image_id, paramKey, level));
                 });
             });
+
+            // 3. Preload all images and update the progress bar
+            let loadedCount = 0;
+            const totalToLoad = urlsToPreload.length;
+
+            for (const url of urlsToPreload) {
+                try {
+                    await preloadImage(url);
+                    loadedCount++;
+                    // Update progress bar
+                    const percent = Math.round((loadedCount / totalToLoad) * 100);
+                    progressBar.style.width = `${percent}%`;
+                } catch (error) {
+                    console.warn(`Could not preload image: ${url}`, error);
+                    // Even if one image fails, we increment the count to not get stuck
+                    loadedCount++;
+                }
+            }
+            
+            // 4. Hide overlay and re-enable the button
+            loadingText.textContent = "Loading complete!";
+            setTimeout(() => { // A brief delay to let the user see "complete"
+                loadingOverlay.classList.add('hidden');
+                if (continueBtn) continueBtn.disabled = false;
+            }, 250);
         }
+
+        // Helper function that returns a Promise which resolves when an image loads
+        function preloadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        // --- End Preloader Module ---
 
 
         function shuffleArray(array) { 
@@ -913,7 +1009,7 @@
             }
 
             // Start preloading the images for THIS trial in the background.
-            preloadTrialImages(currentTrialData.base_image_id);
+            //preloadTrialImages(currentTrialData.base_image_id);
 
             const conditionName = {
                 en: currentTrialData.condition.replace(/_/g, ' '),
@@ -925,6 +1021,8 @@
             conditionInstructionTitleH2.textContent = `${titlePrefix}: ${conditionName}`;
             conditionInstructionTextP.textContent = currentTrialData.condition_instruction[currentLanguage];
             showDiv(conditionInstructionScreenDiv);
+            // Start preloading the assets for this specific trial
+            preloadTrialAssets(currentTrialData);
             currentFocusableElements = [startTrialFromInstructionsBtn];
             updateKeyboardFocus(0);
         }
@@ -1256,7 +1354,7 @@
                 base_image_id: "tutorial" 
             };
             // Preload the images for the tutorial trial.
-            preloadTrialImages(currentTrialData.base_image_id);
+            //preloadTrialImages(currentTrialData.base_image_id);
             // It now calls our single, unified function.
             beginVimRating();
         }
