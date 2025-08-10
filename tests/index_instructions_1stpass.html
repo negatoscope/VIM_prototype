@@ -297,30 +297,6 @@
             background-color: #555;
         }
 
-        .instruction-diagram {
-            max-width: 100%;
-            width: 90%;
-            margin: 25px auto;
-            display: block;
-            border: 1px solid #eee;
-            border-radius: 4px;
-        }
-
-        .header-icon {
-            width: 100px;      /* A nice size for the icon */
-            height: 100px;
-            margin-bottom: 5px; /* A little space between the icon and the title */
-            display: block;   /* Ensures it sits neatly on its own line */
-            margin-left: auto;  /* These two lines will center the icon */
-            margin-right: auto;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
     </style>
 </head>
 <body id="htmlTag" lang="en">
@@ -365,7 +341,6 @@
             <p data-lang-key="howToStep2"></p>
             <p data-lang-key="howToStep3"></p>
         </div>
-        <img src="images/instructions/image_source_diagram.png" alt="Diagram..." class="instruction-diagram">
         <button id="howToContinueBtn" data-lang-key="startPracticeButton">Start Practice Round</button>
     </div>
 
@@ -373,7 +348,6 @@
     <div id="paramIntroScreen" class="main-container hidden">
         <h2 data-lang-key="paramIntroTitle"></h2>
         <p data-lang-key="paramIntroText"></p>
-        <img src="images/instructions/visual_qualities_diagram.png" alt="Diagram showing the six visual qualities" class="instruction-diagram">
         <button id="paramIntroContinueBtn" data-lang-key="continueButton"></button>
         <button class="back-button back-to-menu-btn" data-lang-key="backToMenuButton"></button>
     </div>
@@ -387,7 +361,6 @@
             </div>
         </div>
         <div class="controls-panel">
-            <img id="paramDemoIcon" class="header-icon" src="" alt="Parameter Demo Icon">
             <h2 id="paramDemoTitle"></h2>
             <p id="paramDemoText"></p>
             <div class="flex-spacer"></div>
@@ -406,17 +379,57 @@
         <button class="back-button back-to-menu-btn" data-lang-key="backToMenuButton"></button>
     </div>
 
+    <!-- ADD THIS NEW PARENT CONTAINER FOR THE ENTIRE ONBOARDING FLOW -->
+    <!-- <div id="onboardingContainer" class="hidden"> -->
+
+        <!-- Screen 1: Welcome -->
+        <!-- <div id="welcomeScreen" class="main-container">
+            <h1 data-lang-key="welcomeTitle"></h1>
+            <p data-lang-key="welcomeInstructions"></p>
+            <button id="onboardingNextBtn" data-lang-key="continueButton"></button>
+        </div> -->
+
+        <!-- Screen 2: The 3 Core Steps -->
+        <!-- <div id="coreStepsScreen" class="main-container hidden">
+            <h2 data-lang-key="howToTitle"></h2>
+            <div style="text-align: left; max-width: 600px; margin: 20px auto;">
+                <p data-lang-key="howToStep1"></p>
+                <p data-lang-key="howToStep2"></p>
+                <p data-lang-key="howToStep3"></p>
+            </div>
+            <button id="onboardingNextBtn" data-lang-key="continueButton"></button>
+        </div> -->
+
+        <!-- Screen 3: Parameter Intro -->
+        <!-- <div id="paramIntroScreen" class="main-container hidden">
+            <h2 data-lang-key="paramIntroTitle"></h2>
+            <p data-lang-key="paramIntroText"></p>
+            <button id="onboardingNextBtn" data-lang-key="continueButton"></button>
+        </div> -->
+
+        <!-- Screen 4: Interactive Parameter Demos (Split-Screen Layout) -->
+        <!-- <div id="paramDemoScreen" class="split-container hidden">
+            <div class="image-panel">
+                <img id="paramDemoImg" src="">
+            </div>
+            <div class="controls-panel">
+                <h2 id="paramDemoTitle"></h2>
+                <p id="paramDemoText"></p>
+                <div class="flex-spacer"></div>
+                <input type="range" id="paramDemoSlider" min="1" max="21" value="11">
+                <div class="flex-spacer"></div>
+                <button id="onboardingNextBtn" data-lang-key="continueButton"></button>
+            </div>
+        </div> -->
+        
+        <!-- We will re-use the existing #vimTaskInterface for the tutorial -->
+
+    <!-- </div> -->
+
     <div id="readyScreen" class="main-container hidden">
         <h2 data-lang-key="readyTitle"></h2>
         <p data-lang-key="readyText"></p>
         <button id="startExperimentBtn" data-lang-key="startExperimentButton"></button>
-    </div>
-
-    <div id="breakScreen" class="main-container hidden">
-        <h2 data-lang-key="breakTitle"></h2>
-        <p data-lang-key="breakText"></p>
-        <p id="breakTimerDisplay" style="font-size: 24px; font-weight: bold; margin: 20px 0;"></p>
-        <button id="breakContinueBtn" data-lang-key="continueButton"></button>
     </div>
 
     <div id="parameterSelector" class="main-container hidden">
@@ -426,7 +439,6 @@
     </div>
 
     <div id="conditionInstructionScreen" class="main-container hidden">
-        <img id="conditionIcon" class="header-icon" src="" alt="Condition Icon">
         <h2 id="conditionInstructionTitle"></h2>
         <p id="conditionInstructionText"></p>
         <button id="startTrialFromInstructionsBtn" data-lang-key="trialContinueButton"></button>
@@ -472,7 +484,6 @@
         <!-- 2. The new RIGHT panel for the controls -->
         <div class="controls-panel">
             <!-- TOP SECTION -->
-            <img id="parameterIcon" class="header-icon" src="" alt="Parameter Icon">
             <h2 id="currentParamDisplay">Parameter: <span></span></h2>
             <p id="vimGeneralInstruction"></p> 
 
@@ -561,7 +572,6 @@
 
         // --- CONFIGURATION AND STATE MANAGEMENT ---
         const DEBUG_SHOW_RESULTS = false; // Set to true to show results for debugging
-        const DEBUG_SKIP_BREAK_TIMER = true; // Set to false for real participants
         const loadingOverlay = document.getElementById('loadingOverlay');
         const progressBar = document.getElementById('progressBar');
         const loadingText = document.getElementById('loadingText');
@@ -591,8 +601,6 @@
                 readyTitle: "Practice Complete",
                 readyText: "You have completed all instructions and practice. The main experiment will now begin. There will be 12 trials, plus 3 attention checks.",
                 startExperimentButton: "Start Experiment",
-                breakTitle: "Take a Short Break",
-                breakText: "You have completed a block of trials. You must wait 120 seconds before continuing. Use this time to look away from the display, stand and stretch, or relax. If you need more time you may extend the break up to 5 minutes. When you are ready, press Continue.", 
                 noInfoLabel: "I have no clear impression of this quality."
             },
             "es": {
@@ -619,8 +627,6 @@
                 readyTitle: "Práctica Completada",
                 readyText: "Ha completado las instrucciones y la práctica. El experimento principal comenzará ahora. Habrá 12 ensayos, más 3 pruebas de atención.",
                 startExperimentButton: "Comenzar Experimento",
-                breakTitle: "Tome un Breve Descanso",
-                breakText: "Ha completado un bloque de ensayos. Debe esperar 120 segundos antes de continuar. Utilice este tiempo para apartar la vista de la pantalla, ponerse de pie y estirarse, o relajarse. Si necesita más tiempo, puede ampliar la pausa hasta un máximo de 5 minutos. Cuando esté listo, pulse «Continuar».",
                 noInfoLabel: "No tengo una impresión clara de esta cualidad."
             }
         };
@@ -696,19 +702,6 @@
                 scene_imagination: {en: "Please imagine a BEACH at sunset, with the sky full of orange and purple colors. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.", es: "Por favor, imagine una PLAYA al atardecer, con el cielo lleno de colores naranjas y morados. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar."}
             }}
         ];
-
-        const ICONS = {
-            perceptual_recall: 'images/instructions/icon_perceptual.png',
-            episodic_recall: 'images/instructions/icon_memory.png',
-            scene_imagination: 'images/instructions/icon_imagination.png',
-            brightness: 'images/instructions/icon_brightness.png',
-            contrast: 'images/instructions/icon_contrast.png',
-            saturation: 'images/instructions/icon_saturation.png',
-            blurriness: 'images/instructions/icon_blurriness.png',
-            detailedness: 'images/instructions/icon_detailedness.png',
-            precision: 'images/instructions/icon_precision.png',
-            //attention_check: 'images/instructions/icon_attention.png' // Assumes you have an icon for this
-        };
 
         // --- VVIQ-2 Data and Configuration ---
 
@@ -857,8 +850,6 @@
         let onboardingStep = 0;
         let currentDemoIndex = 0;   
 
-        let breakData = [];
-
         const KEYBOARD_FOCUS_CLASS = 'keyboard-focus';
         const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
 
@@ -912,10 +903,14 @@
         const welcomeScreen = document.getElementById('welcomeScreen');
         const howToScreen = document.getElementById('howToScreen');
 
+        // const onboardingContainer = document.getElementById('onboardingContainer');
+        // // const welcomeScreen = document.getElementById('welcomeScreen');
+        // const coreStepsScreen = document.getElementById('coreStepsScreen');
+        // const paramIntroScreen = document.getElementById('paramIntroScreen');
+
         const paramIntroScreen = document.getElementById('paramIntroScreen');
         const paramDemoScreen = document.getElementById('paramDemoScreen');  
-        const practiceIntroScreen = document.getElementById('practiceIntroScreen'); 
-        const breakScreen = document.getElementById('breakScreen');  
+        const practiceIntroScreen = document.getElementById('practiceIntroScreen');   
 
         // --- Utility Functions ---
 
@@ -1107,7 +1102,7 @@
             const allScreens = [
                 mainMenuDiv, welcomeScreen, howToScreen, paramIntroScreen, paramDemoScreen, practiceIntroScreen,
                 readyScreen, parameterSelectorDiv, conditionInstructionScreenDiv, 
-                preVimScreenContainerDiv, vimTaskInterfaceDiv, vviqScreen, resultsDisplayDiv, breakScreen
+                preVimScreenContainerDiv, vimTaskInterfaceDiv, vviqScreen, resultsDisplayDiv
             ];
             
             // 1. Unconditionally hide every single screen.
@@ -1130,6 +1125,85 @@
                 // (We can add focus setters for other screens here if needed)
             }
         }
+
+        // function showDiv(divToShow) { 
+        //     // This list now correctly includes the parent onboarding container
+        //     const allTopLevelScreens = [
+        //         mainMenuDiv, parameterSelectorDiv, vimTaskInterfaceDiv, 
+        //         resultsDisplayDiv, preVimScreenContainerDiv, conditionInstructionScreenDiv, vviqScreen
+        //     ]; //onboardingContainer,
+            
+        //     // 1. Hide ALL top-level screens.
+        //     allTopLevelScreens.forEach(div => {
+        //         if(div) div.classList.add('hidden');
+        //     });
+
+        //     // 2. Clear any lingering keyboard focus.
+        //     if (currentFocusableElements && currentFocusableElements[currentFocusedIndex]) {
+        //         currentFocusableElements[currentFocusedIndex].classList.remove(KEYBOARD_FOCUS_CLASS);
+        //     }
+        //     currentFocusableElements = []; 
+        //     currentFocusedIndex = -1;
+
+        //     // 3. Show the correct screen.
+        //     if (divToShow) {
+        //         // Find the correct top-level parent of the div we want to show.
+        //         const parentContainer = divToShow.closest('.main-container, .split-container, #onboardingContainer');
+                
+        //         // Show the parent container. This is the key fix that hides the main menu.
+        //         if (parentContainer) {
+        //             parentContainer.classList.remove('hidden');
+        //         }
+        //         // Also ensure the specific sub-screen itself is visible.
+        //         divToShow.classList.remove('hidden');
+                
+        //         // --- The rest of the function for setting focus is the same ---
+        //         if (divToShow === mainMenuDiv) setupMainMenuFocus();
+        //         else if (divToShow === parameterSelectorDiv) setupParameterSelectorFocus();
+        //         else if (divToShow === conditionInstructionScreenDiv) { currentFocusableElements = [startTrialFromInstructionsBtn]; updateKeyboardFocus(0); } 
+        //         else if (divToShow === vimTaskInterfaceDiv && !coarseStepDiv.classList.contains('hidden')) { setupCoarseStepFocus(); }
+        //     }
+        // }
+
+        // REPLACE your existing showDiv function with this one
+
+        // function showDiv(divToShow) { 
+        //     // This list now includes all possible screens that can be shown.
+        //     [mainMenuDiv, welcomeScreen, howToScreen, document.getElementById('readyScreen'),
+        //     parameterSelectorDiv, vimTaskInterfaceDiv, resultsDisplayDiv, 
+        //     preVimScreenContainerDiv, conditionInstructionScreenDiv, vviqScreen].forEach(div => {
+        //         if(div) div.classList.add('hidden');
+        //     });
+
+        //     if (currentFocusableElements && currentFocusableElements[currentFocusedIndex]) {
+        //         currentFocusableElements[currentFocusedIndex].classList.remove(KEYBOARD_FOCUS_CLASS);
+        //     }
+        //     currentFocusableElements = []; currentFocusedIndex = -1;
+
+        //     // --- THIS IS THE NEW LOGIC ---
+        //     // Get a reference to the language selector
+        //     const langSelector = document.getElementById('languageSelector');
+
+        //     if (divToShow) {
+        //         divToShow.classList.remove('hidden');
+
+        //         // Check if the screen being shown is the main menu
+        //         if (divToShow === mainMenuDiv) {
+        //             langSelector.classList.remove('hidden'); // Show language buttons
+        //             setupMainMenuFocus();
+        //         } else {
+        //             langSelector.classList.add('hidden'); // Hide language buttons on all other screens
+        //         }
+                
+        //         // The rest of the focus setup logic
+        //         if (divToShow === parameterSelectorDiv) setupParameterSelectorFocus();
+        //         else if (divToShow === conditionInstructionScreenDiv) { currentFocusableElements = [startTrialFromInstructionsBtn]; updateKeyboardFocus(0); } 
+        //         else if (divToShow === vimTaskInterfaceDiv && !coarseStepDiv.classList.contains('hidden')) { setupCoarseStepFocus(); }
+        //     } else {
+        //         // If we are hiding everything (e.g., between trials), also hide the language selector
+        //         langSelector.classList.add('hidden');
+        //     }
+        // }
 
         // --- LANGUAGE SWITCHING ---
         function setLanguage(lang) {
@@ -1158,99 +1232,11 @@
 
         // --- Core Application Logic ---
 
-        function showBreakScreen(onContinueCallback) {
-            const breakScreen = document.getElementById('breakScreen');
-            const continueBtn = document.getElementById('breakContinueBtn');
-            const timerDisplay = document.getElementById('breakTimerDisplay');
-            
-            let countdownInterval = null; // Use null to track if a timer is active
-            const breakStartTime = Date.now(); // Record when the break screen appears
-            
-            // This is the function that will be called when the user can finally proceed.
-            const enableContinue = () => {
-                // 1. Clean up the timer
-                clearInterval(countdownInterval);
-                
-                // 2. Update the UI to show that the user can continue
-                timerDisplay.textContent = "You may now continue.";
-                continueBtn.textContent = LANG_STRINGS[currentLanguage].continueButton;
-                continueBtn.disabled = false;
-                continueBtn.style.animation = 'pulse 1.5s infinite';
-                
-                // 3. NOW, we attach the real "continue" logic to the button
-                const newContinueBtn = continueBtn.cloneNode(true); // Clear any old listeners
-                continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
-                
-                newContinueBtn.addEventListener('click', () => {
-                    // 1. Calculate the total duration of the break.
-                    const breakDuration = Date.now() - breakStartTime;
-                    // 2. Store the data.
-                    breakData.push({ 
-                        after_trial: allCollectedResponses.length > 0 ? allCollectedResponses.length : 'VVIQ_midpoint',
-                        duration_ms: breakDuration 
-                    });
-                    console.log(`Break taken for ${breakDuration}ms`);
-                    // When clicked, clean up and execute the callback
-                    document.removeEventListener('keydown', handleDebugSkip);
-                    newContinueBtn.style.animation = '';
-                    onContinueCallback();
-                }, { once: true });
-            };
-
-            // --- Timer Function ---
-            const startTimer = () => {
-                let secondsLeft = 120;
-                continueBtn.disabled = true; // Button is disabled from the start
-
-                const updateDisplay = () => {
-                    const minutes = Math.floor(secondsLeft / 60);
-                    const seconds = secondsLeft % 60;
-                    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                    continueBtn.textContent = `Continue (available in ${secondsLeft}s)`;
-                };
-
-                updateDisplay(); // Show initial time
-
-                countdownInterval = setInterval(() => {
-                    secondsLeft--;
-                    updateDisplay();
-                    if (secondsLeft <= 0) {
-                        enableContinue(); // Timer finished, enable the continue functionality
-                    }
-                }, 1000);
-            };
-
-            // --- Debug Skip Logic ---
-            const handleDebugSkip = (event) => {
-                if (DEBUG_SKIP_BREAK_TIMER && event.key === 's') {
-                    console.log("Debug: Skipping break timer.");
-                    enableContinue(); // Call the same function as when the timer finishes
-                }
-            };
-            // We add and remove this listener carefully to avoid it firing on other screens
-            document.addEventListener('keydown', handleDebugSkip);
-
-
-            // --- Main Logic ---
-            // Show the break screen and start the timer
-            showDiv(breakScreen);
-            startTimer();
-        }
-
         function showConditionInstructions(trialDataObject) {
             currentTrialData = trialDataObject; 
             if (!currentTrialData) {
                 console.error("showConditionInstructions called with invalid trialData!");
                 return;
-            }
-
-            // Update the condition icon
-            const conditionIcon = document.getElementById('conditionIcon');
-            if (ICONS[currentTrialData.condition]) {
-                conditionIcon.src = ICONS[currentTrialData.condition];
-                conditionIcon.style.display = 'block';
-            } else {
-                conditionIcon.style.display = 'none'; // Hide if no icon is defined
             }
 
             // Start preloading the images for THIS trial in the background.
@@ -1358,85 +1344,32 @@
 
         function loadNextParameterInVim() { 
             if (currentParameterIndexInTask < actualTaskOrder.length) {
-                // More parameters to rate for the current trial, so this part is unchanged
+                // More parameters to rate for the current trial
                 currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
                 currentParameterConfig = PARAMETERS[currentParameterKey];
                 setupCoarseStepVim(); 
             } else {
                 // --- All parameters for the current trial are FINISHED ---
-                
                 if (currentTaskMode === 'actual_task_full') {
-                    // Only add VIM trials to the results array
-                    if (!currentTrialData.is_attention_check) {
-                        allCollectedResponses.push({...currentTrialResponses}); 
-                    }
+                    allCollectedResponses.push({...currentTrialResponses}); 
                 }
                 
-                if (currentTaskMode === 'tutorial' || currentTaskMode === 'test') {
-                    // Handle end of tutorial or test modes (unchanged)
-                    if (currentTaskMode === 'tutorial') showReadyScreen();
-                    if (currentTaskMode === 'test') {
-                        alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
-                        showDiv(parameterSelectorDiv);
-                    }
-                    return;
-                }
-
-                // --- THIS IS THE NEW BREAK LOGIC ---
-                // This code now runs ONLY at the end of a main task trial (VIM or Attention Check)
-                
-                // Count how many MAIN (non-attention-check) trials have been completed
-                const mainTrialsCompleted = allCollectedResponses.length;
-
-                // Check if it's time for a break (after 4 or 8 main trials)
-                if (mainTrialsCompleted === 4 || mainTrialsCompleted === 8) {
-                    // Show the break screen. The callback function is what will run AFTER the break.
-                    showBreakScreen(() => {
-                        currentGlobalTrialIndex++; // Advance to the next trial
-                        showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
-                    });
-                    return; // IMPORTANT: Stop here and wait for the user to finish their break.
-                }
-                
-                // If it's NOT break time, proceed to the next trial as normal.
-                currentGlobalTrialIndex++;
-                if (currentGlobalTrialIndex < currentSessionTrials.length) {
-                    showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
+                if (currentTaskMode === 'tutorial') {
+                    showReadyScreen();
+                } else if (currentTaskMode === 'test') {
+                    alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
+                    showDiv(parameterSelectorDiv);
                 } else {
-                    // All trials are done, go to the results/VVIQ phase
-                    displayFullResults();
+                    // This was a main trial. Just load the next one.
+                    currentGlobalTrialIndex++;
+                    if (currentGlobalTrialIndex < currentSessionTrials.length) {
+                        showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
+                    } else {
+                        displayFullResults();
+                    }
                 }
             }
         }
-
-        // function loadNextParameterInVim() { 
-        //     if (currentParameterIndexInTask < actualTaskOrder.length) {
-        //         // More parameters to rate for the current trial
-        //         currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
-        //         currentParameterConfig = PARAMETERS[currentParameterKey];
-        //         setupCoarseStepVim(); 
-        //     } else {
-        //         // --- All parameters for the current trial are FINISHED ---
-        //         if (currentTaskMode === 'actual_task_full') {
-        //             allCollectedResponses.push({...currentTrialResponses}); 
-        //         }
-                
-        //         if (currentTaskMode === 'tutorial') {
-        //             showReadyScreen();
-        //         } else if (currentTaskMode === 'test') {
-        //             alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
-        //             showDiv(parameterSelectorDiv);
-        //         } else {
-        //             // This was a main trial. Just load the next one.
-        //             currentGlobalTrialIndex++;
-        //             if (currentGlobalTrialIndex < currentSessionTrials.length) {
-        //                 showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
-        //             } else {
-        //                 displayFullResults();
-        //             }
-        //         }
-        //     }
-        // }
         
         // This is your working function with the one necessary line added.
         function setupCoarseStepVim() { 
@@ -1445,16 +1378,6 @@
             if (fineTuneImg) fineTuneImg.src = "";
             // 2. Clear the image from the coarse preview.
             if (coarsePreviewImg) coarsePreviewImg.src = "";
-            
-            // Update the parameter icon
-            const parameterIcon = document.getElementById('parameterIcon');
-            if (ICONS[currentParameterKey]) {
-                parameterIcon.src = ICONS[currentParameterKey];
-                parameterIcon.style.display = 'block';
-            } else {
-                parameterIcon.style.display = 'none'; // Hide if no icon is defined
-            }
-            
             const paramName = currentParameterConfig.name[currentLanguage];
             currentParamDisplay.textContent = paramName;
             coarseParamNameStrong.textContent = currentParameterConfig.parameter_specific_instruction[currentLanguage]; 
@@ -1610,6 +1533,45 @@
             return { trials: trialList, usedSet: effectiveSet };
         }
 
+        // Parameter Demo Logic
+
+        // let currentDemoIndex = 0;
+        // const paramDemoScreen = document.getElementById('paramDemoScreen');
+        // const paramDemoImg = document.getElementById('paramDemoImg');
+        // const paramDemoSlider = document.getElementById('paramDemoSlider');
+        // const paramDemoTitle = document.getElementById('paramDemoTitle');
+        // const paramDemoText = document.getElementById('paramDemoText');
+
+        // function startParameterDemos() {
+        //     currentDemoIndex = 0;
+        //     // Attach a listener to the demo slider that will update the image
+        //     paramDemoSlider.addEventListener('input', updateDemoImage);
+        //     // Show the first demo
+        //     displayDemoScreen();
+        // }
+
+        // function displayDemoScreen() {
+        //     if (currentDemoIndex < DEMO_PARAMS.length) {
+        //         const demo = DEMO_PARAMS[currentDemoIndex];
+        //         const paramConfig = PARAMETERS[demo.key];
+        //         const lang = currentLanguage;
+
+        //         // Update the text on the screen
+        //         paramDemoTitle.textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
+        //         paramDemoText.textContent = `This refers to ${paramConfig.parameter_specific_instruction[lang]}`;
+
+        //         // Set the initial image and slider value
+        //         paramDemoSlider.value = 11; // Start in the middle
+        //         updateDemoImage(); // Call once to set the initial image
+
+        //         // Show the demo screen
+        //         showDiv(paramDemoScreen);
+        //     } else {
+        //         // We've finished all demos, so we move on to the final practice round.
+        //         startTutorial();
+        //     }
+        // }
+
         function updateDemoImage() {
             const demo = DEMO_PARAMS[currentDemoIndex];
             const level = paramDemoSlider.value;
@@ -1632,6 +1594,10 @@
             document.getElementById('globalProgressContainer').classList.remove('hidden');
         }
 
+        // --- Onboarding Module ---
+        // let onboardingStep = 0;
+        // let currentDemoIndex = 0;
+
         function startParameterDemos() {
             currentDemoIndex = 0;
             // --- THIS IS THE FIX ---
@@ -1641,6 +1607,25 @@
             displayDemoScreen();
         }
 
+        // We also update displayDemoScreen to call the state machine when it's done.
+        // function displayDemoScreen() {
+        //     if (currentDemoIndex < DEMO_PARAMS.length) {
+        //         // ... (logic to show a demo is the same)
+        //         const demo = DEMO_PARAMS[currentDemoIndex];
+        //         const paramConfig = PARAMETERS[demo.key];
+        //         const lang = currentLanguage;
+        //         document.getElementById('paramDemoTitle').textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
+        //         document.getElementById('paramDemoText').textContent = `This refers to ${paramConfig.parameter_specific_instruction[lang]}`;
+        //         document.getElementById('paramDemoSlider').value = 11;
+        //         updateDemoImage();
+        //         showDiv(paramDemoScreen);
+        //     } else {
+        //         // Demos are finished. Let the main state machine advance to the next step.
+        //         document.getElementById('paramDemoSlider').removeEventListener('input', updateDemoImage);
+        //         advanceOnboarding(); 
+        //     }
+        // }
+
         function displayDemoScreen() {
             console.log(`DISPLAY DEMO: currentDemoIndex is ${currentDemoIndex}`);
             console.log(DEMO_PARAMS.length);
@@ -1649,15 +1634,6 @@
                 const demo = DEMO_PARAMS[currentDemoIndex];
                 const paramConfig = PARAMETERS[demo.key];
                 const lang = currentLanguage;
-
-                // Update the parameter icon for the demo
-                const paramDemoIcon = document.getElementById('paramDemoIcon');
-                if (ICONS[demo.key]) {
-                    paramDemoIcon.src = ICONS[demo.key];
-                    paramDemoIcon.style.display = 'block';
-                } else {
-                    paramDemoIcon.style.display = 'none';
-                }
 
                 document.getElementById('paramDemoTitle').textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
                 document.getElementById('paramDemoText').textContent = `This refers to ${paramConfig.parameter_specific_instruction[lang]}`;
@@ -1671,9 +1647,53 @@
                 // 2. Set the initial focus on it.
                 updateKeyboardFocus(0);
             } else {
+                // console.log(DEMO_PARAMS.length);
+                // // --- THIS IS THE NEW LOGIC for after the last demo ---
+                // // Demos are finished. Show the "Putting It All Together" instruction screen.
+                
+                // // Clean up the demo screen listener
+                // document.getElementById('paramDemoSlider').removeEventListener('input', updateDemoImage);
                 advanceOnboarding();
+
+                // // Repurpose the paramIntroScreen for our new instructions
+                // const paramIntroScreen = document.getElementById('paramIntroScreen');
+                
+                // // Set the new text content for this screen
+                // paramIntroScreen.querySelector('h2').textContent = "Putting It All Together: A Practice Round";
+                // paramIntroScreen.querySelector('p').innerHTML = `
+                //     You will now complete one full practice rating.<br><br>
+                //     <b>1. Coarse Selection:</b> First, choose a general level (Low, Medium, or High).<br>
+                //     <b>2. Fine-Tuning:</b> Next, use a slider to make a more precise match.<br>
+                //     <b>3. Confidence Rating:</b> Finally, rate how confident you are in your match.
+                // `;
+                
+                // // Find the button on this screen (we assume its ID is startDemosBtn from the HTML)
+                // const nextButton = document.getElementById('paramIntroContinueBtn');
+                // nextButton.textContent = LANG_STRINGS[currentLanguage].startPracticeButton;
+                
+                // // Use .cloneNode(true) to cleanly remove any old event listeners from the button
+                // const newButton = nextButton.cloneNode(true);
+                // nextButton.parentNode.replaceChild(newButton, nextButton);
+                
+                // // Add the new, correct event listener that calls startTutorial
+                // newButton.addEventListener('click', startTutorial);
+                
+                // Show the new instruction screen
+                // showDiv(paramIntroScreen);
             }
         }
+
+        // --- End Onboarding Module ---
+
+        // --- Onboarding Flow Control ---
+
+        // let onboardingStep = 0;
+        // const onboardingScreens = ['welcomeScreen', 'coreStepsScreen', 'paramIntroScreen'];
+
+        // ADD THIS ENTIRE NEW MODULE - This is the complete onboarding logic.
+
+        // --- Onboarding State Machine ---
+        //let onboardingStep = 0;
 
         // This is the single entry point to start the onboarding process.
         function startOnboarding() {
@@ -1724,6 +1744,115 @@
             nextButton.textContent = LANG_STRINGS[currentLanguage].startPracticeButton;
             showDiv(practiceIntroScreen);
         }
+
+        
+        // function startOnboarding() {
+        //     // This function's only job is to reset the onboarding state and show the first screen.
+        //     onboardingStep = 0;
+        //     currentDemoIndex = 0;
+        //     showDiv(welcomeScreen);
+        // }
+
+        // function advanceOnboarding() {
+        //     // --- THIS IS THE NEW LOGIC ---
+        //     // First, check if we are currently in the parameter demo screen.
+        //     if (!paramDemoScreen.classList.contains('hidden')) {
+        //         // If we are in the demos, the button's only job is to advance the demo index.
+        //         currentDemoIndex++;
+        //         displayDemoScreen(); // This function will handle showing the next demo or starting the tutorial.
+        //         return; // Stop here.
+        //     }
+        //     console.log(`ADVANCE START: onboardingStep is ${onboardingStep}, currentDemoIndex is ${currentDemoIndex}`);
+        //     // --- This is the old logic for the text-based screens ---
+        //     onboardingStep++;
+        //     console.log(`ADVANCE END: onboardingStep is now ${onboardingStep}`);
+        //     if (onboardingStep < onboardingScreens.length) {
+        //         showOnboardingScreen(onboardingStep);
+        //     } 
+        //     else if (onboardingStep === onboardingScreens.length) {
+        //         startParameterDemos();
+        //     }
+        // }
+
+        // function advanceOnboarding() {
+        //     onboardingStep++;
+            
+        //     // Check if we are still on a text-based screen
+        //     if (onboardingStep < onboardingScreens.length) {
+        //         showOnboardingScreen(onboardingStep);
+        //     } 
+        //     // Check if it's time to start the interactive demos
+        //     else if (onboardingStep === onboardingScreens.length) {
+        //         startParameterDemos();
+        //     }
+        //     // Note: The logic inside startParameterDemos will handle advancing from there
+        // }
+
+        // let currentDemoIndex = 0;
+        // const paramDemoScreen = document.getElementById('paramDemoScreen');
+        // const paramDemoImg = document.getElementById('paramDemoImg');
+        // const paramDemoSlider = document.getElementById('paramDemoSlider');
+        // const paramDemoTitle = document.getElementById('paramDemoTitle');
+        // const paramDemoText = document.getElementById('paramDemoText');
+
+        // function startParameterDemos() {
+        //     currentDemoIndex = 0;
+        //     paramDemoSlider.addEventListener('input', updateDemoImage);
+        //     displayDemoScreen();
+        // }
+
+        // function displayDemoScreen() {
+        //     const allOnboardingScreens = onboardingContainer.querySelectorAll('.main-container, .split-container');
+        //     allOnboardingScreens.forEach(el => el.classList.add('hidden'));
+
+        //     if (currentDemoIndex < DEMO_PARAMS.length) {
+        //         const demo = DEMO_PARAMS[currentDemoIndex];
+        //         const paramConfig = PARAMETERS[demo.key];
+        //         const lang = currentLanguage;
+
+        //         paramDemoTitle.textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
+        //         paramDemoText.textContent = `This refers to ${paramConfig.parameter_specific_instruction[lang]}`;
+        //         paramDemoSlider.value = 11;
+        //         updateDemoImage();
+
+        //         paramDemoScreen.classList.remove('hidden');
+        //     } else {
+        //         // Demos are finished, clean up the listener and start the full practice trial
+        //         paramDemoSlider.removeEventListener('input', updateDemoImage);
+        //         startTutorial();
+        //     }
+        // }
+
+        // function updateDemoImage() {
+        //     const demo = DEMO_PARAMS[currentDemoIndex];
+        //     const level = paramDemoSlider.value;
+        //     paramDemoImg.src = getVariantImagePath('image06', demo.key, level);
+        // }
+
+        // // function showOnboardingScreen(stepIndex) {
+        // //     const allOnboardingScreens = onboardingContainer.querySelectorAll('.main-container, .split-container');
+        // //     allOnboardingScreens.forEach(el => el.classList.add('hidden'));
+            
+        // //     const screenId = onboardingScreens[stepIndex];
+        // //     if (screenId) {
+        // //         document.getElementById(screenId).classList.remove('hidden');
+        // //     }
+        // // }
+
+        // function showOnboardingScreen(stepIndex) {
+        //     // Show the main onboarding parent container
+        //     document.getElementById('onboardingContainer').classList.remove('hidden');
+        //     // Hide all individual screens within it
+        //     onboardingContainer.querySelectorAll('.main-container, .split-container').forEach(el => el.classList.add('hidden'));
+            
+        //     const screenId = onboardingScreens[stepIndex];
+        //     if (screenId) {
+        //         // Show the one correct screen for the current step
+        //         document.getElementById(screenId).classList.remove('hidden');
+        //     }
+        // }
+
+        
 
         function showReadyScreen() {
             // This function now correctly uses the showDiv system.
@@ -1784,6 +1913,7 @@
             showConditionInstructions(currentSessionTrials[0]);
         }  
 
+        
 
         function displayFullResults() {
             // This function's only job is to decide whether to show VVIQ or the end screen.
@@ -2089,8 +2219,7 @@
             const finalDataObject = {
                 sessionID: sessionID,
                 vim_results: allCollectedResponses,
-                vviq_scores: finalScores,
-                break_data: breakData 
+                vviq_scores: finalScores 
             };
 
             // Make the data available for download
@@ -2193,7 +2322,23 @@
 
             // Step 7: Ready Screen -> Start the Real Experiment
             document.getElementById('startExperimentBtn').addEventListener('click', startActualTask);
-
+            
+            // document.getElementById('startActualTaskBtn').addEventListener('click', () => {
+            //     // This is the FIX: Reset the state variables every time the flow starts.
+            //     onboardingStep = 0;
+            //     currentDemoIndex = 0;
+            //     showDiv(welcomeScreen);
+            // });;
+            // document.getElementById('startInstructionsBtn').addEventListener('click', () => showDiv(howToScreen));
+            // document.getElementById('startTutorialBtn').addEventListener('click', () => showDiv(paramIntroScreen));
+            // document.getElementById('startDemosBtn').addEventListener('click', startParameterDemos);
+            // document.getElementById('nextDemoBtn').addEventListener('click', () => {
+            //     console.log(`NEXT DEMO CLICK: currentDemoIndex is ${currentDemoIndex}`);
+            //     currentDemoIndex++;
+            //     console.log(`NEXT DEMO CLICK: currentDemoIndex is now ${currentDemoIndex}`);
+            //     displayDemoScreen();
+            // });
+            //document.getElementById('startExperimentBtn').addEventListener('click', startActualTask);
             document.getElementById('noInfoBtn').addEventListener('click', () => {
                 if (!currentTrialData || !currentParameterKey) return;
 
@@ -2249,6 +2394,15 @@
                     showDiv(mainMenuDiv);
                 });
             });
+            // backToMenuFromTestSelectBtn.addEventListener('click', () => { resetFullTaskState(); showDiv(mainMenuDiv); });
+            // backToMenuFromTaskBtn.addEventListener('click', () => {
+            //     let confirmExit = currentTaskMode === 'test' ? true : confirm(LANG_STRINGS[currentLanguage].exitConfirmMessage);
+            //     if (confirmExit) {
+            //         resetFullTaskState();
+            //         showDiv(mainMenuDiv);
+            //     }
+            // }); 
+            // backToMenuFromResultsBtn.addEventListener('click', () => { resetFullTaskState(); showDiv(mainMenuDiv); });
 
             // Download Button
             downloadResultsBtn.addEventListener('click', downloadResults);
@@ -2333,12 +2487,6 @@
                 else if (!howToScreen.classList.contains('hidden')) {
                     if (event.key === "Enter") { event.preventDefault(); document.getElementById('howToContinueBtn').click(); }
                 }
-                else if (!document.getElementById('breakScreen').classList.contains('hidden')) {
-                    if (event.key === "Enter") {
-                        event.preventDefault();
-                        document.getElementById('breakContinueBtn').click();
-                    }
-                }                
                 else if (!paramIntroScreen.classList.contains('hidden')) {
                     if (event.key === "Enter") {
                         // Find whatever the main action button is on this screen (could be startDemosBtn or a cloned version)
@@ -2384,7 +2532,179 @@
                     if (event.key === "Enter") { event.preventDefault(); beginVimRating(); }
                 } 
             });
-        });       
+            // --- ALL OTHER LISTENERS FROM YOUR WORKING FILE GO HERE ---
+            // e.g., document.getElementById('testVVIQBtn').addEventListener('click', ...);
+            // e.g., coarseButtons.forEach(...);
+            // e.g., document.addEventListener('keydown', ...);
+        });
+
+        // REPLACE your old DOMContentLoaded with this. This should be the ONLY
+        // top-level event listener left in your script.
+
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     // 1. Set up the initial state of the application
+        //     resetFullTaskState();
+        //     setLanguage('en');
+        //     showDiv(mainMenuDiv);
+        //     if (isTouchDevice) document.body.classList.add('touch-device');
+
+        //     // 2. NOW that the page is fully loaded, set up all the button listeners
+        //     setupEventListeners();
+        // });
+
+        // function setupEventListeners() {
+            
+        // document.getElementById('startExperimentBtn').addEventListener('click', startActualTask);
+        
+        
+        
+        // ADD this single, smart listener for the whole onboarding flow
+        // onboardingContainer.addEventListener('click', (event) => {
+        //     const target = event.target.closest('button');
+        //     if (!target) return; // Exit if the click wasn't on a button
+
+        //     // Find which screen is currently visible
+        //     const visibleScreen = onboardingContainer.querySelector('.main-container:not(.hidden), .split-container:not(.hidden)');
+        //     if (!visibleScreen) return;
+
+        //     // --- State Machine: Decide what to do based on the current screen ---
+            
+        //     if (visibleScreen.id === 'welcomeScreen') {
+        //         // We are on the welcome screen, so move to the core steps screen
+        //         visibleScreen.classList.add('hidden');
+        //         coreStepsScreen.classList.remove('hidden');
+        //     } 
+        //     else if (visibleScreen.id === 'coreStepsScreen') {
+        //         // We are on the core steps screen, move to the parameter intro
+        //         visibleScreen.classList.add('hidden');
+        //         paramIntroScreen.classList.remove('hidden');
+        //     }
+        //     else if (visibleScreen.id === 'paramIntroScreen') {
+        //         // We are on the parameter intro screen, start the interactive demos
+        //         startParameterDemos();
+        //     }
+        //     else if (visibleScreen.id === 'paramDemoScreen') {
+        //         // We are in a demo, advance to the next one
+        //         currentDemoIndex++;
+        //         displayDemoScreen(); // This function will handle showing the next demo or starting the tutorial
+        //     }
+        // });
+
+            // When user clicks "Continue" on welcome screen
+        // document.getElementById('startInstructionsBtn').addEventListener('click', () => {
+        //     showDiv(howToScreen);
+        // });
+
+        // This listener handles the 'Continue' button on the Welcome Screen
+        // document.getElementById('startInstructionsBtn').addEventListener('click', () => {
+        //     showDiv(coreStepsScreen);
+        // });
+
+        // // When user clicks "Start Practice Round"
+        // document.getElementById('startTutorialBtn').addEventListener('click', () => {
+        //     startTutorial();
+        // });
+
+        // This listener handles the button on the Core Steps / How To screen
+        // document.getElementById('startTutorialBtn').addEventListener('click', () => {
+        //     // We will reuse the #onboardingNextBtn for the next steps, so make sure text is correct
+        //     paramIntroScreen.querySelector('#onboardingNextBtn').textContent = LANG_STRINGS[currentLanguage].continueButton;
+        //     showDiv(paramIntroScreen);
+        // });
+
+        // // This listener handles ALL subsequent "Next" clicks in the onboarding flow
+        // document.getElementById('onboardingNextBtn').addEventListener('click', () => {
+        //     const visibleScreen = onboardingContainer.querySelector('.main-container:not(.hidden), .split-container:not(.hidden)');
+        //     if (!visibleScreen) return;
+
+        //     if (visibleScreen.id === 'paramIntroScreen') {
+        //         // We are on the parameter intro screen, so start the demos
+        //         startParameterDemos();
+        //     } 
+        //     else if (visibleScreen.id === 'paramDemoScreen') {
+        //         // We are in the middle of the demos, advance to the next one
+        //         currentDemoIndex++;
+        //         displayDemoScreen();
+        //     }
+        // });
+            
+        
+
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     resetFullTaskState(); 
+        //     setLanguage('en'); 
+        //     showDiv(mainMenuDiv);
+        //     if(isTouchDevice) document.body.classList.add('touch-device');
+        // });
+
+        
+        
+        // document.getElementById('startActualTaskBtn').addEventListener('click', () => {
+        //     // Hide main menu and show the PARENT onboarding container
+        //     showDiv(document.getElementById('onboardingContainer'));
+        //     // Then, show the FIRST screen inside it
+        //     showOnboardingScreen(0);
+        // });
+
+        // document.getElementById('startActualTaskBtn').addEventListener('click', () => {
+        //     // This starts the onboarding flow from the very beginning
+        //     onboardingStep = 0;
+        //     showOnboardingScreen(onboardingStep);
+        // });
+
+        // REPLACE the existing event listener for this button
+        // document.getElementById('startActualTaskBtn').addEventListener('click', () => {
+        //     mainMenuDiv.classList.add('hidden'); // Explicitly hide the main menu
+        //     onboardingContainer.classList.remove('hidden'); // Show the onboarding parent
+            
+        //     // Ensure only the first onboarding screen is visible
+        //     onboardingContainer.querySelectorAll('.main-container, .split-container').forEach(el => el.classList.add('hidden'));
+        //     welcomeScreen.classList.remove('hidden');
+        // });
+
+        // document.getElementById('startActualTaskBtn').addEventListener('click', () => {
+        //     showDiv(welcomeScreen);
+        // });
+
+        // document.getElementById('onboardingNextBtn').addEventListener('click', () => {
+        //     // When the generic "next" button is clicked, advance the onboarding step
+        //     advanceOnboarding();
+        // });
+
+        // ADD THIS NEW LISTENER
+        // document.getElementById('onboardingContainer').addEventListener('click', (event) => {
+        //     const target = event.target.closest('button');
+        //     if (!target || target.id !== 'onboardingNextBtn') return;
+
+        //     // This is a simple state machine for the onboarding flow
+        //     if (!document.getElementById('welcomeScreen').classList.contains('hidden')) {
+        //         document.getElementById('welcomeScreen').classList.add('hidden');
+        //         document.getElementById('coreStepsScreen').classList.remove('hidden');
+        //     }
+        //     else if (!document.getElementById('coreStepsScreen').classList.contains('hidden')) {
+        //         document.getElementById('coreStepsScreen').classList.add('hidden');
+        //         document.getElementById('paramIntroScreen').classList.remove('hidden');
+        //     }
+        //     // ... we will add the rest of the flow here later
+        // });
+
+        // This single listener controls the entire onboarding flow.
+        // document.getElementById('onboardingContainer').addEventListener('click', (event) => {
+        //     const target = event.target.closest('button');
+        //     if (!target) return; // Ignore clicks that aren't on a button
+
+        //     // When ANY button inside the onboarding container is clicked...
+        //     // ... we simply advance to the next step.
+        //     advanceOnboarding();
+        // });
+        
+        
+
+
+
+        // }
+
+        
 
         function showConfidenceStep() {
             clearAllFocus();

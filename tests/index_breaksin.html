@@ -592,7 +592,7 @@
                 readyText: "You have completed all instructions and practice. The main experiment will now begin. There will be 12 trials, plus 3 attention checks.",
                 startExperimentButton: "Start Experiment",
                 breakTitle: "Take a Short Break",
-                breakText: "You have completed a block of trials. You must wait 120 seconds before continuing. Use this time to look away from the display, stand and stretch, or relax. If you need more time you may extend the break up to 5 minutes. When you are ready, press Continue.", 
+                breakText: "You have completed a block of trials. Please feel free to take a short break (around 3-5 minutes) to rest. When you are ready to continue, press the button below.",
                 noInfoLabel: "I have no clear impression of this quality."
             },
             "es": {
@@ -620,7 +620,7 @@
                 readyText: "Ha completado las instrucciones y la práctica. El experimento principal comenzará ahora. Habrá 12 ensayos, más 3 pruebas de atención.",
                 startExperimentButton: "Comenzar Experimento",
                 breakTitle: "Tome un Breve Descanso",
-                breakText: "Ha completado un bloque de ensayos. Debe esperar 120 segundos antes de continuar. Utilice este tiempo para apartar la vista de la pantalla, ponerse de pie y estirarse, o relajarse. Si necesita más tiempo, puede ampliar la pausa hasta un máximo de 5 minutos. Cuando esté listo, pulse «Continuar».",
+                breakText: "Ha completado un bloque de ensayos. Por favor, siéntase libre de tomar un breve descanso (alrededor de 3-5 minutos) para descansar. Cuando esté listo/a para continuar, presione el botón de abajo.",
                 noInfoLabel: "No tengo una impresión clara de esta cualidad."
             }
         };
@@ -856,8 +856,6 @@
 
         let onboardingStep = 0;
         let currentDemoIndex = 0;   
-
-        let breakData = [];
 
         const KEYBOARD_FOCUS_CLASS = 'keyboard-focus';
         const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
@@ -1164,7 +1162,6 @@
             const timerDisplay = document.getElementById('breakTimerDisplay');
             
             let countdownInterval = null; // Use null to track if a timer is active
-            const breakStartTime = Date.now(); // Record when the break screen appears
             
             // This is the function that will be called when the user can finally proceed.
             const enableContinue = () => {
@@ -1182,14 +1179,6 @@
                 continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
                 
                 newContinueBtn.addEventListener('click', () => {
-                    // 1. Calculate the total duration of the break.
-                    const breakDuration = Date.now() - breakStartTime;
-                    // 2. Store the data.
-                    breakData.push({ 
-                        after_trial: allCollectedResponses.length > 0 ? allCollectedResponses.length : 'VVIQ_midpoint',
-                        duration_ms: breakDuration 
-                    });
-                    console.log(`Break taken for ${breakDuration}ms`);
                     // When clicked, clean up and execute the callback
                     document.removeEventListener('keydown', handleDebugSkip);
                     newContinueBtn.style.animation = '';
@@ -2089,8 +2078,7 @@
             const finalDataObject = {
                 sessionID: sessionID,
                 vim_results: allCollectedResponses,
-                vviq_scores: finalScores,
-                break_data: breakData 
+                vviq_scores: finalScores 
             };
 
             // Make the data available for download

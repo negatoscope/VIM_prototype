@@ -315,12 +315,6 @@
             margin-right: auto;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
     </style>
 </head>
 <body id="htmlTag" lang="en">
@@ -410,13 +404,6 @@
         <h2 data-lang-key="readyTitle"></h2>
         <p data-lang-key="readyText"></p>
         <button id="startExperimentBtn" data-lang-key="startExperimentButton"></button>
-    </div>
-
-    <div id="breakScreen" class="main-container hidden">
-        <h2 data-lang-key="breakTitle"></h2>
-        <p data-lang-key="breakText"></p>
-        <p id="breakTimerDisplay" style="font-size: 24px; font-weight: bold; margin: 20px 0;"></p>
-        <button id="breakContinueBtn" data-lang-key="continueButton"></button>
     </div>
 
     <div id="parameterSelector" class="main-container hidden">
@@ -561,7 +548,6 @@
 
         // --- CONFIGURATION AND STATE MANAGEMENT ---
         const DEBUG_SHOW_RESULTS = false; // Set to true to show results for debugging
-        const DEBUG_SKIP_BREAK_TIMER = true; // Set to false for real participants
         const loadingOverlay = document.getElementById('loadingOverlay');
         const progressBar = document.getElementById('progressBar');
         const loadingText = document.getElementById('loadingText');
@@ -591,8 +577,6 @@
                 readyTitle: "Practice Complete",
                 readyText: "You have completed all instructions and practice. The main experiment will now begin. There will be 12 trials, plus 3 attention checks.",
                 startExperimentButton: "Start Experiment",
-                breakTitle: "Take a Short Break",
-                breakText: "You have completed a block of trials. You must wait 120 seconds before continuing. Use this time to look away from the display, stand and stretch, or relax. If you need more time you may extend the break up to 5 minutes. When you are ready, press Continue.", 
                 noInfoLabel: "I have no clear impression of this quality."
             },
             "es": {
@@ -619,8 +603,6 @@
                 readyTitle: "Práctica Completada",
                 readyText: "Ha completado las instrucciones y la práctica. El experimento principal comenzará ahora. Habrá 12 ensayos, más 3 pruebas de atención.",
                 startExperimentButton: "Comenzar Experimento",
-                breakTitle: "Tome un Breve Descanso",
-                breakText: "Ha completado un bloque de ensayos. Debe esperar 120 segundos antes de continuar. Utilice este tiempo para apartar la vista de la pantalla, ponerse de pie y estirarse, o relajarse. Si necesita más tiempo, puede ampliar la pausa hasta un máximo de 5 minutos. Cuando esté listo, pulse «Continuar».",
                 noInfoLabel: "No tengo una impresión clara de esta cualidad."
             }
         };
@@ -857,8 +839,6 @@
         let onboardingStep = 0;
         let currentDemoIndex = 0;   
 
-        let breakData = [];
-
         const KEYBOARD_FOCUS_CLASS = 'keyboard-focus';
         const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
 
@@ -914,8 +894,7 @@
 
         const paramIntroScreen = document.getElementById('paramIntroScreen');
         const paramDemoScreen = document.getElementById('paramDemoScreen');  
-        const practiceIntroScreen = document.getElementById('practiceIntroScreen'); 
-        const breakScreen = document.getElementById('breakScreen');  
+        const practiceIntroScreen = document.getElementById('practiceIntroScreen');   
 
         // --- Utility Functions ---
 
@@ -1107,7 +1086,7 @@
             const allScreens = [
                 mainMenuDiv, welcomeScreen, howToScreen, paramIntroScreen, paramDemoScreen, practiceIntroScreen,
                 readyScreen, parameterSelectorDiv, conditionInstructionScreenDiv, 
-                preVimScreenContainerDiv, vimTaskInterfaceDiv, vviqScreen, resultsDisplayDiv, breakScreen
+                preVimScreenContainerDiv, vimTaskInterfaceDiv, vviqScreen, resultsDisplayDiv
             ];
             
             // 1. Unconditionally hide every single screen.
@@ -1157,85 +1136,6 @@
         }
 
         // --- Core Application Logic ---
-
-        function showBreakScreen(onContinueCallback) {
-            const breakScreen = document.getElementById('breakScreen');
-            const continueBtn = document.getElementById('breakContinueBtn');
-            const timerDisplay = document.getElementById('breakTimerDisplay');
-            
-            let countdownInterval = null; // Use null to track if a timer is active
-            const breakStartTime = Date.now(); // Record when the break screen appears
-            
-            // This is the function that will be called when the user can finally proceed.
-            const enableContinue = () => {
-                // 1. Clean up the timer
-                clearInterval(countdownInterval);
-                
-                // 2. Update the UI to show that the user can continue
-                timerDisplay.textContent = "You may now continue.";
-                continueBtn.textContent = LANG_STRINGS[currentLanguage].continueButton;
-                continueBtn.disabled = false;
-                continueBtn.style.animation = 'pulse 1.5s infinite';
-                
-                // 3. NOW, we attach the real "continue" logic to the button
-                const newContinueBtn = continueBtn.cloneNode(true); // Clear any old listeners
-                continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
-                
-                newContinueBtn.addEventListener('click', () => {
-                    // 1. Calculate the total duration of the break.
-                    const breakDuration = Date.now() - breakStartTime;
-                    // 2. Store the data.
-                    breakData.push({ 
-                        after_trial: allCollectedResponses.length > 0 ? allCollectedResponses.length : 'VVIQ_midpoint',
-                        duration_ms: breakDuration 
-                    });
-                    console.log(`Break taken for ${breakDuration}ms`);
-                    // When clicked, clean up and execute the callback
-                    document.removeEventListener('keydown', handleDebugSkip);
-                    newContinueBtn.style.animation = '';
-                    onContinueCallback();
-                }, { once: true });
-            };
-
-            // --- Timer Function ---
-            const startTimer = () => {
-                let secondsLeft = 120;
-                continueBtn.disabled = true; // Button is disabled from the start
-
-                const updateDisplay = () => {
-                    const minutes = Math.floor(secondsLeft / 60);
-                    const seconds = secondsLeft % 60;
-                    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                    continueBtn.textContent = `Continue (available in ${secondsLeft}s)`;
-                };
-
-                updateDisplay(); // Show initial time
-
-                countdownInterval = setInterval(() => {
-                    secondsLeft--;
-                    updateDisplay();
-                    if (secondsLeft <= 0) {
-                        enableContinue(); // Timer finished, enable the continue functionality
-                    }
-                }, 1000);
-            };
-
-            // --- Debug Skip Logic ---
-            const handleDebugSkip = (event) => {
-                if (DEBUG_SKIP_BREAK_TIMER && event.key === 's') {
-                    console.log("Debug: Skipping break timer.");
-                    enableContinue(); // Call the same function as when the timer finishes
-                }
-            };
-            // We add and remove this listener carefully to avoid it firing on other screens
-            document.addEventListener('keydown', handleDebugSkip);
-
-
-            // --- Main Logic ---
-            // Show the break screen and start the timer
-            showDiv(breakScreen);
-            startTimer();
-        }
 
         function showConditionInstructions(trialDataObject) {
             currentTrialData = trialDataObject; 
@@ -1358,85 +1258,32 @@
 
         function loadNextParameterInVim() { 
             if (currentParameterIndexInTask < actualTaskOrder.length) {
-                // More parameters to rate for the current trial, so this part is unchanged
+                // More parameters to rate for the current trial
                 currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
                 currentParameterConfig = PARAMETERS[currentParameterKey];
                 setupCoarseStepVim(); 
             } else {
                 // --- All parameters for the current trial are FINISHED ---
-                
                 if (currentTaskMode === 'actual_task_full') {
-                    // Only add VIM trials to the results array
-                    if (!currentTrialData.is_attention_check) {
-                        allCollectedResponses.push({...currentTrialResponses}); 
-                    }
+                    allCollectedResponses.push({...currentTrialResponses}); 
                 }
                 
-                if (currentTaskMode === 'tutorial' || currentTaskMode === 'test') {
-                    // Handle end of tutorial or test modes (unchanged)
-                    if (currentTaskMode === 'tutorial') showReadyScreen();
-                    if (currentTaskMode === 'test') {
-                        alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
-                        showDiv(parameterSelectorDiv);
-                    }
-                    return;
-                }
-
-                // --- THIS IS THE NEW BREAK LOGIC ---
-                // This code now runs ONLY at the end of a main task trial (VIM or Attention Check)
-                
-                // Count how many MAIN (non-attention-check) trials have been completed
-                const mainTrialsCompleted = allCollectedResponses.length;
-
-                // Check if it's time for a break (after 4 or 8 main trials)
-                if (mainTrialsCompleted === 4 || mainTrialsCompleted === 8) {
-                    // Show the break screen. The callback function is what will run AFTER the break.
-                    showBreakScreen(() => {
-                        currentGlobalTrialIndex++; // Advance to the next trial
-                        showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
-                    });
-                    return; // IMPORTANT: Stop here and wait for the user to finish their break.
-                }
-                
-                // If it's NOT break time, proceed to the next trial as normal.
-                currentGlobalTrialIndex++;
-                if (currentGlobalTrialIndex < currentSessionTrials.length) {
-                    showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
+                if (currentTaskMode === 'tutorial') {
+                    showReadyScreen();
+                } else if (currentTaskMode === 'test') {
+                    alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
+                    showDiv(parameterSelectorDiv);
                 } else {
-                    // All trials are done, go to the results/VVIQ phase
-                    displayFullResults();
+                    // This was a main trial. Just load the next one.
+                    currentGlobalTrialIndex++;
+                    if (currentGlobalTrialIndex < currentSessionTrials.length) {
+                        showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
+                    } else {
+                        displayFullResults();
+                    }
                 }
             }
         }
-
-        // function loadNextParameterInVim() { 
-        //     if (currentParameterIndexInTask < actualTaskOrder.length) {
-        //         // More parameters to rate for the current trial
-        //         currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
-        //         currentParameterConfig = PARAMETERS[currentParameterKey];
-        //         setupCoarseStepVim(); 
-        //     } else {
-        //         // --- All parameters for the current trial are FINISHED ---
-        //         if (currentTaskMode === 'actual_task_full') {
-        //             allCollectedResponses.push({...currentTrialResponses}); 
-        //         }
-                
-        //         if (currentTaskMode === 'tutorial') {
-        //             showReadyScreen();
-        //         } else if (currentTaskMode === 'test') {
-        //             alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
-        //             showDiv(parameterSelectorDiv);
-        //         } else {
-        //             // This was a main trial. Just load the next one.
-        //             currentGlobalTrialIndex++;
-        //             if (currentGlobalTrialIndex < currentSessionTrials.length) {
-        //                 showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
-        //             } else {
-        //                 displayFullResults();
-        //             }
-        //         }
-        //     }
-        // }
         
         // This is your working function with the one necessary line added.
         function setupCoarseStepVim() { 
@@ -2089,8 +1936,7 @@
             const finalDataObject = {
                 sessionID: sessionID,
                 vim_results: allCollectedResponses,
-                vviq_scores: finalScores,
-                break_data: breakData 
+                vviq_scores: finalScores 
             };
 
             // Make the data available for download
@@ -2333,12 +2179,6 @@
                 else if (!howToScreen.classList.contains('hidden')) {
                     if (event.key === "Enter") { event.preventDefault(); document.getElementById('howToContinueBtn').click(); }
                 }
-                else if (!document.getElementById('breakScreen').classList.contains('hidden')) {
-                    if (event.key === "Enter") {
-                        event.preventDefault();
-                        document.getElementById('breakContinueBtn').click();
-                    }
-                }                
                 else if (!paramIntroScreen.classList.contains('hidden')) {
                     if (event.key === "Enter") {
                         // Find whatever the main action button is on this screen (could be startDemosBtn or a cloned version)
