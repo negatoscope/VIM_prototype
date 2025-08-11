@@ -353,6 +353,21 @@
             }
         }
 
+        /* This rule applies ONLY to narrow screens (like phones) in landscape mode */
+        @media screen and (max-width: 900px) and (orientation: landscape) {
+            
+            /* We'll reduce the height of the main container slightly to account for browser UI */
+            .split-container {
+                height: calc(100vh - 20px); /* Less vertical padding */
+                padding: 10px;
+            }
+
+            /* And we'll force the panels to use the available height more effectively */
+            .image-panel, .controls-panel {
+                height: 100%; /* Tell panels to fill the new parent height */
+            }
+        }
+
     </style>
 </head>
 <body id="htmlTag" lang="en">
