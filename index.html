@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VIM Prototype - Final Corrected</title>
+    <title>VIM Task</title>
+    <link rel="icon" type="image/png" href="images/instructions/icon_blurriness.png">
     <style>
       body {
         font-family: sans-serif;
@@ -20,7 +21,7 @@
       .main-container {
         border: 1px solid #ccc;
         padding: 20px;
-        text-align: center;
+        text-align: left;
         background-color: white;
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -69,12 +70,59 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         height: 85vh;
         overflow-y: auto;
-        text-align: center;
+        text-align: left;
 
         /* --- The new properties to add --- */
         display: flex;
         flex-direction: column;
       }
+
+      /* 1. Center all main titles and subtitles */
+        .main-container h1, 
+        .main-container h2, 
+        .controls-panel h2 {
+            text-align: center;
+        }
+
+        /* 2. Center the content of specific instruction paragraphs that need it */
+        .main-container p[data-lang-key="mainMenuWelcome"],
+        .main-container p[data-lang-key="welcomeInstructions"] p { /* ADDED THIS LINE */
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        /* 3. Center all single action buttons on simple screens */
+        #mainMenu > button {
+            display: block; /* Each button will now take its own line */
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 1px; /* Explicitly add space between the buttons */
+            width: 250px; /* You can adjust this width as needed */
+        }
+        #welcomeScreen > button,
+        #howToScreen > button,
+        #paramIntroScreen > button,
+        #practiceIntroScreen > button,
+        #readyScreen > button,
+        #conditionInstructionScreen > button,
+        #preVimScreenContainer button {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 4. Center the interactive elements within the VIM controls panel */
+        .coarse-selection, 
+        .fine-tuning,
+        .confidence-rating,
+        .controls-bottom { /* This now also centers the bottom button group */
+            text-align: center;
+        }
+
+        /* 5. Center the content of the parameter selector screen */
+        #parameterSelector {
+            text-align: center;
+        }
 
       /* This is the generic "spacer" that will push content apart.
         This is the most important missing piece. */
@@ -201,6 +249,9 @@
         margin: 30px auto 10px auto; /* 'auto' on left/right handles the centering */
         width: 200px;
       }
+      .vviq-toggle {
+            text-align: center;
+        }
       .image-display {
         display: flex;
         align-items: center;
@@ -258,11 +309,13 @@
       .hidden {
         display: none !important;
       }
-      #mainMenu button,
-      #parameterSelector button {
-        margin-bottom: 10px;
-        width: 200px;
-      }
+      #mainMenu button, #parameterSelector button {
+            display: block;      /* This is the key: forces each button onto its own line */
+            width: 200px;        /* A slightly wider, more modern button size */
+            margin-left: auto;   /* These two lines center the button horizontally */
+            margin-right: auto;
+            margin-bottom: 1px; /* Increase the space between buttons for better readability */
+        }
       #resultsDisplay ul {
         list-style-type: none;
         padding: 0;
@@ -510,6 +563,57 @@
           height: 100%; /* Tell panels to fill the new parent height */
         }
       }
+      /* This turns the button container into a 3-column grid */
+        #paramButtonsContainer {
+            display: grid;
+            grid-template-columns: repeat(3, 140px); /* Columns will now size to their content */
+            gap: 20px;
+            margin-top: 20px;
+            justify-content: center; /* This will center the whole grid of buttons */
+        }
+
+        /* Style for each individual icon button */
+        .param-icon-button {
+            display: flex;
+            flex-direction: column; /* Stack the icon on top of the text */
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            height: 160px; /* Give them a consistent height */
+        }
+
+        .param-icon-button:hover {
+            background-color: #e9ecef;
+            border-color: #007bff;
+        }
+
+        /* The .keyboard-focus style will apply to these buttons as well */
+        .param-icon-button.keyboard-focus {
+            outline: 3px solid dodgerblue;
+            box-shadow: 0 0 8px dodgerblue;
+            border-color: #007bff;
+        }
+
+        /* Style for the icon image inside the button */
+        .param-icon-button img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        /* Style for the text label inside the button */
+        .param-icon-button span {
+            font-size: 15px;
+            color: #333;
+            width: 100%;          /* ADD THIS LINE */
+            text-align: center;   /* ADD THIS LINE */
+            display: block;
+        }
     </style>
   </head>
   <body id="htmlTag" lang="en">
@@ -527,7 +631,7 @@
       <p data-lang-key="mainMenuWelcome"></p>
       <button id="testParameterBtn" data-lang-key="testParamButton"></button
       ><br />
-      <button id="testVVIQBtn">Test VVIQ-2</button><br />
+      <button id="testVVIQBtn">VVIQ-2</button><br />
       <button id="startActualTaskBtn" data-lang-key="startTaskButton"></button>
       <p
         id="setInfo"
@@ -564,14 +668,16 @@
       <h2 data-lang-key="howToTitle">How the Task Works</h2>
       <div style="text-align: left; max-width: 600px; margin: 20px auto">
         <p data-lang-key="howToStep1"></p>
-        <p data-lang-key="howToStep2"></p>
-        <p data-lang-key="howToStep3"></p>
       </div>
       <img
         src="images/instructions/image_source_diagram.png"
         alt="Diagram..."
         class="instruction-diagram"
       />
+      <!-- <div style="text-align: left; max-width: 600px; margin: 20px auto">
+        <p data-lang-key="howToStep2"></p>
+        <p data-lang-key="howToStep3"></p>
+      </div> -->
       <button id="howToContinueBtn" data-lang-key="startPracticeButton">
         Start Practice Round
       </button>
@@ -888,11 +994,14 @@
       const LANG_STRINGS = {
         en: {
           // --- Existing Strings ---
-          mainMenuTitle: "Visual Quality Rating Task",
-          mainMenuWelcome:
-            "Welcome! Please read the general instructions before starting.",
-          testParamButton: "Test Single Parameter",
-          startTaskButton: "Start Full Task (12 Trials)",
+          mainMenuTitle: "Visual Imagery Matching (VIM) Task",
+          mainMenuWelcome: `
+    <p>This application is a research tool designed to measure the qualities of visual imagery. It was created by Luis Eudave at the University of Navarra.</p>
+    <p>You can use this interface to test the <b>Visual Imagery Matching (VIM) Task</b> and the <b>Vividness of Visual Imagery Questionnaire (VVIQ-2)</b>.</p>
+    <p>This project is open source. You can find the code and documentation at the <a href="https://github.com/negatoscope/VIM_prototype" target="_blank">GitHub repository</a>.</p>
+`,
+          testParamButton: "VIM Task Tutorial",
+          startTaskButton: "Start VIM Task",
           paramSelectorTitle: "Select Parameter to Test",
           conditionInstructionTitle: "Instructions: {condition} Task",
           trialContinueButton: "Continue",
@@ -923,20 +1032,26 @@
           likertLabelHigh: "Completely confident",
           confirmConfidenceButton: "Confirm Confidence",
           // --- New Onboarding Strings ---
-          welcomeTitle: "Welcome!",
-          welcomeInstructions:
-            "Thank you for participating. This experiment investigates the nature of mental imagery. It will take approximately 15-20 minutes. You will first complete a short, interactive practice round, followed by the 12 main trials.",
+          welcomeTitle: "Instructions",
+          welcomeInstructions: `
+    <p>Thank you for participating in this important study on the nature of mental imagery. Our objective is to better understand the different visual qualities that make up our internal experiences, such as memories and imagination.</p>
+    <p>In this task, you will be asked to generate various mental images and then use a set of visual tools to match what you experienced. You will also be asked to complete a standardized questionnaire about your imagery abilities.</p>
+    <p>The entire session takes approximately 40 minutes to complete. It is very important that you complete it in one single session without major interruptions. There will be two scheduled opportunities to take a short break. Please ensure you are in a quiet environment where you can focus.</p>
+`,
           continueButton: "Continue",
           howToTitle: "How the Task Works",
           howToStep1:
-            "<b>Step 1: Generate an Image.</b> You will be asked to remember a photo, recall a personal memory, or imagine a new scene.",
-          howToStep2:
+            `<p>In each trial, you will follow a simple three-step process: First, you will be asked to generate an image in your mind based on a prompt. Second, you will adjust an image on the screen to match the qualities of your mental image. Finally, you will rate how confident you were in that match. Here are the details for each step: </p>
+            <b>1. Generate an Image:</b> Based on the instruction, you will either remember a photo you just saw, recall a personal memory, or imagine a new scene. We encourage you to <b>close your eyes</b> for this step to help you focus. Try to form the image as you naturally would, and once you have a clear impression, <b>hold that image in your mind.</b>`,
+            howToStep2:
             "<b>Step 2: Match the Image Quality.</b> You will then adjust an image on the screen to match the visual qualities of your mental image.",
           howToStep3:
             "<b>Step 3: Rate Your Confidence.</b> After each adjustment, you will rate how confident you are in your choice.",
-          paramIntroTitle: "The 6 Visual Qualities",
+          paramIntroTitle: "How the Task Works",
           paramIntroText:
-            "You will be asked to match your mental image on six different visual qualities. The next few screens will provide an interactive demonstration of each one.",
+          `<b>2. Match the Image:</b> With the mental image in mind, you will open your eyes. Your task will be to adjust an image on the screen, using buttons and a slider, until it best matches the visual qualities (like brightness, blurriness, etc.) of the image in your head. The next few screens will provide an explanation of each quality along with an interactive demonstration of each one.`,
+          paramDemoTitleTemplate: "Quality {X} of 6: {paramName}",
+          paramDemoTextTemplate: "This refers to {paramDescription}",
           practiceIntroTitle: "Putting It All Together: A Practice Round",
           practiceIntroText: `
                 You will now complete one full practice rating.<br><br>
@@ -944,7 +1059,7 @@
                 <b>2. Fine-Tuning:</b> Next, use a slider to make a more precise match.<br>
                 <b>3. Confidence Rating:</b> Finally, rate how confident you are in your match.
             `,
-          startPracticeButton: "Start Practice Round",
+          startPracticeButton: "Continue",
           readyTitle: "Practice Complete",
           readyText:
             "You have completed all instructions and practice. The main experiment will now begin. There will be 12 trials, plus 3 attention checks.",
@@ -956,11 +1071,14 @@
         },
         es: {
           // --- Existing Strings ---
-          mainMenuTitle: "Tarea de Calificación de Calidad Visual",
-          mainMenuWelcome:
-            "¡Bienvenido/a! Por favor, lea las instrucciones generales antes de comenzar.",
-          testParamButton: "Probar un Parámetro",
-          startTaskButton: "Comenzar Tarea Completa (12 Ensayos)",
+          mainMenuTitle: "Tarea de Ajuste de Imaginación Visual (AIV)",
+          mainMenuWelcome: `
+    <p>Esta aplicación es una herramienta de investigación diseñada para medir las cualidades de la imaginación visual. Ha sido creada por Luis Eudave en la Universidad de Navarra.</p>
+    <p>Puede utilizar esta interfaz para probar la <b>Tarea de Ajuste de Imaginación Visual (AIV)</b> y el <b>Cuestionario de Viveza de la Imaginación Visual (VVIQ-2)</b>.</p>
+    <p>Este proyecto es de código abierto. Puede encontrar el código y la documentación en el <a href="https://github.com/negatoscope/VIM_prototype" target="_blank">repositorio de GitHub</a>.</p>
+`,
+          testParamButton: "Tutorial Tarea AIV",
+          startTaskButton: "Comenzar Tarea AIV",
           paramSelectorTitle: "Seleccione el Parámetro a Probar",
           conditionInstructionTitle: "Instrucciones: Tarea de {condition}",
           trialContinueButton: "Continuar",
@@ -992,20 +1110,26 @@
           likertLabelHigh: "Completamente seguro/a",
           confirmConfidenceButton: "Confirmar Confianza",
           // --- New Onboarding Strings ---
-          welcomeTitle: "¡Bienvenido/a!",
-          welcomeInstructions:
-            "Gracias por participar. Este experimento investiga la naturaleza de las imágenes mentales. Tomará aproximadamente 15-20 minutos. Primero completará una breve ronda de práctica interactiva, seguida de los 12 ensayos principales.",
+          welcomeTitle: "Instrucciones",
+          welcomeInstructions: `
+    <p>Gracias por participar en este importante estudio sobre la naturaleza de la imaginación mental. Nuestro objetivo es comprender mejor las diferentes cualidades visuales que componen nuestras experiencias internas, como los recuerdos y la imaginación.</p>
+    <p>En esta tarea, se le pedirá que genere varias imágenes mentales y que luego utilice una serie de herramientas visuales para igualar lo que ha experimentado. También se le pedirá que complete un cuestionario estandarizado sobre sus habilidades de imaginación.</p>
+    <p>La sesión completa dura aproximadamente 40 minutos. Es muy importante que la complete en una única sesión sin interrupciones importantes. Habrá dos oportunidades programadas para tomar un breve descanso. Por favor, asegúrese de estar en un entorno tranquilo donde pueda concentrarse.</p>
+`,
           continueButton: "Continuar",
           howToTitle: "Cómo Funciona la Tarea",
           howToStep1:
-            "<b>Paso 1: Generar una Imagen.</b> Se le pedirá que recuerde una foto, una memoria personal, o que imagine una escena nueva.",
-          howToStep2:
+            `<p>En cada ensayo, seguirá un sencillo proceso de tres pasos: Primero, se le pedirá que genere una imagen en su mente basándose en una instrucción. Segundo, ajustará una imagen en la pantalla para que coincida con las cualidades de su imagen mental. Finalmente, calificará la seguridad de su decisión. Aquí están los detalles de cada paso: </p>
+            <b>1. Generar una Imagen:</b> Basándose en la instrucción, deberá recordar una foto que acaba de ver, evocar un recuerdo personal o imaginar una escena nueva. Le animamos a <b>cerrar los ojos</b> en este paso para ayudarle a concentrarse. Intente formar la imagen de la manera más natural para usted y, una vez que tenga una impresión clara, <b>mantenga esa imagen en su mente.</b>`,
+            howToStep2:
             "<b>Paso 2: Igualar la Calidad de la Imagen.</b> Luego, ajustará una imagen en la pantalla para que coincida con las cualidades visuales de su imagen mental.",
           howToStep3:
             "<b>Paso 3: Calificar su Confianza.</b> Después de cada ajuste, calificará qué tan seguro/a está de su elección.",
-          paramIntroTitle: "Las 6 Cualidades Visuales",
+          paramIntroTitle: "Cómo Funciona la Tarea",
           paramIntroText:
-            "Se le pedirá que iguale su imagen mental en seis cualidades visuales diferentes. Las siguientes pantallas le ofrecerán una demostración interactiva de cada una.",
+            `<b>2. Igualar la Imagen:</b> Con la imagen mental en mente, abrirá los ojos. Su tarea será ajustar una imagen en la pantalla, usando botones y un deslizador, hasta que coincida lo mejor posible con las cualidades visuales (como el brillo, el desenfoque, etc.) de la imagen en su cabeza. A continuación se le ofrecerán una explicación y una demostración interactiva de cada una de estas cualidades.`,
+          paramDemoTitleTemplate: "Cualidad {X} de 6: {paramName}",
+          paramDemoTextTemplate: "Esto se refiere a {paramDescription}",
           practiceIntroTitle: "Putting It All Together: A Practice Round",
           practiceIntroText: `
                 You will now complete one full practice rating.<br><br>
@@ -1013,7 +1137,7 @@
                 <b>2. Fine-Tuning:</b> Next, use a slider to make a more precise match.<br>
                 <b>3. Confidence Rating:</b> Finally, rate how confident you are in your match.
             `,
-          startPracticeButton: "Comenzar Ronda de Práctica",
+          startPracticeButton: "Continuar",
           readyTitle: "Práctica Completada",
           readyText:
             "Ha completado las instrucciones y la práctica. El experimento principal comenzará ahora. Habrá 12 ensayos, más 3 pruebas de atención.",
@@ -1040,8 +1164,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "how bright or dim it appeared.",
-            es: "qué tan brillante u oscuro parecía.",
+            en: "how bright or dim it appeared in your head. <p>Note how moving the slider makes the images brighter or darker, which is what <b>Brightness</b> represents.</p>",
+            es: "qué tan brillante u oscuro parecía. <p>Nota como al mover el deslizador la imagen se vuelve más brillante o más oscura, que es lo que representa el parámetro <b>Brillo</b> </p>",
           },
         },
         contrast: {
@@ -1296,8 +1420,8 @@
       // --- VVIQ-2 Data and Configuration ---
 
       // Add the new checkbox label to the LANG_STRINGS object
-      LANG_STRINGS.en.vviqCheckboxLabel = "Include VVIQ-2 Questionnaire";
-      LANG_STRINGS.es.vviqCheckboxLabel = "Incluir Cuestionario VVIQ-2";
+      LANG_STRINGS.en.vviqCheckboxLabel = "Include VVIQ-2";
+      LANG_STRINGS.es.vviqCheckboxLabel = "Incluir VVIQ-2";
 
       const VVIQ_DATA = {
         instructions: {
@@ -1983,7 +2107,7 @@
             LANG_STRINGS[currentLanguage] &&
             LANG_STRINGS[currentLanguage][key]
           ) {
-            el.textContent = LANG_STRINGS[currentLanguage][key];
+            el.innerHTML = LANG_STRINGS[currentLanguage][key];
           }
         });
 
@@ -2350,11 +2474,11 @@
 
         const paramName = currentParameterConfig.name[currentLanguage];
         currentParamDisplay.textContent = paramName;
-        coarseParamNameStrong.textContent =
+        coarseParamNameStrong.innerHTML =
           currentParameterConfig.parameter_specific_instruction[
             currentLanguage
           ];
-        fineTuneParamNameStrong.textContent =
+        fineTuneParamNameStrong.innerHTML =
           currentParameterConfig.parameter_specific_instruction[
             currentLanguage
           ];
@@ -2477,18 +2601,39 @@
       }
 
       // --- Start/Setup Functions ---
-      function populateParameterSelector() {
-        paramButtonsContainer.innerHTML = "";
-        Object.keys(PARAMETERS).forEach((key) => {
-          const button = document.createElement("button");
-          button.textContent = `${
-            LANG_STRINGS[currentLanguage].testParamButton.split(" ")[0]
-          } ${PARAMETERS[key].name[currentLanguage]}`;
-          button.addEventListener("click", () => startParameterTest(key));
-          paramButtonsContainer.appendChild(button);
+      function populateParameterSelector() { 
+        paramButtonsContainer.innerHTML = ''; 
+        
+        const realParameters = Object.keys(PARAMETERS).filter(key => key !== 'attention_check');
+        
+        realParameters.forEach(key => {
+            const button = document.createElement('button');
+            button.className = 'param-icon-button';
+            
+            const iconImg = document.createElement('img');
+            iconImg.src = ICONS[key];
+            iconImg.alt = PARAMETERS[key].name[currentLanguage];
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = PARAMETERS[key].name[currentLanguage];
+            
+            button.appendChild(iconImg);
+            button.appendChild(labelSpan);
+            
+            // --- THIS IS THE FIX ---
+            // We add the event listener directly to the button as we create it.
+            // This is simple, robust, and avoids the const-assignment error.
+            button.addEventListener('click', () => {
+                startParameterTest(key);
+            });
+            
+            paramButtonsContainer.appendChild(button);
         });
-        setupParameterSelectorFocus();
-      }
+
+        // We no longer need the complex cloneNode/re-assignment logic.
+            
+        setupParameterSelectorFocus(); 
+    }
 
       function startParameterTest(paramKey) {
         resetFullTaskState();
@@ -2610,12 +2755,22 @@
             paramDemoIcon.style.display = "none";
           }
 
-          document.getElementById("paramDemoTitle").textContent = `Quality ${
-            currentDemoIndex + 1
-          } of 6: ${paramConfig.name[lang]}`;
-          document.getElementById(
-            "paramDemoText"
-          ).textContent = `This refers to ${paramConfig.parameter_specific_instruction[lang]}`;
+          // 1. Get the template strings from our LANG_STRINGS object.
+        const titleTemplate = LANG_STRINGS[lang].paramDemoTitleTemplate;
+        const textTemplate = LANG_STRINGS[lang].paramDemoTextTemplate;
+
+        // 2. Replace the placeholders with the dynamic content.
+        const finalTitle = titleTemplate
+            .replace('{X}', currentDemoIndex + 1)
+            .replace('{paramName}', paramConfig.name[lang]);
+        
+        const finalText = textTemplate
+            .replace('{paramDescription}', paramConfig.parameter_specific_instruction[lang]);
+
+        // 3. Update the text on the screen using the final, translated strings.
+        document.getElementById('paramDemoTitle').textContent = finalTitle;
+        document.getElementById('paramDemoText').innerHTML = finalText;
+          
           document.getElementById("paramDemoSlider").value = 11;
           updateDemoImage();
 
