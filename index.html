@@ -841,7 +841,7 @@
         <!-- MIDDLE SECTION (Interactive Elements) -->
         <div id="coarseStep" class="coarse-selection control-group">
           <p>
-            <span data-lang-key="vimCoarsePrompt"></span>
+            <span data-lang-key="vimCoarsePrompt" class="hidden"></span>
             <strong id="coarseParamName"></strong>:
           </p>
 
@@ -864,7 +864,7 @@
 
         <div id="fineTuneStep" class="fine-tuning control-group hidden">
           <p>
-            <span data-lang-key="fineTunePrompt"></span>
+            <span data-lang-key="fineTunePrompt" class="hidden"></span>
             <strong id="fineTuneParamName"></strong>:
           </p>
           <input type="range" id="fineTuneSlider" min="1" max="7" value="4" />
@@ -1063,6 +1063,7 @@
                     <b>3. Confidence Rating:</b> Finally, you will rate how confident you were in your match.
                 </p>
             `,
+          tutorialVimInstruction: "This is a practice round. Please try to match the <b>Brightness</b> of the mental image you are holding in your mind.",
           startPracticeButton: "Continue",
           readyTitle: "Practice Complete",
           readyText:
@@ -1134,7 +1135,7 @@
             `<b>2. Igualar la Imagen:</b> Con la imagen mental en mente, abrirá los ojos. Su tarea será ajustar una imagen en la pantalla, usando botones y un deslizador, hasta que coincida lo mejor posible con las cualidades visuales (como el brillo, el desenfoque, etc.) de la imagen en su cabeza. A continuación se le ofrecerán una explicación y una demostración interactiva de cada una de estas cualidades.`,
           paramDemoTitleTemplate: "Cualidad {X} de 6: {paramName}",
           paramDemoTextTemplate: "Esto se refiere a {paramDescription}",
-          practiceIntroTitle: "Putting It All Together: A Practice Round",
+          practiceIntroTitle: "Poniéndolo Todo Junto: Una Ronda de Práctica",
           practiceIntroText: `
                 <p>
                     Ahora que se ha familiarizado con las diferentes cualidades visuales, completará una ronda de prueba completa para el parámetro de <b>Brillo</b>.
@@ -1145,6 +1146,7 @@
                     <b>3. Calificación de Confianza:</b> Finalmente, calificará qué tan seguro/a estaba de su ajuste.
                 </p>
             `,
+          tutorialVimInstruction: "Esta es una ronda de práctica. Por favor, intente igualar el <b>Brillo</b> de la imagen mental que tiene en su mente.",
           startPracticeButton: "Continuar",
           readyTitle: "Práctica Completada",
           readyText:
@@ -1157,73 +1159,187 @@
         },
       };
 
-      const PARAMETERS = {
-        saturation: {
-          name: { en: "Saturation", es: "Saturación" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: `how <b>colorful or muted</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from grayscale (<b>Low Saturation</b>) to intensely colorful (<b>High Saturation</b>).</p>`,
-            es: `qué tan <b>colorida o apagada</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de una escala de grises (<b>Baja Saturación</b>) a colores intensos (<b>Alta Saturación</b>).</p>`,
-          },
-        },
-        brightness: {
-          name: { en: "Brightness", es: "Brillo" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: `how <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
-            es: `qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`,
-          },
-        },
-        contrast: {
-          name: { en: "Contrast", es: "Contraste" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: `the difference between the <b>light and dark</b> areas of the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from washed out (<b>Low Contrast</b>) to stark and defined (<b>High Contrast</b>).</p>`,
-            es: `la diferencia entre las áreas <b>claras y oscuras</b> de la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener un aspecto lavado (<b>Bajo Contraste</b>) a uno nítido y definido (<b>Alto Contraste</b>).</p>`,
-          },
-        },
-        blurriness: {
-          name: { en: "Blurriness", es: "Desenfoque" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: `how <b>sharp or out-of-focus</b> the scene was in your mind. <p>In the interactive demo, notice how moving the slider changes the image from blurry (<b>High Blurriness</b>) to sharp and clear (<b>Low Blurriness</b>).</p>`,
-            es: `qué tan <b>nítida o desenfocada</b> estaba la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de borrosa (<b>Alto Desenfoque</b>) a nítida y clara (<b>Bajo Desenfoque</b>).</p>`,
-          },
-        },
-        detailedness: {
-          name: { en: "Detailedness", es: "Nivel de Detalle" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: `the amount of <b>fine-grained detail and texture</b> present in the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from smooth and simple (<b>Low Detail</b>) to rich with complex textures (<b>High Detail</b>).</p>`,
-            es: `la cantidad de <b>detalles finos y texturas</b> presentes en la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de un aspecto liso y simple (<b>Bajo Detalle</b>) a uno rico en texturas complejas (<b>Alto Detalle</b>).</p>`,
-          },
-        },
-        precision: {
-          name: { en: "Color Precision", es: "Precisión de Color" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: `how <b>specific or ambiguous</b> the colors were in your mind. <p>In the interactive demo, notice how moving the slider changes the image from having few, blocky colors (<b>Low Precision</b>) to having many subtle shades and gradients (<b>High Precision</b>).</p>`,
-            es: `qué tan <b>específicos o ambiguos</b> eran los colores en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener pocos colores sólidos (<b>Baja Precisión</b>) a tener muchos tonos y gradientes sutiles (<b>Alta Precisión</b>).</p>`,
-          },
-        },
-        // --- THIS IS THE NEW ATTENTION CHECK PARAMETER ---
-        attention_check: {
-          name: { en: "Attention Check", es: "Prueba de Atención" },
-          levels: 21,
-          coarse: { low: 4, mid: 11, high: 18 },
-          parameter_specific_instruction: {
-            en: "For this check, please select the 'Medium' button, then move the slider to level 11.",
-            es: "Para esta prueba, por favor seleccione el botón 'Medio', y luego mueva el deslizador al nivel 11.",
-          },
-          is_attention_check: true, // Flag to identify this special parameter
-        },
-      };
+    //   const PARAMETERS = {
+    //     saturation: {
+    //       name: { en: "Saturation", es: "Saturación" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>colorful or muted</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from grayscale (<b>Low Saturation</b>) to intensely colorful (<b>High Saturation</b>).</p>`,
+    //         es: `qué tan <b>colorida o apagada</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de una escala de grises (<b>Baja Saturación</b>) a colores intensos (<b>Alta Saturación</b>).</p>`,
+    //       },
+    //     },
+    //     brightness: {
+    //       name: { en: "Brightness", es: "Brillo" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
+    //         es: `qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`,
+    //       },
+    //     },
+    //     contrast: {
+    //       name: { en: "Contrast", es: "Contraste" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `the difference between the <b>light and dark</b> areas of the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from washed out (<b>Low Contrast</b>) to stark and defined (<b>High Contrast</b>).</p>`,
+    //         es: `la diferencia entre las áreas <b>claras y oscuras</b> de la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener un aspecto lavado (<b>Bajo Contraste</b>) a uno nítido y definido (<b>Alto Contraste</b>).</p>`,
+    //       },
+    //     },
+    //     blurriness: {
+    //       name: { en: "Blurriness", es: "Desenfoque" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>sharp or out-of-focus</b> the scene was in your mind. <p>In the interactive demo, notice how moving the slider changes the image from blurry (<b>High Blurriness</b>) to sharp and clear (<b>Low Blurriness</b>).</p>`,
+    //         es: `qué tan <b>nítida o desenfocada</b> estaba la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de borrosa (<b>Alto Desenfoque</b>) a nítida y clara (<b>Bajo Desenfoque</b>).</p>`,
+    //       },
+    //     },
+    //     detailedness: {
+    //       name: { en: "Detailedness", es: "Nivel de Detalle" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `the amount of <b>fine-grained detail and texture</b> present in the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from smooth and simple (<b>Low Detail</b>) to rich with complex textures (<b>High Detail</b>).</p>`,
+    //         es: `la cantidad de <b>detalles finos y texturas</b> presentes en la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de un aspecto liso y simple (<b>Bajo Detalle</b>) a uno rico en texturas complejas (<b>Alto Detalle</b>).</p>`,
+    //       },
+    //     },
+    //     precision: {
+    //       name: { en: "Color Precision", es: "Precisión de Color" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>specific or ambiguous</b> the colors were in your mind. <p>In the interactive demo, notice how moving the slider changes the image from having few, blocky colors (<b>Low Precision</b>) to having many subtle shades and gradients (<b>High Precision</b>).</p>`,
+    //         es: `qué tan <b>específicos o ambiguos</b> eran los colores en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener pocos colores sólidos (<b>Baja Precisión</b>) a tener muchos tonos y gradientes sutiles (<b>Alta Precisión</b>).</p>`,
+    //       },
+    //     },
+    //     // --- THIS IS THE NEW ATTENTION CHECK PARAMETER ---
+    //     attention_check: {
+    //       name: { en: "Attention Check", es: "Prueba de Atención" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: "For this check, please select the 'Medium' button, then move the slider to level 11.",
+    //         es: "Para esta prueba, por favor seleccione el botón 'Medio', y luego mueva el deslizador al nivel 11.",
+    //       },
+    //       is_attention_check: true, // Flag to identify this special parameter
+    //     },
+    //   };
+
+            const PARAMETERS = {
+                brightness: {
+                    name: { en: "Brightness", es: "Brillo" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
+                            es: `Qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Brightness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Brillo</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Brightness</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Brillo</b> de forma más precisa." }
+                        }
+                    }
+                },
+                contrast: {
+                    name: { en: "Contrast", es: "Contraste" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `The difference between the <b>light and dark</b> areas of the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from washed out (<b>Low Contrast</b>) to stark and defined (<b>High Contrast</b>).</p>`,
+                            es: `La diferencia entre las áreas <b>claras y oscuras</b> de la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener un aspecto lavado (<b>Bajo Contraste</b>) a uno nítido y definido (<b>Alto Contraste</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Contrast</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Contraste</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Contrast</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Contraste</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Contrast</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Contraste</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Contrast</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Contraste</b> de forma más precisa." }
+                        }
+                    }
+                },
+                saturation: {
+                    name: { en: "Saturation", es: "Saturación" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>colorful or muted</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from grayscale (<b>Low Saturation</b>) to intensely colorful (<b>High Saturation</b>).</p>`,
+                            es: `Qué tan <b>colorida o apagada</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de una escala de grises (<b>Baja Saturación</b>) a colores intensos (<b>Alta Saturación</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Saturation</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Saturación</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Saturation</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar la <b>Saturación</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Saturation</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Saturación</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Saturation</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar la <b>Saturación</b> de forma más precisa." }
+                        }
+                    }
+                },
+                blurriness: {
+                    name: { en: "Blurriness", es: "Desenfoque" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>sharp or out-of-focus</b> the scene was in your mind. <p>In the interactive demo, notice how moving the slider changes the image from blurry (<b>High Blurriness</b>) to sharp and clear (<b>Low Blurriness</b>).</p>`,
+                            es: `Qué tan <b>nítida o desenfocada</b> estaba la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de borrosa (<b>Alto Desenfoque</b>) a nítida y clara (<b>Bajo Desenfoque</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Blurriness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Desenfoque</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Blurriness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Desenfoque</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Blurriness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Desenfoque</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Blurriness</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Desenfoque</b> de forma más precisa." }
+                        }
+                    }
+                },
+                detailedness: {
+                    name: { en: "Detailedness", es: "Nivel de Detalle" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `The amount of <b>fine-grained detail and texture</b> present in the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from smooth and simple (<b>Low Detail</b>) to rich with complex textures (<b>High Detail</b>).</p>`,
+                            es: `La cantidad de <b>detalles finos y texturas</b> presentes en la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de un aspecto liso y simple (<b>Bajo Detalle</b>) a uno rico en texturas complejas (<b>Alto Detalle</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Detailedness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Nivel de Detalle</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Detailedness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Nivel de Detalle</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Detailedness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Nivel de Detalle</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Detailedness</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Nivel de Detalle</b> de forma más precisa." }
+                        }
+                    }
+                },
+                precision: {
+                    name: { en: "Color Precision", es: "Precisión de Color" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>specific or ambiguous</b> the colors were in your mind. <p>In the interactive demo, notice how moving the slider changes the image from having few, blocky colors (<b>Low Precision</b>) to having many subtle shades and gradients (<b>High Precision</b>).</p>`,
+                            es: `Qué tan <b>específicos o ambiguos</b> eran los colores en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener pocos colores sólidos (<b>Baja Precisión</b>) a tener muchos tonos y gradientes sutiles (<b>Alta Precisión</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Color Precision</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Precisión de Color</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Color Precision</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar la <b>Precisión de Color</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Color Precision</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Precisión de Color</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Color Precision</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar la <b>Precisión de Color</b> de forma más precisa." }
+                        }
+                    }
+                },
+                attention_check: {
+                    name: { en: "Attention Check", es: "Prueba de Atención" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        task: {
+                            coarse:   { en: "For this attention check, please select the <b>'Medium'</b> button.", es: "Para esta prueba de atención, por favor seleccione el botón <b>'Medio'</b>." },
+                            fineTune: { en: "Now, please move the slider to level <b>11</b> and click 'Confirm'.", es: "Ahora, por favor mueva el deslizador al nivel <b>11</b> y haga clic en 'Confirmar'." }
+                        }
+                    }
+                }
+            };
 
       // ADD THIS NEW DATA OBJECT (replaces the old allTrialsMasterList)
 
@@ -2464,132 +2580,116 @@
       // }
 
       // This is your working function with the one necessary line added.
-      function setupCoarseStepVim() {
-        clearAllFocus();
-        // 1. Clear the image from the previous fine-tuning step.
-        if (fineTuneImg) fineTuneImg.src = "";
-        // 2. Clear the image from the coarse preview.
-        if (coarsePreviewImg) coarsePreviewImg.src = "";
+      // REPLACE your function with this corrected version
 
-        // Update the parameter icon
-        const parameterIcon = document.getElementById("parameterIcon");
-        if (ICONS[currentParameterKey]) {
-          parameterIcon.src = ICONS[currentParameterKey];
-          parameterIcon.style.display = "block";
-        } else {
-          parameterIcon.style.display = "none"; // Hide if no icon is defined
+        function setupCoarseStepVim() {
+            clearAllFocus();
+            if (fineTuneImg) fineTuneImg.src = "";
+            if (coarsePreviewImg) coarsePreviewImg.src = "";
+
+            const parameterIcon = document.getElementById("parameterIcon");
+            if (ICONS[currentParameterKey]) {
+                parameterIcon.src = ICONS[currentParameterKey];
+                parameterIcon.style.display = "block";
+            } else {
+                parameterIcon.style.display = "none";
+            }
+
+            const paramConfig = PARAMETERS[currentParameterKey];
+            const lang = currentLanguage;
+
+            // Set the main parameter title
+            currentParamDisplay.textContent = paramConfig.name[lang];
+
+            // --- THIS IS THE NEW INTEGRATED LOGIC ---
+            // 1. Determine which instruction string to use based on the current task mode
+            let instructionText = '';
+            if (currentTaskMode === 'tutorial') {
+                instructionText = paramConfig.instructions.tutorial.coarse[lang];
+            } else {
+                instructionText = paramConfig.instructions.task.coarse[lang];
+            }
+            coarseParamNameStrong.innerHTML = instructionText;
+            
+            // 2. Set the text for both the coarse and fine-tune steps using the selected string
+            coarseParamNameStrong.innerHTML = instructionText;
+            fineTuneParamNameStrong.innerHTML = instructionText; // Also prepares the next screen
+            
+            // --- The rest of your function is the same ---
+            
+            coarseButtons.forEach((button) => {
+                const levelKey = button.dataset.levelKey;
+                button.dataset.level = currentParameterConfig.coarse[levelKey];
+            });
+
+            coarseStepDiv.classList.remove("hidden");
+            fineTuneStepDiv.classList.add("hidden");
+            confidenceStepDiv.classList.add("hidden");
+
+            document.querySelectorAll(".likert-button.selected, .coarse-selection button.selected").forEach((btn) => btn.classList.remove("selected"));
+
+            document.getElementById("coarseImageDisplay").classList.remove("hidden");
+            document.getElementById("fineTuneImageDisplay").classList.add("hidden");
+
+            backToCoarseBtn.classList.add("hidden");
+            confirmSelectionBtn.classList.add("hidden");
+            confirmConfidenceBtn.classList.add("hidden");
+
+            coarsePreviewImg.src = "";
+            if (coarseImageDisplayP) coarseImageDisplayP.classList.remove("hidden");
+            
+            setupCoarseStepFocus();
+            parameterStartTime = Date.now();
         }
-
-        const paramName = currentParameterConfig.name[currentLanguage];
-        currentParamDisplay.textContent = paramName;
-        coarseParamNameStrong.innerHTML =
-          currentParameterConfig.parameter_specific_instruction[
-            currentLanguage
-          ];
-        fineTuneParamNameStrong.innerHTML =
-          currentParameterConfig.parameter_specific_instruction[
-            currentLanguage
-          ];
-        coarseButtons.forEach((button) => {
-          const levelKey = button.dataset.levelKey;
-          button.dataset.level = currentParameterConfig.coarse[levelKey];
-        });
-
-        // Show/hide controls in RIGHT panel
-        coarseStepDiv.classList.remove("hidden");
-        fineTuneStepDiv.classList.add("hidden");
-        confidenceStepDiv.classList.add("hidden"); // Also hide confidence step
-
-        // Clear highlighting from BOTH sets of buttons.
-        document
-          .querySelectorAll(
-            ".likert-button.selected, .coarse-selection button.selected"
-          )
-          .forEach((btn) => btn.classList.remove("selected"));
-
-        //likertButtons.forEach(btn => btn.classList.remove('selected'));
-        //coarseButtons.forEach(btn => btn.classList.remove('selected')); // THIS IS THE NEW, ADDED LINE
-
-        // Show/hide images in LEFT panel
-        document
-          .getElementById("coarseImageDisplay")
-          .classList.remove("hidden");
-        document.getElementById("fineTuneImageDisplay").classList.add("hidden");
-
-        // Hide ALL action buttons at the bottom initially for the coarse step
-        backToCoarseBtn.classList.add("hidden");
-        confirmSelectionBtn.classList.add("hidden");
-        confirmConfidenceBtn.classList.add("hidden");
-
-        // Reset preview
-        coarsePreviewImg.src = "";
-        if (coarseImageDisplayP) coarseImageDisplayP.classList.remove("hidden");
-        setupCoarseStepFocus();
-        // Start the timer for this parameter rating.
-        parameterStartTime = Date.now();
-      }
 
       function setupFineTuneStepVim(coarseLevelValue) {
-        clearAllFocus();
-        currentCoarseSelectionLevel = coarseLevelValue;
-        fineTuneParamNameStrong.textContent =
-          currentParameterConfig.parameter_specific_instruction[
-            currentLanguage
-          ];
-        const totalParamLevels = currentParameterConfig.levels;
+            clearAllFocus();
+            currentCoarseSelectionLevel = coarseLevelValue;
+            
+            const paramConfig = PARAMETERS[currentParameterKey];
+            const lang = currentLanguage;
 
-        // Determine the min and max levels for the slider range
-        let minL, maxL;
-        if (coarseLevelValue === PARAMETERS[currentParameterKey].coarse.low) {
-          minL = 1;
-          maxL = 7;
-        } else if (
-          coarseLevelValue === PARAMETERS[currentParameterKey].coarse.mid
-        ) {
-          minL = 8;
-          maxL = 14;
-        } else {
-          // High
-          minL = 15;
-          maxL = 21;
+            // --- THIS IS THE FIX ---
+            // Determine which instruction to use based on the current task mode.
+            let instructionText = '';
+            if (currentTaskMode === 'tutorial') {
+                instructionText = paramConfig.instructions.tutorial.fineTune[lang];
+            } else {
+                instructionText = paramConfig.instructions.task.fineTune[lang];
+            }
+            fineTuneParamNameStrong.innerHTML = instructionText;
+
+            // --- The rest of the function is unchanged ---
+            const totalParamLevels = paramConfig.levels;
+            let minL, maxL;
+            if (coarseLevelValue === paramConfig.coarse.low) { minL = 1; maxL = 7; } 
+            else if (coarseLevelValue === paramConfig.coarse.mid) { minL = 8; maxL = 14; } 
+            else { minL = 15; maxL = 21; }
+            
+            sliderToActualLevelMap = [];
+            for (let i = minL; i <= maxL; i++) { sliderToActualLevelMap.push(i); }
+
+            const randomSliderIndex = Math.floor(Math.random() * sliderToActualLevelMap.length);
+            const initialSliderValue = randomSliderIndex + 1;
+
+            fineTuneSlider.min = 1;
+            fineTuneSlider.max = sliderToActualLevelMap.length;
+            fineTuneSlider.value = initialSliderValue; 
+
+            updateFineTuneImageVim(fineTuneSlider.value);
+            
+            coarseStepDiv.classList.add('hidden');
+            fineTuneStepDiv.classList.remove('hidden');
+            document.getElementById('coarseImageDisplay').classList.add('hidden');
+            document.getElementById('fineTuneImageDisplay').classList.remove('hidden');
+            
+            backToCoarseBtn.classList.remove('hidden');
+            confirmSelectionBtn.classList.remove('hidden');
+            
+            fineTuneSlider.focus(); 
+            currentFocusableElements = [fineTuneSlider, backToCoarseBtn, confirmSelectionBtn];
+            updateKeyboardFocus(0); 
         }
-
-        sliderToActualLevelMap = [];
-        for (let i = minL; i <= maxL; i++) {
-          sliderToActualLevelMap.push(i);
-        }
-
-        // --- LOGIC FOR RANDOMIZATION ---
-        // Instead of centering on the coarse value, pick a random starting index for the slider.
-        const randomSliderIndex = Math.floor(
-          Math.random() * sliderToActualLevelMap.length
-        ); // Get a random index from 0 to length-1
-        const initialSliderValue = randomSliderIndex + 1; // Slider values are 1-based
-
-        fineTuneSlider.min = 1;
-        fineTuneSlider.max = sliderToActualLevelMap.length;
-        fineTuneSlider.value = initialSliderValue; // Set the slider to the random position
-
-        updateFineTuneImageVim(fineTuneSlider.value);
-
-        coarseStepDiv.classList.add("hidden");
-        fineTuneStepDiv.classList.remove("hidden");
-        document.getElementById("coarseImageDisplay").classList.add("hidden");
-        document
-          .getElementById("fineTuneImageDisplay")
-          .classList.remove("hidden");
-
-        backToCoarseBtn.classList.remove("hidden");
-        confirmSelectionBtn.classList.remove("hidden");
-
-        fineTuneSlider.focus();
-        currentFocusableElements = [
-          fineTuneSlider,
-          backToCoarseBtn,
-          confirmSelectionBtn,
-        ];
-        updateKeyboardFocus(0);
-      }
 
       function updateFineTuneImageVim(sliderValStr) {
         const sliderValue = parseInt(sliderValStr);
@@ -2745,53 +2845,87 @@
         displayDemoScreen();
       }
 
-      function displayDemoScreen() {
-        console.log(`DISPLAY DEMO: currentDemoIndex is ${currentDemoIndex}`);
-        console.log(DEMO_PARAMS.length);
-        if (currentDemoIndex < DEMO_PARAMS.length) {
-          // --- This is YOUR working logic for showing a demo. It is unchanged. ---
-          const demo = DEMO_PARAMS[currentDemoIndex];
-          const paramConfig = PARAMETERS[demo.key];
-          const lang = currentLanguage;
+      // REPLACE your existing displayDemoScreen function with this one.
 
-          // Update the parameter icon for the demo
-          const paramDemoIcon = document.getElementById("paramDemoIcon");
-          if (ICONS[demo.key]) {
-            paramDemoIcon.src = ICONS[demo.key];
-            paramDemoIcon.style.display = "block";
-          } else {
-            paramDemoIcon.style.display = "none";
-          }
+        function displayDemoScreen() {
+            if (currentDemoIndex < DEMO_PARAMS.length) {
+                const demo = DEMO_PARAMS[currentDemoIndex];
+                const paramConfig = PARAMETERS[demo.key];
+                const lang = currentLanguage;
+                
+                // Update the parameter icon for the demo
+                const paramDemoIcon = document.getElementById('paramDemoIcon');
+                if (ICONS[demo.key]) {
+                    paramDemoIcon.src = ICONS[demo.key];
+                    paramDemoIcon.style.display = 'block';
+                } else {
+                    paramDemoIcon.style.display = 'none';
+                }
 
-          // 1. Get the template strings from our LANG_STRINGS object.
-        const titleTemplate = LANG_STRINGS[lang].paramDemoTitleTemplate;
-        const textTemplate = LANG_STRINGS[lang].paramDemoTextTemplate;
+                // --- THIS IS THE FIX ---
+                // It now correctly gets the 'demo' instruction text from the new 'instructions' object.
+                document.getElementById('paramDemoTitle').textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
+                document.getElementById('paramDemoText').innerHTML = paramConfig.instructions.demo[lang];
 
-        // 2. Replace the placeholders with the dynamic content.
-        const finalTitle = titleTemplate
-            .replace('{X}', currentDemoIndex + 1)
-            .replace('{paramName}', paramConfig.name[lang]);
-        
-        const finalText = textTemplate
-            .replace('{paramDescription}', paramConfig.parameter_specific_instruction[lang]);
+                // --- The rest of the function is unchanged ---
+                document.getElementById('paramDemoSlider').value = 11;
+                updateDemoImage();
+                showDiv(paramDemoScreen);
+                currentFocusableElements = [paramDemoSlider, document.getElementById('nextDemoBtn')];
+                updateKeyboardFocus(0);
 
-        // 3. Update the text on the screen using the final, translated strings.
-        document.getElementById('paramDemoTitle').textContent = finalTitle;
-        document.getElementById('paramDemoText').innerHTML = finalText;
-          
-          document.getElementById("paramDemoSlider").value = 11;
-          updateDemoImage();
-
-          showDiv(paramDemoScreen);
-
-          // 1. Set the slider as the only focusable element for this screen.
-          currentFocusableElements = [paramDemoSlider];
-          // 2. Set the initial focus on it.
-          updateKeyboardFocus(0);
-        } else {
-          advanceOnboarding();
+            } else {
+                advanceOnboarding();
+            }
         }
-      }
+
+    //   function displayDemoScreen() {
+    //     console.log(`DISPLAY DEMO: currentDemoIndex is ${currentDemoIndex}`);
+    //     console.log(DEMO_PARAMS.length);
+    //     if (currentDemoIndex < DEMO_PARAMS.length) {
+    //       // --- This is YOUR working logic for showing a demo. It is unchanged. ---
+    //       const demo = DEMO_PARAMS[currentDemoIndex];
+    //       const paramConfig = PARAMETERS[demo.key];
+    //       const lang = currentLanguage;
+
+    //       // Update the parameter icon for the demo
+    //       const paramDemoIcon = document.getElementById("paramDemoIcon");
+    //       if (ICONS[demo.key]) {
+    //         paramDemoIcon.src = ICONS[demo.key];
+    //         paramDemoIcon.style.display = "block";
+    //       } else {
+    //         paramDemoIcon.style.display = "none";
+    //       }
+
+    //       // 1. Get the template strings from our LANG_STRINGS object.
+    //     const titleTemplate = LANG_STRINGS[lang].paramDemoTitleTemplate;
+    //     const textTemplate = LANG_STRINGS[lang].paramDemoTextTemplate;
+
+    //     // 2. Replace the placeholders with the dynamic content.
+    //     const finalTitle = titleTemplate
+    //         .replace('{X}', currentDemoIndex + 1)
+    //         .replace('{paramName}', paramConfig.name[lang]);
+        
+    //     const finalText = textTemplate
+    //         .replace('{paramDescription}', paramConfig.parameter_specific_instruction[lang]);
+
+    //     // 3. Update the text on the screen using the final, translated strings.
+    //     document.getElementById('paramDemoTitle').textContent = finalTitle;
+    //     document.getElementById('paramDemoText').innerHTML = paramConfig.instructions.demo[lang];
+          
+    //       document.getElementById("paramDemoSlider").value = 11;
+    //       updateDemoImage();
+
+    //       showDiv(paramDemoScreen);
+
+    //       // 1. Set the slider as the only focusable element for this screen.
+    //       currentFocusableElements = [paramDemoSlider];
+    //       // 2. Set the initial focus on it.
+    //       updateKeyboardFocus(0);
+    //     } else {
+    //       advanceOnboarding();
+    //     }
+    //   }
 
       // This is the single entry point to start the onboarding process.
       function startOnboarding() {
@@ -3374,6 +3508,11 @@
         // Step 5: Cycling through the Demos
         document.getElementById("nextDemoBtn").addEventListener("click", () => {
           currentDemoIndex++;
+          console.log(`1. 'nextDemoBtn' clicked. currentDemoIndex (before increment) is: ${currentDemoIndex}`);
+          if (currentDemoIndex >= DEMO_PARAMS.length) {
+                // If they are finished, explicitly remove the listener before proceeding.
+                document.getElementById('paramDemoSlider').removeEventListener('input', updateDemoImage);
+            }
           displayDemoScreen();
           //advanceOnboarding();
         });
