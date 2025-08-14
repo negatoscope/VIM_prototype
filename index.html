@@ -1041,7 +1041,7 @@
           continueButton: "Continue",
           howToTitle: "How the Task Works",
           howToStep1:
-            `<p>In each trial, you will follow a simple three-step process: First, you will be asked to generate an image in your mind based on a prompt. Second, you will adjust an image on the screen to match the qualities of your mental image. Finally, you will rate how confident you were in that match. Here are the details for each step: </p>
+            `<p>In each trial, you will follow a simple two-phase process: First, you will be asked to generate an image in your mind based on a prompt. Second, you will adjust an image on the screen to try to match the qualities of your mental image, along with a rating of how confident you were in that match. Here are the details for each phase: </p>
             <b>1. Generate an Image:</b> Based on the instruction, you will either remember a photo you just saw, recall a personal memory, or imagine a new scene. We encourage you to <b>close your eyes</b> for this step to help you focus. Try to form the image as you naturally would, and once you have a clear impression, <b>hold that image in your mind.</b>`,
             howToStep2:
             "<b>Step 2: Match the Image Quality.</b> You will then adjust an image on the screen to match the visual qualities of your mental image.",
@@ -1054,10 +1054,14 @@
           paramDemoTextTemplate: "This refers to {paramDescription}",
           practiceIntroTitle: "Putting It All Together: A Practice Round",
           practiceIntroText: `
-                You will now complete one full practice rating.<br><br>
-                <b>1. Coarse Selection:</b> First, choose a general level (Low, Medium, or High).<br>
-                <b>2. Fine-Tuning:</b> Next, use a slider to make a more precise match.<br>
-                <b>3. Confidence Rating:</b> Finally, rate how confident you are in your match.
+                <p>
+                    Now that you are familiar with the different visual qualities, you will complete one full practice rating for <b>Brightness</b>.
+                </p>
+                <p>
+                    <b>1. Coarse Selection:</b> First, you will choose a general level (Low, Medium, or High).<br><br>
+                    <b>2. Fine-Tuning:</b> Next, you will use a slider to make a more precise match.<br><br>
+                    <b>3. Confidence Rating:</b> Finally, you will rate how confident you were in your match.
+                </p>
             `,
           startPracticeButton: "Continue",
           readyTitle: "Practice Complete",
@@ -1119,7 +1123,7 @@
           continueButton: "Continuar",
           howToTitle: "Cómo Funciona la Tarea",
           howToStep1:
-            `<p>En cada ensayo, seguirá un sencillo proceso de tres pasos: Primero, se le pedirá que genere una imagen en su mente basándose en una instrucción. Segundo, ajustará una imagen en la pantalla para que coincida con las cualidades de su imagen mental. Finalmente, calificará la seguridad de su decisión. Aquí están los detalles de cada paso: </p>
+            `<p>En cada ensayo, seguirá un sencillo proceso de dos fases: Primero, se le pedirá que genere una imagen en su mente basándose en una instrucción. Segundo, ajustará una imagen en la pantalla para intentar que coincida con las cualidades de su imagen mental, incluyendo una valoración sobre qué tan seguro/a está de su decisión. Aquí están los detalles de cada paso: </p>
             <b>1. Generar una Imagen:</b> Basándose en la instrucción, deberá recordar una foto que acaba de ver, evocar un recuerdo personal o imaginar una escena nueva. Le animamos a <b>cerrar los ojos</b> en este paso para ayudarle a concentrarse. Intente formar la imagen de la manera más natural para usted y, una vez que tenga una impresión clara, <b>mantenga esa imagen en su mente.</b>`,
             howToStep2:
             "<b>Paso 2: Igualar la Calidad de la Imagen.</b> Luego, ajustará una imagen en la pantalla para que coincida con las cualidades visuales de su imagen mental.",
@@ -1132,10 +1136,14 @@
           paramDemoTextTemplate: "Esto se refiere a {paramDescription}",
           practiceIntroTitle: "Putting It All Together: A Practice Round",
           practiceIntroText: `
-                You will now complete one full practice rating.<br><br>
-                <b>1. Coarse Selection:</b> First, choose a general level (Low, Medium, or High).<br>
-                <b>2. Fine-Tuning:</b> Next, use a slider to make a more precise match.<br>
-                <b>3. Confidence Rating:</b> Finally, rate how confident you are in your match.
+                <p>
+                    Ahora que se ha familiarizado con las diferentes cualidades visuales, completará una ronda de prueba completa para el parámetro de <b>Brillo</b>.
+                </p>
+                <p>
+                    <b>1. Selección General:</b> Primero, elegirá un nivel general (Bajo, Medio o Alto).<br><br>
+                    <b>2. Ajuste Fino:</b> Luego, usará un deslizador para hacer un ajuste más preciso.<br><br>
+                    <b>3. Calificación de Confianza:</b> Finalmente, calificará qué tan seguro/a estaba de su ajuste.
+                </p>
             `,
           startPracticeButton: "Continuar",
           readyTitle: "Práctica Completada",
@@ -1155,8 +1163,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "how colorful or saturated it was.",
-            es: "qué tan colorido o saturado era.",
+            en: `how <b>colorful or muted</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from grayscale (<b>Low Saturation</b>) to intensely colorful (<b>High Saturation</b>).</p>`,
+            es: `qué tan <b>colorida o apagada</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de una escala de grises (<b>Baja Saturación</b>) a colores intensos (<b>Alta Saturación</b>).</p>`,
           },
         },
         brightness: {
@@ -1164,8 +1172,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "how bright or dim it appeared in your head. <p>Note how moving the slider makes the images brighter or darker, which is what <b>Brightness</b> represents.</p>",
-            es: "qué tan brillante u oscuro parecía. <p>Nota como al mover el deslizador la imagen se vuelve más brillante o más oscura, que es lo que representa el parámetro <b>Brillo</b> </p>",
+            en: `how <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
+            es: `qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`,
           },
         },
         contrast: {
@@ -1173,8 +1181,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "the difference between light and dark areas.",
-            es: "la diferencia entre áreas claras y oscuras.",
+            en: `the difference between the <b>light and dark</b> areas of the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from washed out (<b>Low Contrast</b>) to stark and defined (<b>High Contrast</b>).</p>`,
+            es: `la diferencia entre las áreas <b>claras y oscuras</b> de la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener un aspecto lavado (<b>Bajo Contraste</b>) a uno nítido y definido (<b>Alto Contraste</b>).</p>`,
           },
         },
         blurriness: {
@@ -1182,8 +1190,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "how sharp or out-of-focus it was.",
-            es: "qué tan nítido o desenfocado estaba.",
+            en: `how <b>sharp or out-of-focus</b> the scene was in your mind. <p>In the interactive demo, notice how moving the slider changes the image from blurry (<b>High Blurriness</b>) to sharp and clear (<b>Low Blurriness</b>).</p>`,
+            es: `qué tan <b>nítida o desenfocada</b> estaba la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de borrosa (<b>Alto Desenfoque</b>) a nítida y clara (<b>Bajo Desenfoque</b>).</p>`,
           },
         },
         detailedness: {
@@ -1191,8 +1199,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "how rich in fine features and textures it was.",
-            es: "qué tan rico en detalles finos y texturas era.",
+            en: `the amount of <b>fine-grained detail and texture</b> present in the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from smooth and simple (<b>Low Detail</b>) to rich with complex textures (<b>High Detail</b>).</p>`,
+            es: `la cantidad de <b>detalles finos y texturas</b> presentes en la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de un aspecto liso y simple (<b>Bajo Detalle</b>) a uno rico en texturas complejas (<b>Alto Detalle</b>).</p>`,
           },
         },
         precision: {
@@ -1200,8 +1208,8 @@
           levels: 21,
           coarse: { low: 4, mid: 11, high: 18 },
           parameter_specific_instruction: {
-            en: "how specific or ambiguous the colors were.",
-            es: "qué tan específicos o ambiguos eran los colores.",
+            en: `how <b>specific or ambiguous</b> the colors were in your mind. <p>In the interactive demo, notice how moving the slider changes the image from having few, blocky colors (<b>Low Precision</b>) to having many subtle shades and gradients (<b>High Precision</b>).</p>`,
+            es: `qué tan <b>específicos o ambiguos</b> eran los colores en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener pocos colores sólidos (<b>Baja Precisión</b>) a tener muchos tonos y gradientes sutiles (<b>Alta Precisión</b>).</p>`,
           },
         },
         // --- THIS IS THE NEW ATTENTION CHECK PARAMETER ---
