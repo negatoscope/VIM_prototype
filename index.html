@@ -1968,6 +1968,49 @@
 
       // --- Smart Preloader Module ---
 
+      async function preloadDemoAssets() {
+          // 1. Show the loading overlay and disable the continue button
+          const continueBtn = document.getElementById('startDemosBtn');
+          if (continueBtn) continueBtn.disabled = true;
+          loadingOverlay.classList.remove('hidden');
+          progressBar.style.width = '0%';
+          loadingText.textContent = "Loading Demos...";
+
+          // 2. Create the list of all image URLs needed for the demos
+          let urlsToPreload = [];
+          DEMO_PARAMS.forEach(demo => {
+              // For each demo, we need all 21 variants for its slider
+              for (let level = 1; level <= 21; level++) {
+                  urlsToPreload.push(getVariantImagePath('image06', demo.key, level));
+              }
+          });
+
+          // 3. Preload all images and update the progress bar
+          let loadedCount = 0;
+          const totalToLoad = urlsToPreload.length;
+
+          for (const url of urlsToPreload) {
+              try {
+                  await preloadImage(url);
+                  loadedCount++;
+                  const percent = Math.round((loadedCount / totalToLoad) * 100);
+                  progressBar.style.width = `${percent}%`;
+              } catch (error) {
+                  console.warn(`Could not preload demo image: ${url}`, error);
+                  loadedCount++; // Increment anyway to not get stuck
+              }
+          }
+          
+          // 4. Hide overlay and proceed to the first demo
+          loadingText.textContent = "Loading complete!";
+          setTimeout(() => {
+              loadingOverlay.classList.add('hidden');
+              if (continueBtn) continueBtn.disabled = false;
+              // Now that everything is loaded, start the demos
+              advanceOnboarding(); 
+          }, 250);
+      }
+
       async function preloadTrialAssets(trialData) {
         // 1. Show the loading overlay and disable the continue button
         const continueBtn = document.getElementById(
@@ -2875,6 +2918,7 @@
                 updateKeyboardFocus(0);
 
             } else {
+                paramDemoSlider.removeEventListener('input', updateDemoImage);
                 advanceOnboarding();
             }
         }
@@ -2928,17 +2972,17 @@
     //   }
 
       // This is the single entry point to start the onboarding process.
-      function startOnboarding() {
-        onboardingStep = 0;
-        currentDemoIndex = 0; // Also reset the demo counter
-        runOnboardingStep();
-      }
+      // function startOnboarding() {
+      //   onboardingStep = 0;
+      //   currentDemoIndex = 0; // Also reset the demo counter
+      //   runOnboardingStep();
+      // }
 
       // This is the single "brain" function for the entire onboarding flow.
-      function advanceOnboarding() {
-        onboardingStep++;
-        runOnboardingStep();
-      }
+      // function advanceOnboarding() {
+      //   onboardingStep++;
+      //   runOnboardingStep();
+      // }
 
       // This function determines which screen to show based on the current step.
       function runOnboardingStep() {
@@ -3142,6 +3186,26 @@
         }
       }
 
+      // ADD THIS NEW FUNCTION
+      function handleNoInfoSelection() {
+          if (!currentTrialData || !currentParameterKey) return;
+
+          // Record the "no_info" response
+          if (!currentTrialResponses.parameter_responses) {
+              currentTrialResponses.parameter_responses = {};
+          }
+          currentTrialResponses.parameter_responses[currentParameterKey] = {
+              level: 'no_info',
+              // Confidence will be collected in the next step
+          };
+
+          // First, explicitly hide the coarse selection controls
+          coarseStepDiv.classList.add('hidden');
+          
+          // Then, go DIRECTLY to the confidence step
+          showConfidenceStep();
+      }
+
       function handleConfirmSelection() {
         if (!currentTrialData || !currentParameterKey) return;
 
@@ -3182,6 +3246,55 @@
         currentParameterIndexInTask++;
         loadNextParameterInVim();
       }
+
+      // ADD THIS ENTIRE NEW MODULE
+
+      // --- Onboarding State Machine ---
+      //let onboardingStep = 0;
+      const ONBOARDING_FLOW = [
+          'welcomeScreen',
+          'howToScreen',
+          'paramIntroScreen',
+          'preloadDemos',
+          'paramDemos',
+          'practiceIntroScreen',
+          'practiceTrial',
+          'readyScreen'
+      ];
+
+      function startOnboarding() {
+          onboardingStep = 0;
+          currentDemoIndex = 0;
+          runOnboardingStep();
+      }
+
+      function advanceOnboarding() {
+          onboardingStep++;
+          runOnboardingStep();
+      }
+
+      function runOnboardingStep() {
+          const currentStepName = ONBOARDING_FLOW[onboardingStep];
+          console.log(`Running Onboarding Step: ${currentStepName}`);
+
+          if (currentStepName.endsWith('Screen')) {
+              showDiv(document.getElementById(currentStepName));
+          } 
+          else if (currentStepName === 'preloadDemos') {
+              // --- THIS IS THE FIX ---
+              // When we hit this step, call the preloader function.
+              // The preloader will automatically call startParameterDemos when it's done.
+              preloadDemoAssets(); 
+          }
+          else if (currentStepName === 'paramDemos') {
+              // This step is now only entered AFTER preloading is complete.
+              startParameterDemos();
+          }
+          else if (currentStepName === 'practiceTrial') {
+              startTutorial();
+          }
+      }
+      // --- End Onboarding State Machine ---
 
       // --- VVIQ-2 Module (Corrected with Event Delegation) ---
 
@@ -3469,84 +3582,95 @@
         showDiv(mainMenuDiv);
         if (isTouchDevice) document.body.classList.add("touch-device");
 
-        // --- Onboarding Flow Listeners ---
-        // Step 1: Main Menu -> Welcome Screen
-        document
-          .getElementById("startActualTaskBtn")
-          .addEventListener("click", () => {
-            // Reset the state every time the flow begins
-            onboardingStep = 0;
-            currentDemoIndex = 0;
-            showDiv(welcomeScreen);
-            //advanceOnboarding();
-          });
+        // --- Onboarding Listeners (Unified) ---
+        document.getElementById('startActualTaskBtn').addEventListener('click', startOnboarding);
+        document.getElementById('welcomeContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('howToContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('paramIntroContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('practiceIntroContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('startExperimentBtn').addEventListener('click', startActualTask);
 
-        // Step 2: Welcome Screen -> How To Screen
-        document
-          .getElementById("welcomeContinueBtn")
-          .addEventListener("click", () => {
-            showDiv(howToScreen);
-            advanceOnboarding();
-          });
-
-        // Step 3: How To Screen -> Parameter Intro Screen
-        document
-          .getElementById("howToContinueBtn")
-          .addEventListener("click", () => {
-            showDiv(paramIntroScreen);
-            advanceOnboarding();
-          });
-
-        // Step 4: Parameter Intro Screen -> Start Interactive Demos
-        document
-          .getElementById("paramIntroContinueBtn")
-          .addEventListener("click", () => {
-            startParameterDemos();
-            advanceOnboarding();
-          });
-
-        // Step 5: Cycling through the Demos
-        document.getElementById("nextDemoBtn").addEventListener("click", () => {
-          currentDemoIndex++;
-          console.log(`1. 'nextDemoBtn' clicked. currentDemoIndex (before increment) is: ${currentDemoIndex}`);
-          if (currentDemoIndex >= DEMO_PARAMS.length) {
-                // If they are finished, explicitly remove the listener before proceeding.
-                document.getElementById('paramDemoSlider').removeEventListener('input', updateDemoImage);
-            }
-          displayDemoScreen();
-          //advanceOnboarding();
+        // The demo "next" button has its own special logic
+        document.getElementById('nextDemoBtn').addEventListener('click', () => {
+            currentDemoIndex++;
+            displayDemoScreen();
         });
 
-        // Step 6: Parameter Intro Screen -> Start Interactive Demos
-        document
-          .getElementById("practiceIntroContinueBtn")
-          .addEventListener("click", () => {
-            startTutorial();
-            advanceOnboarding();
-          });
+        // --- Onboarding Flow Listeners ---
+        // Step 1: Main Menu -> Welcome Screen
+        // document
+        //   .getElementById("startActualTaskBtn")
+        //   .addEventListener("click", () => {
+        //     // Reset the state every time the flow begins
+        //     onboardingStep = 0;
+        //     currentDemoIndex = 0;
+        //     showDiv(welcomeScreen);
+        //     //advanceOnboarding();
+        //   });
+
+        // // Step 2: Welcome Screen -> How To Screen
+        // document
+        //   .getElementById("welcomeContinueBtn")
+        //   .addEventListener("click", () => {
+        //     showDiv(howToScreen);
+        //     advanceOnboarding();
+        //   });
+
+        // // Step 3: How To Screen -> Parameter Intro Screen
+        // document
+        //   .getElementById("howToContinueBtn")
+        //   .addEventListener("click", () => {
+        //     showDiv(paramIntroScreen);
+        //     advanceOnboarding();
+        //   });
+
+        // // Step 4: Parameter Intro Screen -> Start Interactive Demos
+        // document.getElementById("paramIntroContinueBtn").addEventListener("click", preloadDemoAssets);
+
+        // // Step 5: Cycling through the Demos
+        // document.getElementById("nextDemoBtn").addEventListener("click", () => {
+        //   currentDemoIndex++;
+        //   console.log(`1. 'nextDemoBtn' clicked. currentDemoIndex (before increment) is: ${currentDemoIndex}`);
+        //   if (currentDemoIndex >= DEMO_PARAMS.length) {
+        //         // If they are finished, explicitly remove the listener before proceeding.
+        //         document.getElementById('paramDemoSlider').removeEventListener('input', updateDemoImage);
+        //     }
+        //   displayDemoScreen();
+        //   //advanceOnboarding();
+        // });
+
+        // // Step 6: Parameter Intro Screen -> Start Interactive Demos
+        // document
+        //   .getElementById("practiceIntroContinueBtn")
+        //   .addEventListener("click", () => {
+        //     startTutorial();
+        //     advanceOnboarding();
+        //   });
 
         // Step 7: Ready Screen -> Start the Real Experiment
         document
           .getElementById("startExperimentBtn")
           .addEventListener("click", startActualTask);
 
-        document.getElementById("noInfoBtn").addEventListener("click", () => {
-          if (!currentTrialData || !currentParameterKey) return;
+        document.getElementById('noInfoBtn').addEventListener('click', handleNoInfoSelection);
 
-          // Record the "no_info" response for the level
-          if (!currentTrialResponses.parameter_responses) {
-            currentTrialResponses.parameter_responses = {};
-          }
-          currentTrialResponses.parameter_responses[currentParameterKey] = {
-            level: "no_info",
-            // Confidence will be collected in the next step
-          };
+        // document.getElementById("noInfoBtn").addEventListener("click", () => {
+        //   if (!currentTrialData || !currentParameterKey) return;
 
-          // First, explicitly hide the coarse selection controls.
-          coarseStepDiv.classList.add("hidden");
-          // Go DIRECTLY to the confidence step, skipping fine-tune.
-          showConfidenceStep();
-        });
+        //   // Record the "no_info" response for the level
+        //   if (!currentTrialResponses.parameter_responses) {
+        //     currentTrialResponses.parameter_responses = {};
+        //   }
+        //   currentTrialResponses.parameter_responses[currentParameterKey] = {
+        //     level: "no_info",
+        //     // Confidence will be collected in the next step
+        //   };
+
+        //   // First, explicitly hide the coarse selection controls.
+        //   coarseStepDiv.classList.add("hidden");
+        //   // Go DIRECTLY to the confidence step, skipping fine-tune.
+        //   showConfidenceStep();
+        // });
         document.getElementById("testVVIQBtn").addEventListener("click", () => {
           // --- NEW PROGRESS BAR LOGIC ---
           completedSteps = 0;
@@ -3921,10 +4045,20 @@
             if (event.key === 'Enter' && currentFocusedIndex > -1) {
                 // --- THIS IS THE FIX ---
                 const focusedElement = currentFocusableElements[currentFocusedIndex];
-                const realLevel = PARAMETERS[currentParameterKey].coarse[focusedElement.dataset.levelKey];
                 
-                // Keyboard Enter should ALWAYS be a direct confirmation, never a preview.
-                setupFineTuneStepVim(realLevel);
+                
+                
+                // Check if the focused element is the No Info button
+                if (focusedElement.id === 'noInfoBtn') {
+                    // If it is, call our new, dedicated handler
+                    handleNoInfoSelection();
+                } else {
+                    // Otherwise, it's a Low/Medium/High button, so click it normally
+                    const realLevel = PARAMETERS[currentParameterKey].coarse[focusedElement.dataset.levelKey];
+                    // Keyboard Enter should ALWAYS be a direct confirmation, never a preview.
+                    setupFineTuneStepVim(realLevel);
+                    focusedElement.click();
+                }
                 
                 handled = true;
             }
