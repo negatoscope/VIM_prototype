@@ -1799,27 +1799,27 @@
       const DEMO_PARAMS = [
         {
           key: "brightness",
-          image: getVariantImagePath("image06", "brightness", 11),
+          image: getVariantImagePath("tutorial", "brightness", 11),
         },
         {
           key: "contrast",
-          image: getVariantImagePath("image06", "contrast", 11),
+          image: getVariantImagePath("tutorial", "contrast", 11),
         },
         {
           key: "saturation",
-          image: getVariantImagePath("image06", "saturation", 11),
+          image: getVariantImagePath("tutorial", "saturation", 11),
         },
         {
           key: "blurriness",
-          image: getVariantImagePath("image06", "blurriness", 11),
+          image: getVariantImagePath("tutorial", "blurriness", 11),
         },
         {
           key: "detailedness",
-          image: getVariantImagePath("image06", "detailedness", 11),
+          image: getVariantImagePath("tutorial", "detailedness", 11),
         },
         {
           key: "precision",
-          image: getVariantImagePath("image06", "precision", 11),
+          image: getVariantImagePath("tutorial", "precision", 11),
         },
       ];
 
@@ -1981,7 +1981,7 @@
           DEMO_PARAMS.forEach(demo => {
               // For each demo, we need all 21 variants for its slider
               for (let level = 1; level <= 21; level++) {
-                  urlsToPreload.push(getVariantImagePath('image06', demo.key, level));
+                  urlsToPreload.push(getVariantImagePath('tutorial', demo.key, level));
               }
           });
 
@@ -2859,7 +2859,7 @@
         const demo = DEMO_PARAMS[currentDemoIndex];
         const level = paramDemoSlider.value;
         // Dynamically get the correct image variant based on the slider's value
-        paramDemoImg.src = getVariantImagePath("image06", demo.key, level);
+        paramDemoImg.src = getVariantImagePath("tutorial", demo.key, level);
       }
 
       function startTutorial() {
