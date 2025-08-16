@@ -103,6 +103,7 @@
         #howToScreen > button,
         #paramIntroScreen > button,
         #practiceIntroScreen > button,
+        #tutorialPromptScreen > button,
         #readyScreen > button,
         #conditionInstructionScreen > button,
         #preVimScreenContainer button {
@@ -252,6 +253,18 @@
       .vviq-toggle {
             text-align: center;
         }
+
+      #vviqScreen .flex-spacer + button, /* Selects the Next/Submit button */
+      #vviqScreen .back-button { /* Selects the Back to Menu button */
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+      }
+      #resultsDisplay button {
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+      }
       .image-display {
         display: flex;
         align-items: center;
@@ -744,6 +757,15 @@
       ></button>
     </div>
 
+    <!-- ADD THIS NEW SCREEN for the Tutorial Prompt -->
+    <div id="tutorialPromptScreen" class="main-container hidden">
+      <img id="tutorialPromptIcon" class="header-icon" src="" alt="Tutorial Icon">  
+      <h2 data-lang-key="tutorialPromptTitle"></h2>
+        <p data-lang-key="tutorialPromptText"></p>
+        <button id="tutorialStartBtn" data-lang-key="continueButton"></button>
+        <button class="back-button back-to-menu-btn" data-lang-key="backToMenuButton"></button>
+    </div>
+
     <div id="readyScreen" class="main-container hidden">
       <h2 data-lang-key="readyTitle"></h2>
       <p data-lang-key="readyText"></p>
@@ -1063,6 +1085,8 @@
                     <b>3. Confidence Rating:</b> Finally, you will rate how confident you were in your match.
                 </p>
             `,
+            tutorialPromptTitle: "Practice Trial: Instructions",
+            tutorialPromptText: "For this practice trial, please imagine <b>a sunny day at a park with green trees.</b><br><br>Please close your eyes to form a clear and stable mental image. When you have it, open your eyes and press Continue.",
           tutorialVimInstruction: "This is a practice round. Please try to match the <b>Brightness</b> of the mental image you are holding in your mind.",
           startPracticeButton: "Continue",
           readyTitle: "Practice Complete",
@@ -1146,6 +1170,8 @@
                     <b>3. Calificación de Confianza:</b> Finalmente, calificará qué tan seguro/a estaba de su ajuste.
                 </p>
             `,
+            tutorialPromptTitle: "Ensayo de Práctica: Instrucciones",
+            tutorialPromptText: "Para este ensayo de práctica, por favor imagine <b>un día soleado en un parque con árboles verdes.</b><br><br>Por favor, cierre los ojos para formar una imagen clara y estable. Cuando la tenga, abra los ojos y presione Continuar.",
           tutorialVimInstruction: "Esta es una ronda de práctica. Por favor, intente igualar el <b>Brillo</b> de la imagen mental que tiene en su mente.",
           startPracticeButton: "Continuar",
           readyTitle: "Práctica Completada",
@@ -1791,6 +1817,8 @@
         "https://script.google.com/macros/s/AKfycbwkcpn2kATIjVlfgGAT6um4sN2LOcTU6Qde2vj8mKzd19VtfVxHynh3KR-qMBuNeanSkQ/exec";
       const saveStatus = document.getElementById("saveStatus");
 
+      let generationStartTime = null;
+
       let currentLanguage = "en";
       const imageBaseFolder = "images";
       const imageExtension = ".jpg";
@@ -2208,6 +2236,7 @@
           paramIntroScreen,
           paramDemoScreen,
           practiceIntroScreen,
+          tutorialPromptScreen, 
           readyScreen,
           parameterSelectorDiv,
           conditionInstructionScreenDiv,
@@ -2395,6 +2424,19 @@
           return;
         }
 
+        // Create the response object as soon as the trial starts.
+        currentTrialResponses = {
+            trial_id: currentTrialData.trial_id,
+            condition: currentTrialData.condition,
+            image_id: currentTrialData.base_image_id,
+            parameter_responses: {}
+        };
+
+        // If the trial is one that requires image generation from a prompt, start the timer.
+        if (trialDataObject.condition === 'episodic_recall' || trialDataObject.condition === 'scene_imagination') {
+            generationStartTime = Date.now();
+        }
+
         // Update the condition icon
         const conditionIcon = document.getElementById("conditionIcon");
         if (ICONS[currentTrialData.condition]) {
@@ -2435,27 +2477,26 @@
 
       startTrialFromInstructionsBtn.addEventListener("click", () => {
         if (!currentTrialData) return;
+        // If a timer was started for this trial, stop it and record the time.
+        if (generationStartTime) {
+            currentTrialResponses.generation_rt = Date.now() - generationStartTime;
+            generationStartTime = null;
+        }
         if (currentTrialData.condition === "perceptual_recall") {
-          startPreVimPhase(currentTrialData);
-        } else {
-          currentTrialResponses = {
-            trial_id: currentTrialData.trial_id,
-            condition: currentTrialData.condition,
-            image_id: currentTrialData.base_image_id,
-            parameter_responses: {},
-          };
-          beginVimRating();
+            startPreVimPhase(currentTrialData);
+        } else { 
+            beginVimRating();
         }
       });
 
       // --- Pre-VIM Task Flow ---
       function startPreVimPhase(trialData) {
-        currentTrialResponses = {
-          trial_id: trialData.trial_id,
-          condition: trialData.condition,
-          image_id: trialData.base_image_id,
-          parameter_responses: {},
-        };
+        // currentTrialResponses = {
+        //   trial_id: trialData.trial_id,
+        //   condition: trialData.condition,
+        //   image_id: trialData.base_image_id,
+        //   parameter_responses: {},
+        // };
 
         showDiv(preVimScreenContainerDiv);
 
@@ -2479,15 +2520,27 @@
             holdImagePromptP.textContent =
               LANG_STRINGS[currentLanguage].holdImagePrompt_recall;
             holdImageInstructionScreenDiv.classList.remove("hidden");
-
+            // Start the timer now that the "hold" prompt is visible.
+            generationStartTime = Date.now();
+            console.log(`%c1. TIMER STARTED for perceptual_recall. Timestamp: ${generationStartTime}`, 'color: blue; font-weight: bold;');
             currentFocusableElements = [holdImageContinueBtn];
             updateKeyboardFocus(0);
           }, 1000); // Image display duration: 4 seconds
         }, 2000); // Fixation duration: 1 second
       }
 
-      holdImageContinueBtn.addEventListener("click", () => {
-        beginVimRating();
+      holdImageContinueBtn.addEventListener('click', () => {
+          if (generationStartTime) {
+              const generationTime = Date.now() - generationStartTime;
+              currentTrialResponses.generation_rt = generationTime;
+              generationStartTime = null;
+
+              // --- ADD THESE TWO LINES ---
+              console.log(`%c2. RT CALCULATED for perceptual_recall: ${generationTime}ms`, 'color: green; font-weight: bold;');
+              // The JSON trick logs a snapshot, not a live view, which is crucial for debugging.
+              console.log('   STATE AFTER STORING:', JSON.parse(JSON.stringify(currentTrialResponses)));
+          }
+          beginVimRating();
       });
 
       // --- VIM Parameter Rating Functions ---
@@ -2544,9 +2597,13 @@
           // --- All parameters for the current trial are FINISHED ---
 
           if (currentTaskMode === "actual_task_full") {
-            // Only add VIM trials to the results array
+            console.log(`%c3. FINAL CHECK before saving trial data:`, 'color: red; font-weight: bold;');
+            console.log('   DATA TO BE SAVED:', JSON.parse(JSON.stringify(currentTrialResponses)));
             if (!currentTrialData.is_attention_check) {
-              allCollectedResponses.push({ ...currentTrialResponses });
+                // if (currentTrialData.generation_rt) {
+                //     currentTrialResponses.generation_rt = currentTrialData.generation_rt;
+                // }
+                allCollectedResponses.push({...currentTrialResponses});
             }
           }
 
@@ -3587,7 +3644,19 @@
         document.getElementById('welcomeContinueBtn').addEventListener('click', advanceOnboarding);
         document.getElementById('howToContinueBtn').addEventListener('click', advanceOnboarding);
         document.getElementById('paramIntroContinueBtn').addEventListener('click', advanceOnboarding);
-        document.getElementById('practiceIntroContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById("practiceIntroContinueBtn").addEventListener("click", () => {
+            // 1. Get a reference to the new icon element.
+            const iconEl = document.getElementById('tutorialPromptIcon');
+            
+            // 2. Set its source to the 'imagination' icon, which is a good fit for a practice trial.
+            //    We use the ICONS constant we already have.
+            iconEl.src = ICONS.scene_imagination;
+            // It now shows the new tutorial prompt screen.
+            showDiv(document.getElementById('tutorialPromptScreen'));
+        });
+        document.getElementById("tutorialStartBtn").addEventListener("click", () => {
+            startTutorial();
+        });
         document.getElementById('startExperimentBtn').addEventListener('click', startActualTask);
 
         // The demo "next" button has its own special logic
@@ -3888,7 +3957,12 @@
               event.preventDefault();
               document.getElementById("practiceIntroContinueBtn").click();
             }
-          } else if (!readyScreen.classList.contains("hidden")) {
+          } else if (!document.getElementById('tutorialPromptScreen').classList.contains('hidden')) {
+              if (event.key === "Enter") {
+                  event.preventDefault();
+                  document.getElementById('tutorialStartBtn').click();
+              }
+            }else if (!readyScreen.classList.contains("hidden")) {
             if (event.key === "Enter") {
               event.preventDefault();
               document.getElementById("startExperimentBtn").click();
@@ -3910,7 +3984,7 @@
           ) {
             if (event.key === "Enter") {
               event.preventDefault();
-              beginVimRating();
+              holdImageContinueBtn.click();
             }
           }
         });
