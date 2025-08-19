@@ -1,0 +1,4191 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlTag">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VIM Task</title>
+    <link rel="icon" type="image/png" href="images/instructions/icon_blurriness.png">
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+        background-color: #f4f4f4;
+      }
+      .main-container {
+        border: 1px solid #ccc;
+        padding: 20px;
+        text-align: left;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 800px;
+        margin-top: 20px;
+      }
+      /* This is the new top-level wrapper for our split-screen view */
+      /* REPLACEMENT CSS RULES */
+
+      .split-container {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch; /* Make panels equal height */
+        justify-content: center;
+        gap: 20px;
+        width: 100%; /* Use the full browser width */
+        height: calc(
+          100vh - 40px
+        ); /* Fill the full screen height, minus some padding */
+        padding: 20px;
+        box-sizing: border-box; /* Include padding in the width/height calculation */
+      }
+
+      /* This is the new LEFT panel, which will hold the image */
+      .image-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #eee;
+        height: 90vh; /* Increased from 85vh */
+        border-radius: 8px;
+        /* padding: 10px;  <-- REMOVED to maximize space */
+      }
+
+      /* This is the new RIGHT panel, for all our text and buttons */
+      .controls-panel {
+        /* --- Your existing properties --- */
+        flex: 0 0 400px;
+        border: 1px solid #ccc;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        height: 85vh;
+        overflow-y: auto;
+        text-align: left;
+
+        /* --- The new properties to add --- */
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* 1. Center all main titles and subtitles */
+        .main-container h1, 
+        .main-container h2, 
+        .controls-panel h2 {
+            text-align: center;
+        }
+
+        /* 2. Center the content of specific instruction paragraphs that need it */
+        .main-container p[data-lang-key="mainMenuWelcome"],
+        .main-container p[data-lang-key="welcomeInstructions"] p { /* ADDED THIS LINE */
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        /* 3. Center all single action buttons on simple screens */
+        #mainMenu > button {
+            display: block; /* Each button will now take its own line */
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 1px; /* Explicitly add space between the buttons */
+            width: 250px; /* You can adjust this width as needed */
+        }
+        #welcomeScreen > button,
+        #howToScreen > button,
+        #paramIntroScreen > button,
+        #practiceIntroScreen > button,
+        #readyScreen > button,
+        #conditionInstructionScreen > button,
+        #preVimScreenContainer button {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 4. Center the interactive elements within the VIM controls panel */
+        .coarse-selection, 
+        .fine-tuning,
+        .confidence-rating,
+        .controls-bottom { /* This now also centers the bottom button group */
+            text-align: center;
+        }
+
+        /* 5. Center the content of the parameter selector screen */
+        #parameterSelector {
+            text-align: center;
+        }
+
+      /* This is the generic "spacer" that will push content apart.
+        This is the most important missing piece. */
+      .flex-spacer {
+        flex-grow: 1; /* This makes the element take up all available empty vertical space */
+      }
+
+      /* This styles the container for the buttons at the bottom */
+      .controls-bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .confidence-rating {
+        margin-top: 20px;
+      }
+
+      /* This is the new parent container for the scale and its labels */
+      .likert-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 15px 0;
+        margin-top: 25px; /* Added this line to create more space above */
+      }
+
+      /* This is the existing scale, no major changes needed */
+      .likert-scale {
+        display: flex;
+        justify-content: center;
+        flex-grow: 1; /* Allow the button container to take up the space */
+      }
+
+      .likert-button {
+        padding: 10px;
+        min-width: 40px; /* Give buttons a consistent width */
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ccc;
+      }
+
+      .likert-button:hover {
+        background-color: #e0e0e0;
+      }
+
+      /* Style for the selected confidence button */
+      .likert-button.selected {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+      }
+
+      .likert-label-end {
+        width: 150px; /* Give the labels a fixed width */
+        font-size: 13px; /* Slightly smaller to help with fitting */
+        color: #666;
+      }
+      .likert-label-end:first-child {
+        text-align: right; /* Align the left label to the right */
+      }
+      .likert-label-end:last-child {
+        text-align: left; /* Align the right label to the left */
+      }
+
+      .likert-labels {
+        display: flex;
+        justify-content: space-between;
+        max-width: 350px;
+        margin: 0 auto;
+        font-size: 14px;
+        color: #555;
+      }
+
+      #vviqScreen {
+        text-align: left;
+        max-width: 800px;
+      }
+      #vviqScreen h2 {
+        text-align: center;
+      }
+      .vviq-instructions {
+        line-height: 1.6;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+      }
+      .vviq-rating-scale-table {
+        margin: 20px 0;
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .vviq-rating-scale-table td,
+      .vviq-rating-scale-table th {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .vviq-item-container {
+        margin-top: 25px;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+      }
+      .vviq-prompt-header {
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+      .vviq-item {
+        margin-bottom: 15px;
+      }
+      .vviq-item-text {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .vviq-radio-group label {
+        margin-right: 15px;
+        cursor: pointer;
+      }
+      #vviqNextBtn,
+      #vviqSubmitBtn {
+        display: block;
+        margin: 30px auto 10px auto; /* 'auto' on left/right handles the centering */
+        width: 200px;
+      }
+      .vviq-toggle {
+            text-align: center;
+        }
+      .image-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #eee;
+        min-height: 30vh;
+        max-height: 100%;
+        width: 100%;
+      }
+      .image-display img {
+        max-width: 100%;
+        max-height: 100%;
+        border: 1px solid black;
+        object-fit: contain;
+      }
+      .slider-value-display {
+        display: none;
+      }
+      .image-display p.preview-instruction {
+        padding: 20px;
+        color: #555;
+      }
+      button {
+        margin: 5px;
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .control-group {
+        margin-bottom: 15px;
+      }
+      .coarse-selection button {
+        background-color: #6c757d;
+      }
+      .coarse-selection button:hover {
+        background-color: #5a6268;
+      }
+      .coarse-selection button.selected {
+        background-color: #007bff; /* The main blue color */
+        color: white;
+        outline: 2px solid #0056b3; /* A darker border to make it pop */
+      }
+      .fine-tuning input[type="range"] {
+        width: 80%;
+        max-width: 400px;
+        margin-top: 10px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #mainMenu button, #parameterSelector button {
+            display: block;      /* This is the key: forces each button onto its own line */
+            width: 200px;        /* A slightly wider, more modern button size */
+            margin-left: auto;   /* These two lines center the button horizontally */
+            margin-right: auto;
+            margin-bottom: 1px; /* Increase the space between buttons for better readability */
+        }
+      #resultsDisplay ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      #resultsDisplay li {
+        margin-bottom: 5px;
+        text-align: left;
+      }
+      #resultsDisplay li strong {
+        display: block;
+        margin-top: 10px;
+      }
+      .back-button {
+        background-color: #6c757d;
+        margin-top: 20px;
+      }
+      .back-button:hover {
+        background-color: #545b62;
+      }
+      #fixationScreen,
+      #preVimImageScreenDiv,
+      #holdImageInstructionScreen,
+      #conditionInstructionScreen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 60vh;
+        font-size: 18px;
+        line-height: 1.6;
+      }
+      #conditionInstructionScreen p {
+        max-width: 80%;
+        margin-bottom: 20px;
+      }
+      #fixationCross {
+        font-size: 48px;
+      }
+      #preVimImageScreenDiv img {
+        max-width: 100%;
+        max-height: 100%; /* Allows image to fill the panel's height */
+        border: 1px solid #ddd;
+        object-fit: contain; /* Ensures aspect ratio is maintained */
+      }
+      .keyboard-focus {
+        outline: 3px solid dodgerblue;
+        box-shadow: 0 0 8px dodgerblue;
+      }
+      #paramButtonsContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #paramButtonsContainer button {
+        width: 80%;
+        margin-bottom: 10px;
+      }
+      #languageSelector {
+        position: fixed; /* Changed from 'absolute' to 'fixed' */
+        bottom: 10px;
+        right: 10px;
+        z-index: 1000; /* Increased z-index to be safe */
+      }
+      #languageSelector button {
+        font-size: 14px;
+        padding: 5px 10px;
+        width: auto;
+        background-color: #f8f9fa;
+        color: #333;
+        border: 1px solid #ddd;
+      }
+      #languageSelector button.active-lang {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+      }
+      #downloadResultsBtn {
+        background-color: #28a745;
+        margin-top: 20px;
+      }
+      #downloadResultsBtn:hover {
+        background-color: #218838;
+      }
+      #fineTuneActionButtons {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+      }
+      #loadingOverlay {
+        position: fixed; /* Sit on top of everything */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.7
+        ); /* Semi-transparent black background */
+        z-index: 200; /* High z-index to be on top */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .loading-box {
+        background-color: white;
+        padding: 30px 40px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      }
+
+      #loadingText {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+      }
+
+      .progress-bar-container {
+        width: 300px;
+        height: 20px;
+        background-color: #e0e0e0;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        overflow: hidden; /* Keep the progress bar contained */
+      }
+
+      #progressBar {
+        width: 0%; /* Start at 0% width */
+        height: 100%;
+        background-color: #007bff;
+        transition: width 0.2s ease-in-out; /* Smooth animation for the bar */
+      }
+
+      #globalProgressContainer {
+        position: fixed; /* Stick to the top of the viewport */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px; /* A thin bar */
+        background-color: #e9ecef; /* A light background color */
+        z-index: 999; /* High z-index to be on top of most things */
+      }
+
+      #globalProgressBar {
+        height: 100%;
+        width: 0%; /* Start at 0% */
+        background-color: #007bff; /* The same blue as your buttons */
+        transition: width 0.3s ease; /* Smooth animation */
+      }
+
+      .back-button {
+        display: none !important; /* Hide by default, !important to override other styles */
+      }
+
+      #parameterSelector .back-button {
+        display: inline-block !important; /* Re-show the button only on this screen */
+      }
+
+      .no-info-button {
+        background-color: #333; /* A different color */
+        border: 1px solid #555;
+        width: 250px; /* Make it wider to fit the text */
+        margin-bottom: 15px;
+      }
+      .no-info-button:hover {
+        background-color: #555;
+      }
+
+      .instruction-diagram {
+        max-width: 100%;
+        width: 90%;
+        margin: 25px auto;
+        display: block;
+        border: 1px solid #eee;
+        border-radius: 4px;
+      }
+
+      .header-icon {
+        width: 100px; /* A nice size for the icon */
+        height: 100px;
+        margin-bottom: 5px; /* A little space between the icon and the title */
+        display: block; /* Ensures it sits neatly on its own line */
+        margin-left: auto; /* These two lines will center the icon */
+        margin-right: auto;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      #orientationOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #f4f4f4; /* Same as body background */
+        z-index: 1000; /* Highest z-index */
+        display: none; /* Hidden by default on desktops */
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .orientation-message {
+        padding: 20px;
+      }
+
+      .orientation-icon {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 20px;
+        fill: #333;
+      }
+
+      /* It will only apply these styles on devices that are in portrait mode AND are narrow (like a phone) */
+      @media screen and (max-width: 768px) and (orientation: portrait) {
+        #orientationOverlay {
+          display: flex; /* This SHOWS the overlay */
+        }
+      }
+
+      /* This rule applies ONLY to narrow screens (like phones) in landscape mode */
+      @media screen and (max-width: 900px) and (orientation: landscape) {
+        /* We'll reduce the height of the main container slightly to account for browser UI */
+        .split-container {
+          height: calc(100vh - 20px); /* Less vertical padding */
+          padding: 10px;
+        }
+
+        /* And we'll force the panels to use the available height more effectively */
+        .image-panel,
+        .controls-panel {
+          height: 100%; /* Tell panels to fill the new parent height */
+        }
+      }
+      /* This turns the button container into a 3-column grid */
+        #paramButtonsContainer {
+            display: grid;
+            grid-template-columns: repeat(3, 140px); /* Columns will now size to their content */
+            gap: 20px;
+            margin-top: 20px;
+            justify-content: center; /* This will center the whole grid of buttons */
+        }
+
+        /* Style for each individual icon button */
+        .param-icon-button {
+            display: flex;
+            flex-direction: column; /* Stack the icon on top of the text */
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            height: 160px; /* Give them a consistent height */
+        }
+
+        .param-icon-button:hover {
+            background-color: #e9ecef;
+            border-color: #007bff;
+        }
+
+        /* The .keyboard-focus style will apply to these buttons as well */
+        .param-icon-button.keyboard-focus {
+            outline: 3px solid dodgerblue;
+            box-shadow: 0 0 8px dodgerblue;
+            border-color: #007bff;
+        }
+
+        /* Style for the icon image inside the button */
+        .param-icon-button img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        /* Style for the text label inside the button */
+        .param-icon-button span {
+            font-size: 15px;
+            color: #333;
+            width: 100%;          /* ADD THIS LINE */
+            text-align: center;   /* ADD THIS LINE */
+            display: block;
+        }
+    </style>
+  </head>
+  <body id="htmlTag" lang="en">
+    <div id="globalProgressContainer" class="hidden">
+      <div id="globalProgressBar"></div>
+    </div>
+
+    <div id="languageSelector">
+      <button data-lang="en">English</button>
+      <button data-lang="es">Español</button>
+    </div>
+
+    <div id="mainMenu" class="main-container">
+      <h1 data-lang-key="mainMenuTitle"></h1>
+      <p data-lang-key="mainMenuWelcome"></p>
+      <button id="testParameterBtn" data-lang-key="testParamButton"></button
+      ><br />
+      <button id="testVVIQBtn">VVIQ-2</button><br />
+      <button id="startActualTaskBtn" data-lang-key="startTaskButton"></button>
+      <p
+        id="setInfo"
+        style="margin-top: 20px; font-size: 12px; color: #888"
+      ></p>
+      <div
+        class="vviq-toggle"
+        style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee"
+      >
+        <label>
+          <input type="checkbox" id="vviqCheckbox" checked />
+          <span data-lang-key="vviqCheckboxLabel"
+            >Include VVIQ-2 Questionnaire</span
+          >
+        </label>
+      </div>
+    </div>
+
+    <!-- The Welcome Screen -->
+    <div id="welcomeScreen" class="main-container hidden">
+      <h1 data-lang-key="welcomeTitle">Welcome!</h1>
+      <p data-lang-key="welcomeInstructions"></p>
+      <button id="welcomeContinueBtn" data-lang-key="continueButton">
+        Continue
+      </button>
+      <button
+        class="back-button back-to-menu-btn"
+        data-lang-key="backToMenuButton"
+      ></button>
+    </div>
+
+    <!-- The How-To Explanation Screen -->
+    <div id="howToScreen" class="main-container hidden">
+      <h2 data-lang-key="howToTitle">How the Task Works</h2>
+      <div style="text-align: left; max-width: 600px; margin: 20px auto">
+        <p data-lang-key="howToStep1"></p>
+      </div>
+      <img
+        src="images/instructions/image_source_diagram.png"
+        alt="Diagram..."
+        class="instruction-diagram"
+      />
+      <!-- <div style="text-align: left; max-width: 600px; margin: 20px auto">
+        <p data-lang-key="howToStep2"></p>
+        <p data-lang-key="howToStep3"></p>
+      </div> -->
+      <button id="howToContinueBtn" data-lang-key="startPracticeButton">
+        Start Practice Round
+      </button>
+    </div>
+
+    <!-- Screen 3: Parameter Intro -->
+    <div id="paramIntroScreen" class="main-container hidden">
+      <h2 data-lang-key="paramIntroTitle"></h2>
+      <p data-lang-key="paramIntroText"></p>
+      <img
+        src="images/instructions/visual_qualities_diagram.png"
+        alt="Diagram showing the six visual qualities"
+        class="instruction-diagram"
+      />
+      <button
+        id="paramIntroContinueBtn"
+        data-lang-key="continueButton"
+      ></button>
+      <button
+        class="back-button back-to-menu-btn"
+        data-lang-key="backToMenuButton"
+      ></button>
+    </div>
+
+    <!-- Screen 4: Interactive Parameter Demos -->
+    <div id="paramDemoScreen" class="split-container hidden">
+      <div class="image-panel">
+        <!-- This wrapper is the key to correct sizing -->
+        <div class="image-display">
+          <img id="paramDemoImg" src="" />
+        </div>
+      </div>
+      <div class="controls-panel">
+        <img
+          id="paramDemoIcon"
+          class="header-icon"
+          src=""
+          alt="Parameter Demo Icon"
+        />
+        <h2 id="paramDemoTitle"></h2>
+        <p id="paramDemoText"></p>
+        <div class="flex-spacer"></div>
+        <input type="range" id="paramDemoSlider" min="1" max="21" value="11" />
+        <div class="flex-spacer"></div>
+        <button id="nextDemoBtn" data-lang-key="continueButton"></button>
+        <button
+          class="back-button back-to-menu-btn"
+          data-lang-key="backToMenuButton"
+        ></button>
+      </div>
+    </div>
+
+    <!-- Screen 11: Practice Intro -->
+    <div id="practiceIntroScreen" class="main-container hidden">
+      <h2 data-lang-key="practiceIntroTitle"></h2>
+      <p data-lang-key="practiceIntroText"></p>
+      <button
+        id="practiceIntroContinueBtn"
+        data-lang-key="continueButton"
+      ></button>
+      <button
+        class="back-button back-to-menu-btn"
+        data-lang-key="backToMenuButton"
+      ></button>
+    </div>
+
+    <div id="readyScreen" class="main-container hidden">
+      <h2 data-lang-key="readyTitle"></h2>
+      <p data-lang-key="readyText"></p>
+      <button
+        id="startExperimentBtn"
+        data-lang-key="startExperimentButton"
+      ></button>
+    </div>
+
+    <div id="breakScreen" class="main-container hidden">
+      <h2 data-lang-key="breakTitle"></h2>
+      <p data-lang-key="breakText"></p>
+      <p
+        id="breakTimerDisplay"
+        style="font-size: 24px; font-weight: bold; margin: 20px 0"
+      ></p>
+      <button id="breakContinueBtn" data-lang-key="continueButton"></button>
+    </div>
+
+    <div id="parameterSelector" class="main-container hidden">
+      <h2 data-lang-key="paramSelectorTitle"></h2>
+      <div id="paramButtonsContainer"></div>
+      <button
+        id="backToMenuFromTestSelectBtn"
+        class="back-button back-to-menu-btn"
+        data-lang-key="backToMenuButton"
+      ></button>
+    </div>
+
+    <div id="conditionInstructionScreen" class="main-container hidden">
+      <img id="conditionIcon" class="header-icon" src="" alt="Condition Icon" />
+      <h2 id="conditionInstructionTitle"></h2>
+      <p id="conditionInstructionText"></p>
+      <button
+        id="startTrialFromInstructionsBtn"
+        data-lang-key="trialContinueButton"
+      ></button>
+    </div>
+
+    <!-- This container now uses the 'split-container' class for the two-panel layout -->
+    <div id="preVimScreenContainer" class="split-container hidden">
+      <!-- The LEFT panel will hold the visual stimuli (fixation and image) -->
+      <div class="image-panel">
+        <div id="fixationScreen" class="hidden">
+          <div id="fixationCross">+</div>
+        </div>
+        <div id="preVimImageScreenDiv" class="hidden">
+          <img id="originalImageDisplay" src="" alt="Original Image" />
+        </div>
+      </div>
+
+      <!-- The RIGHT panel will hold the text prompt and button -->
+      <div class="controls-panel">
+        <div id="holdImageInstructionScreen" class="hidden">
+          <p id="holdImagePrompt" style="margin-top: 20vh"></p>
+          <!-- Added style to vertically center the prompt a bit -->
+          <button
+            id="holdImageContinueBtn"
+            data-lang-key="trialContinueButton"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="vimTaskInterface" class="split-container hidden">
+      <!-- 1. The new LEFT panel for the image -->
+      <div class="image-panel">
+        <!-- MOVE THE COARSE IMAGE DISPLAY HERE -->
+        <div class="image-display" id="coarseImageDisplay">
+          <p class="preview-instruction" data-lang-key="coarsePreviewText"></p>
+          <img id="coarsePreviewImg" src="" alt="Press Arrow/Hover Mouse" />
+        </div>
+
+        <!-- MOVE THE FINE-TUNE IMAGE DISPLAY HERE (and hide it) -->
+        <div class="image-display hidden" id="fineTuneImageDisplay">
+          <img id="fineTuneImg" src="" alt="Fine-tuned image" />
+        </div>
+      </div>
+
+      <!-- 2. The new RIGHT panel for the controls -->
+      <div class="controls-panel">
+        <!-- TOP SECTION -->
+        <img
+          id="parameterIcon"
+          class="header-icon"
+          src=""
+          alt="Parameter Icon"
+        />
+        <h2 id="currentParamDisplay">Parameter: <span></span></h2>
+        <p id="vimGeneralInstruction"></p>
+
+        <!-- ADD THIS FIRST SPACER to push the middle section down -->
+        <div class="flex-spacer"></div>
+
+        <!-- MIDDLE SECTION (Interactive Elements) -->
+        <div id="coarseStep" class="coarse-selection control-group">
+          <p>
+            <span data-lang-key="vimCoarsePrompt" class="hidden"></span>
+            <strong id="coarseParamName"></strong>:
+          </p>
+
+          <button data-level-key="low">
+            <span data-lang-key="coarseButtonLow"></span>
+          </button>
+          <button data-level-key="mid">
+            <span data-lang-key="coarseButtonMid"></span>
+          </button>
+          <button data-level-key="high">
+            <span data-lang-key="coarseButtonHigh"></span>
+          </button>
+
+          <button
+            id="noInfoBtn"
+            class="no-info-button"
+            data-lang-key="noInfoLabel"
+          ></button>
+        </div>
+
+        <div id="fineTuneStep" class="fine-tuning control-group hidden">
+          <p>
+            <span data-lang-key="fineTunePrompt" class="hidden"></span>
+            <strong id="fineTuneParamName"></strong>:
+          </p>
+          <input type="range" id="fineTuneSlider" min="1" max="7" value="4" />
+          <!-- This is the line you correctly fixed -->
+          <p class="slider-value-display">
+            <span id="fineTuneLevelDisplay"></span>
+          </p>
+          <!-- NOTE: The two buttons that were here have been moved to the bottom -->
+        </div>
+
+        <div id="confidenceStep" class="confidence-rating control-group hidden">
+          <p id="confidencePrompt"></p>
+          <div class="likert-scale">
+            <button class="likert-button" data-value="1">1</button>
+            <button class="likert-button" data-value="2">2</button>
+            <button class="likert-button" data-value="3">3</button>
+            <button class="likert-button" data-value="4">4</button>
+            <button class="likert-button" data-value="5">5</button>
+            <button class="likert-button" data-value="6">6</button>
+            <button class="likert-button" data-value="7">7</button>
+          </div>
+          <div class="likert-labels">
+            <span id="likertLabelLow"></span>
+            <span id="likertLabelHigh"></span>
+          </div>
+        </div>
+
+        <!-- This new spacer element pushes everything below it to the bottom -->
+        <div class="flex-spacer"></div>
+
+        <!-- BOTTOM SECTION (Action Buttons) -->
+        <div class="controls-bottom">
+          <!-- This new wrapper will hold the side-by-side buttons -->
+          <div id="fineTuneActionButtons">
+            <button
+              id="backToCoarseBtn"
+              data-lang-key="backToCoarseButton"
+            ></button>
+            <button
+              id="confirmSelectionBtn"
+              data-lang-key="confirmLevelButton"
+            ></button>
+            <button
+              id="confirmNoInfoBtn"
+              class="hidden"
+              data-lang-key="continueButton"
+            ></button>
+            <button
+              id="confirmConfidenceBtn"
+              data-lang-key="confirmConfidenceButton"
+              class="hidden"
+            ></button>
+          </div>
+          <button
+            id="backToMenuFromTaskBtn"
+            class="back-button back-to-menu-btn"
+            data-lang-key="exitTaskButton"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD THIS ENTIRE NEW BLOCK FOR THE VVIQ -->
+    <div id="vviqScreen" class="main-container hidden">
+      <!-- VVIQ content will be generated by JavaScript here -->
+    </div>
+
+    <div id="resultsDisplay" class="main-container hidden">
+      <h2 data-lang-key="resultsTitle"></h2>
+      <ul id="resultsList"></ul>
+      <!-- --- NEW --- -->
+      <p id="saveStatus" style="font-style: italic; color: #555"></p>
+      <button id="downloadResultsBtn" data-lang-key="downloadResultsButton">
+        Download Results
+      </button>
+      <button
+        id="backToMenuFromResultsBtn"
+        class="back-button back-to-menu-btn"
+        data-lang-key="backToMenuButton"
+      ></button>
+    </div>
+
+    <div id="loadingOverlay" class="hidden">
+      <div class="loading-box">
+        <p id="loadingText">Loading trial...</p>
+        <div class="progress-bar-container">
+          <div id="progressBar" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="orientationOverlay">
+      <div class="orientation-message">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="orientation-icon"
+        >
+          <path
+            d="M16.49,4.26l-1.41,1.41c1.62,1.62,2.5,3.81,2.5,6.08c0,1.39-0.32,2.7-0.91,3.86l1.4,1.42c0.77-1.46,1.18-3.08,1.18-4.83C19.25,8.07,18.27,5.98,16.49,4.26z M17.65,2.85l1.41-1.41C21.32,3.7,22.75,6.2,22.75,9c0,2.18-0.63,4.27-1.76,6.09l-1.46-1.46C20.59,12.13,21.25,10.61,21.25,9C21.25,6.86,20.04,4.9,17.65,2.85z M4.75,9c0-2.27,0.88-4.45,2.5-6.08L5.84,1.51C3.73,3.7,2.75,6.2,2.75,9c0,2.18,0.63,4.27,1.76,6.09l1.46-1.46C5.41,12.13,4.75,10.61,4.75,9z M12,7c-2.21,0-4,1.79-4,4s1.79,4,4,4s4-1.79,4-4S14.21,7,12,7z"
+          />
+        </svg>
+        <p id="orientationText_en">
+          For the best experience, please rotate your device to landscape mode.
+        </p>
+        <p id="orientationText_es">
+          Para una mejor experiencia, por favor gire su dispositivo a modo
+          horizontal.
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // --- CONFIGURATION AND STATE MANAGEMENT ---
+      const DEBUG_SHOW_RESULTS = false; // Set to true to show results for debugging
+      const DEBUG_SKIP_BREAK_TIMER = true; // Set to false for real participants
+      
+
+      const KEYBOARD_FOCUS_CLASS = "keyboard-focus";
+      const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+      console.log(`Device detection: isTouchDevice = ${isTouchDevice}`);
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const progressBar = document.getElementById("progressBar");
+      const loadingText = document.getElementById("loadingText");
+
+      const LANG_STRINGS = {
+        en: {
+          // --- Existing Strings ---
+          mainMenuTitle: "Visual Imagery Matching (VIM) Task",
+          mainMenuWelcome: `
+    <p>This application is a research tool designed to measure the qualities of visual imagery. It was created by Luis Eudave at the University of Navarra.</p>
+    <p>You can use this interface to test the <b>Visual Imagery Matching (VIM) Task</b> and the <b>Vividness of Visual Imagery Questionnaire (VVIQ-2)</b>.</p>
+    <p>This project is open source. You can find the code and documentation at the <a href="https://github.com/negatoscope/VIM_prototype" target="_blank">GitHub repository</a>.</p>
+`,
+          testParamButton: "VIM Task Tutorial",
+          startTaskButton: "Start VIM Task",
+          paramSelectorTitle: "Select Parameter to Test",
+          conditionInstructionTitle: "Instructions: {condition} Task",
+          trialContinueButton: "Continue",
+          holdImagePrompt_recall:
+            "Please keep the image you just saw in your mind. Press Continue when ready.",
+          holdImagePrompt_imagine:
+            "Once you have formed a clear mental image of the scene as instructed, press Continue.",
+          vimGeneralInstruction:
+            "Please keep the image of your {sceneType} in your mind.",
+          vimCoarsePrompt:
+            "Select the image that best represents the overall level for",
+          coarseButtonLow: "Low",
+          coarseButtonMid: "Medium",
+          coarseButtonHigh: "High",
+          coarsePreviewText: "Hover over buttons to preview, click to select.",
+          fineTunePrompt: "Now, fine-tune your selection for",
+          selectedLevelLabel: "Selected Level:",
+          backToCoarseButton: "Back to Coarse Selection",
+          confirmLevelButton: "Confirm This Level",
+          backToMenuButton: "Back to Main Menu",
+          exitTaskButton: "Back to Main Menu (Exit Task)",
+          exitConfirmMessage:
+            "Are you sure you want to exit the current task and return to the main menu? Progress will be lost.",
+          resultsTitle: "Trial Results",
+          downloadResultsButton: "Download Results",
+          confidencePrompt: "How confident are you in your selection?",
+          likertLabelLow: "Not at all confident",
+          likertLabelHigh: "Completely confident",
+          confirmConfidenceButton: "Confirm Confidence",
+          // --- New Onboarding Strings ---
+          welcomeTitle: "Instructions",
+          welcomeInstructions: `
+    <p>Thank you for participating in this important study on the nature of mental imagery. Our objective is to better understand the different visual qualities that make up our internal experiences, such as memories and imagination.</p>
+    <p>In this task, you will be asked to generate various mental images and then use a set of visual tools to match what you experienced. You will also be asked to complete a standardized questionnaire about your imagery abilities.</p>
+    <p>The entire session takes approximately 40 minutes to complete. It is very important that you complete it in one single session without major interruptions. There will be two scheduled opportunities to take a short break. Please ensure you are in a quiet environment where you can focus.</p>
+`,
+          continueButton: "Continue",
+          howToTitle: "How the Task Works",
+          howToStep1:
+            `<p>In each trial, you will follow a simple two-phase process: First, you will be asked to generate an image in your mind based on a prompt. Second, you will adjust an image on the screen to try to match the qualities of your mental image, along with a rating of how confident you were in that match. Here are the details for each phase: </p>
+            <b>1. Generate an Image:</b> Based on the instruction, you will either remember a photo you just saw, recall a personal memory, or imagine a new scene. We encourage you to <b>close your eyes</b> for this step to help you focus. Try to form the image as you naturally would, and once you have a clear impression, <b>hold that image in your mind.</b>`,
+            howToStep2:
+            "<b>Step 2: Match the Image Quality.</b> You will then adjust an image on the screen to match the visual qualities of your mental image.",
+          howToStep3:
+            "<b>Step 3: Rate Your Confidence.</b> After each adjustment, you will rate how confident you are in your choice.",
+          paramIntroTitle: "How the Task Works",
+          paramIntroText:
+          `<b>2. Match the Image:</b> With the mental image in mind, you will open your eyes. Your task will be to adjust an image on the screen, using buttons and a slider, until it best matches the visual qualities (like brightness, blurriness, etc.) of the image in your head. The next few screens will provide an explanation of each quality along with an interactive demonstration of each one.`,
+          paramDemoTitleTemplate: "Quality {X} of 6: {paramName}",
+          paramDemoTextTemplate: "This refers to {paramDescription}",
+          practiceIntroTitle: "Putting It All Together: A Practice Round",
+          practiceIntroText: `
+                <p>
+                    Now that you are familiar with the different visual qualities, you will complete one full practice rating for <b>Brightness</b>.
+                </p>
+                <p>
+                    <b>1. Coarse Selection:</b> First, you will choose a general level (Low, Medium, or High).<br><br>
+                    <b>2. Fine-Tuning:</b> Next, you will use a slider to make a more precise match.<br><br>
+                    <b>3. Confidence Rating:</b> Finally, you will rate how confident you were in your match.
+                </p>
+            `,
+          tutorialVimInstruction: "This is a practice round. Please try to match the <b>Brightness</b> of the mental image you are holding in your mind.",
+          startPracticeButton: "Continue",
+          readyTitle: "Practice Complete",
+          readyText:
+            "You have completed all instructions and practice. The main experiment will now begin. There will be 12 trials, plus 3 attention checks.",
+          startExperimentButton: "Start Experiment",
+          breakTitle: "Take a Short Break",
+          breakText:
+            "You have completed a block of trials. You must wait 120 seconds before continuing. Use this time to look away from the display, stand and stretch, or relax. If you need more time you may extend the break up to 5 minutes. When you are ready, press Continue.",
+          noInfoLabel: "I have no clear impression of this quality.",
+        },
+        es: {
+          // --- Existing Strings ---
+          mainMenuTitle: "Tarea de Ajuste de Imaginación Visual (AIV)",
+          mainMenuWelcome: `
+    <p>Esta aplicación es una herramienta de investigación diseñada para medir las cualidades de la imaginación visual. Ha sido creada por Luis Eudave en la Universidad de Navarra.</p>
+    <p>Puede utilizar esta interfaz para probar la <b>Tarea de Ajuste de Imaginación Visual (AIV)</b> y el <b>Cuestionario de Viveza de la Imaginación Visual (VVIQ-2)</b>.</p>
+    <p>Este proyecto es de código abierto. Puede encontrar el código y la documentación en el <a href="https://github.com/negatoscope/VIM_prototype" target="_blank">repositorio de GitHub</a>.</p>
+`,
+          testParamButton: "Tutorial Tarea AIV",
+          startTaskButton: "Comenzar Tarea AIV",
+          paramSelectorTitle: "Seleccione el Parámetro a Probar",
+          conditionInstructionTitle: "Instrucciones: Tarea de {condition}",
+          trialContinueButton: "Continuar",
+          holdImagePrompt_recall:
+            "Por favor, mantenga la imagen que acaba de ver en su mente. Presione Continuar cuando esté listo/a.",
+          holdImagePrompt_imagine:
+            "Una vez que haya formado una imagen mental clara de la escena como se le indicó, presione Continuar.",
+          vimGeneralInstruction:
+            "Por favor, mantenga la imagen de su {sceneType} en su mente.",
+          vimCoarsePrompt:
+            "Seleccione la imagen que mejor represente el nivel general para",
+          coarseButtonLow: "Bajo",
+          coarseButtonMid: "Medio",
+          coarseButtonHigh: "Alto",
+          coarsePreviewText:
+            "Pase el cursor sobre los botones para previsualizar, haga clic para seleccionar.",
+          fineTunePrompt: "Ahora, ajuste su selección para",
+          selectedLevelLabel: "Nivel Seleccionado:",
+          backToCoarseButton: "Volver a Selección General",
+          confirmLevelButton: "Confirmar este Nivel",
+          backToMenuButton: "Volver al Menú Principal",
+          exitTaskButton: "Volver al Menú Principal (Salir de la Tarea)",
+          exitConfirmMessage:
+            "¿Está seguro/a de que desea salir de la tarea actual y volver al menú principal? El progreso se perderá.",
+          resultsTitle: "Resultados de los Ensayos",
+          downloadResultsButton: "Descargar Resultados",
+          confidencePrompt: "¿Qué tan seguro/a está de su selección?",
+          likertLabelLow: "Nada seguro/a",
+          likertLabelHigh: "Completamente seguro/a",
+          confirmConfidenceButton: "Confirmar Confianza",
+          // --- New Onboarding Strings ---
+          welcomeTitle: "Instrucciones",
+          welcomeInstructions: `
+    <p>Gracias por participar en este importante estudio sobre la naturaleza de la imaginación mental. Nuestro objetivo es comprender mejor las diferentes cualidades visuales que componen nuestras experiencias internas, como los recuerdos y la imaginación.</p>
+    <p>En esta tarea, se le pedirá que genere varias imágenes mentales y que luego utilice una serie de herramientas visuales para igualar lo que ha experimentado. También se le pedirá que complete un cuestionario estandarizado sobre sus habilidades de imaginación.</p>
+    <p>La sesión completa dura aproximadamente 40 minutos. Es muy importante que la complete en una única sesión sin interrupciones importantes. Habrá dos oportunidades programadas para tomar un breve descanso. Por favor, asegúrese de estar en un entorno tranquilo donde pueda concentrarse.</p>
+`,
+          continueButton: "Continuar",
+          howToTitle: "Cómo Funciona la Tarea",
+          howToStep1:
+            `<p>En cada ensayo, seguirá un sencillo proceso de dos fases: Primero, se le pedirá que genere una imagen en su mente basándose en una instrucción. Segundo, ajustará una imagen en la pantalla para intentar que coincida con las cualidades de su imagen mental, incluyendo una valoración sobre qué tan seguro/a está de su decisión. Aquí están los detalles de cada paso: </p>
+            <b>1. Generar una Imagen:</b> Basándose en la instrucción, deberá recordar una foto que acaba de ver, evocar un recuerdo personal o imaginar una escena nueva. Le animamos a <b>cerrar los ojos</b> en este paso para ayudarle a concentrarse. Intente formar la imagen de la manera más natural para usted y, una vez que tenga una impresión clara, <b>mantenga esa imagen en su mente.</b>`,
+            howToStep2:
+            "<b>Paso 2: Igualar la Calidad de la Imagen.</b> Luego, ajustará una imagen en la pantalla para que coincida con las cualidades visuales de su imagen mental.",
+          howToStep3:
+            "<b>Paso 3: Calificar su Confianza.</b> Después de cada ajuste, calificará qué tan seguro/a está de su elección.",
+          paramIntroTitle: "Cómo Funciona la Tarea",
+          paramIntroText:
+            `<b>2. Igualar la Imagen:</b> Con la imagen mental en mente, abrirá los ojos. Su tarea será ajustar una imagen en la pantalla, usando botones y un deslizador, hasta que coincida lo mejor posible con las cualidades visuales (como el brillo, el desenfoque, etc.) de la imagen en su cabeza. A continuación se le ofrecerán una explicación y una demostración interactiva de cada una de estas cualidades.`,
+          paramDemoTitleTemplate: "Cualidad {X} de 6: {paramName}",
+          paramDemoTextTemplate: "Esto se refiere a {paramDescription}",
+          practiceIntroTitle: "Poniéndolo Todo Junto: Una Ronda de Práctica",
+          practiceIntroText: `
+                <p>
+                    Ahora que se ha familiarizado con las diferentes cualidades visuales, completará una ronda de prueba completa para el parámetro de <b>Brillo</b>.
+                </p>
+                <p>
+                    <b>1. Selección General:</b> Primero, elegirá un nivel general (Bajo, Medio o Alto).<br><br>
+                    <b>2. Ajuste Fino:</b> Luego, usará un deslizador para hacer un ajuste más preciso.<br><br>
+                    <b>3. Calificación de Confianza:</b> Finalmente, calificará qué tan seguro/a estaba de su ajuste.
+                </p>
+            `,
+          tutorialVimInstruction: "Esta es una ronda de práctica. Por favor, intente igualar el <b>Brillo</b> de la imagen mental que tiene en su mente.",
+          startPracticeButton: "Continuar",
+          readyTitle: "Práctica Completada",
+          readyText:
+            "Ha completado las instrucciones y la práctica. El experimento principal comenzará ahora. Habrá 12 ensayos, más 3 pruebas de atención.",
+          startExperimentButton: "Comenzar Experimento",
+          breakTitle: "Tome un Breve Descanso",
+          breakText:
+            "Ha completado un bloque de ensayos. Debe esperar 120 segundos antes de continuar. Utilice este tiempo para apartar la vista de la pantalla, ponerse de pie y estirarse, o relajarse. Si necesita más tiempo, puede ampliar la pausa hasta un máximo de 5 minutos. Cuando esté listo, pulse «Continuar».",
+          noInfoLabel: "No tengo una impresión clara de esta cualidad.",
+        },
+      };
+
+    //   const PARAMETERS = {
+    //     saturation: {
+    //       name: { en: "Saturation", es: "Saturación" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>colorful or muted</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from grayscale (<b>Low Saturation</b>) to intensely colorful (<b>High Saturation</b>).</p>`,
+    //         es: `qué tan <b>colorida o apagada</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de una escala de grises (<b>Baja Saturación</b>) a colores intensos (<b>Alta Saturación</b>).</p>`,
+    //       },
+    //     },
+    //     brightness: {
+    //       name: { en: "Brightness", es: "Brillo" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
+    //         es: `qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`,
+    //       },
+    //     },
+    //     contrast: {
+    //       name: { en: "Contrast", es: "Contraste" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `the difference between the <b>light and dark</b> areas of the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from washed out (<b>Low Contrast</b>) to stark and defined (<b>High Contrast</b>).</p>`,
+    //         es: `la diferencia entre las áreas <b>claras y oscuras</b> de la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener un aspecto lavado (<b>Bajo Contraste</b>) a uno nítido y definido (<b>Alto Contraste</b>).</p>`,
+    //       },
+    //     },
+    //     blurriness: {
+    //       name: { en: "Blurriness", es: "Desenfoque" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>sharp or out-of-focus</b> the scene was in your mind. <p>In the interactive demo, notice how moving the slider changes the image from blurry (<b>High Blurriness</b>) to sharp and clear (<b>Low Blurriness</b>).</p>`,
+    //         es: `qué tan <b>nítida o desenfocada</b> estaba la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de borrosa (<b>Alto Desenfoque</b>) a nítida y clara (<b>Bajo Desenfoque</b>).</p>`,
+    //       },
+    //     },
+    //     detailedness: {
+    //       name: { en: "Detailedness", es: "Nivel de Detalle" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `the amount of <b>fine-grained detail and texture</b> present in the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from smooth and simple (<b>Low Detail</b>) to rich with complex textures (<b>High Detail</b>).</p>`,
+    //         es: `la cantidad de <b>detalles finos y texturas</b> presentes en la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de un aspecto liso y simple (<b>Bajo Detalle</b>) a uno rico en texturas complejas (<b>Alto Detalle</b>).</p>`,
+    //       },
+    //     },
+    //     precision: {
+    //       name: { en: "Color Precision", es: "Precisión de Color" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: `how <b>specific or ambiguous</b> the colors were in your mind. <p>In the interactive demo, notice how moving the slider changes the image from having few, blocky colors (<b>Low Precision</b>) to having many subtle shades and gradients (<b>High Precision</b>).</p>`,
+    //         es: `qué tan <b>específicos o ambiguos</b> eran los colores en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener pocos colores sólidos (<b>Baja Precisión</b>) a tener muchos tonos y gradientes sutiles (<b>Alta Precisión</b>).</p>`,
+    //       },
+    //     },
+    //     // --- THIS IS THE NEW ATTENTION CHECK PARAMETER ---
+    //     attention_check: {
+    //       name: { en: "Attention Check", es: "Prueba de Atención" },
+    //       levels: 21,
+    //       coarse: { low: 4, mid: 11, high: 18 },
+    //       parameter_specific_instruction: {
+    //         en: "For this check, please select the 'Medium' button, then move the slider to level 11.",
+    //         es: "Para esta prueba, por favor seleccione el botón 'Medio', y luego mueva el deslizador al nivel 11.",
+    //       },
+    //       is_attention_check: true, // Flag to identify this special parameter
+    //     },
+    //   };
+
+            const PARAMETERS = {
+                brightness: {
+                    name: { en: "Brightness", es: "Brillo" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
+                            es: `Qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Brightness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Brillo</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Brightness</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Brillo</b> de forma más precisa." }
+                        }
+                    }
+                },
+                contrast: {
+                    name: { en: "Contrast", es: "Contraste" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `The difference between the <b>light and dark</b> areas of the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from washed out (<b>Low Contrast</b>) to stark and defined (<b>High Contrast</b>).</p>`,
+                            es: `La diferencia entre las áreas <b>claras y oscuras</b> de la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener un aspecto lavado (<b>Bajo Contraste</b>) a uno nítido y definido (<b>Alto Contraste</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Contrast</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Contraste</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Contrast</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Contraste</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Contrast</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Contraste</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Contrast</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Contraste</b> de forma más precisa." }
+                        }
+                    }
+                },
+                saturation: {
+                    name: { en: "Saturation", es: "Saturación" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>colorful or muted</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from grayscale (<b>Low Saturation</b>) to intensely colorful (<b>High Saturation</b>).</p>`,
+                            es: `Qué tan <b>colorida o apagada</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de una escala de grises (<b>Baja Saturación</b>) a colores intensos (<b>Alta Saturación</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Saturation</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Saturación</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Saturation</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar la <b>Saturación</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Saturation</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Saturación</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Saturation</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar la <b>Saturación</b> de forma más precisa." }
+                        }
+                    }
+                },
+                blurriness: {
+                    name: { en: "Blurriness", es: "Desenfoque" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>sharp or out-of-focus</b> the scene was in your mind. <p>In the interactive demo, notice how moving the slider changes the image from blurry (<b>High Blurriness</b>) to sharp and clear (<b>Low Blurriness</b>).</p>`,
+                            es: `Qué tan <b>nítida o desenfocada</b> estaba la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de borrosa (<b>Alto Desenfoque</b>) a nítida y clara (<b>Bajo Desenfoque</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Blurriness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Desenfoque</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Blurriness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Desenfoque</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Blurriness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Desenfoque</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Blurriness</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Desenfoque</b> de forma más precisa." }
+                        }
+                    }
+                },
+                detailedness: {
+                    name: { en: "Detailedness", es: "Nivel de Detalle" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `The amount of <b>fine-grained detail and texture</b> present in the scene in your mind. <p>In the interactive demo, notice how moving the slider changes the image from smooth and simple (<b>Low Detail</b>) to rich with complex textures (<b>High Detail</b>).</p>`,
+                            es: `La cantidad de <b>detalles finos y texturas</b> presentes en la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de un aspecto liso y simple (<b>Bajo Detalle</b>) a uno rico en texturas complejas (<b>Alto Detalle</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Detailedness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Nivel de Detalle</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Detailedness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Nivel de Detalle</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Detailedness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Nivel de Detalle</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Detailedness</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar el <b>Nivel de Detalle</b> de forma más precisa." }
+                        }
+                    }
+                },
+                precision: {
+                    name: { en: "Color Precision", es: "Precisión de Color" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        demo: {
+                            en: `How <b>specific or ambiguous</b> the colors were in your mind. <p>In the interactive demo, notice how moving the slider changes the image from having few, blocky colors (<b>Low Precision</b>) to having many subtle shades and gradients (<b>High Precision</b>).</p>`,
+                            es: `Qué tan <b>específicos o ambiguos</b> eran los colores en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de tener pocos colores sólidos (<b>Baja Precisión</b>) a tener muchos tonos y gradientes sutiles (<b>Alta Precisión</b>).</p>`
+                        },
+                        tutorial: {
+                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Color Precision</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Precisión de Color</b> general de su imagen mental." },
+                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Color Precision</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar la <b>Precisión de Color</b> de forma más precisa." }
+                        },
+                        task: {
+                            coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Color Precision</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente la <b>Precisión de Color</b> general de su imagen mental." },
+                            fineTune: { en: "Now, use the slider to fine-tune the <b>Color Precision</b> for a more precise match.", es: "Ahora, use el deslizador para ajustar la <b>Precisión de Color</b> de forma más precisa." }
+                        }
+                    }
+                },
+                attention_check: {
+                    name: { en: "Attention Check", es: "Prueba de Atención" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
+                    instructions: {
+                        task: {
+                            coarse:   { en: "For this attention check, please select the <b>'Medium'</b> button.", es: "Para esta prueba de atención, por favor seleccione el botón <b>'Medio'</b>." },
+                            fineTune: { en: "Now, please move the slider to level <b>11</b> and click 'Confirm'.", es: "Ahora, por favor mueva el deslizador al nivel <b>11</b> y haga clic en 'Confirmar'." }
+                        }
+                    }
+                }
+            };
+
+      // ADD THIS NEW DATA OBJECT (replaces the old allTrialsMasterList)
+
+      const IMAGE_DATA = [
+        // --- INDOOR IMAGES (6) ---
+        {
+          id: "image01",
+          type: "indoor",
+          filename: "image01.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a recent, vivid memory of relaxing in a LIVING ROOM with friends or family present. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria reciente y vívida de estar relajándose en una SALA DE ESTAR con amigos o familiares. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a quiet, empty LIVING ROOM in the middle of the day, with sunlight coming through a window. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine una SALA DE ESTAR tranquila y vacía a mediodía, con la luz del sol entrando por una ventana. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image03",
+          type: "indoor",
+          filename: "image03.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a specific, vivid memory of being in a CLASSROOM, listening to a lesson. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria específica y vívida de estar en un AULA, escuchando una lección. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine an old, empty CLASSROOM after school, with chalk dust on the blackboard. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine un AULA vieja y vacía después de clases, con polvo de tiza en la pizarra. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image04",
+          type: "indoor",
+          filename: "image04.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a recent, vivid memory of pushing a shopping cart through a busy SUPERMARKET. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria reciente y vívida de estar empujando un carrito de compras en un SUPERMERCADO concurrido. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine standing in a SUPERMARKET aisle late at night, with almost no one else around. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine que está en el pasillo de un SUPERMERCADO por la noche, casi sin nadie más alrededor. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image08",
+          type: "indoor",
+          filename: "image08.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of looking for a specific item in a SUPERMARKET AISLE. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de estar buscando un artículo específico en un PASILLO DE SUPERMERCADO. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a brightly lit and perfectly organized SUPERMARKET AISLE that is completely empty. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine un PASILLO DE SUPERMERCADO perfectamente ordenado y muy iluminado, que está completamente vacío. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image09",
+          type: "indoor",
+          filename: "image09.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of having a conversation in a comfortable LIVING ROOM. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de tener una conversación en una SALA DE ESTAR cómoda. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a minimalist LIVING ROOM with modern furniture and no personal items. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine una SALA DE ESTAR minimalista con muebles modernos y sin objetos personales. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image12",
+          type: "indoor",
+          filename: "image12.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of working on a group project with other students in a CLASSROOM. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de trabajar en un proyecto grupal con otros estudiantes en un AULA. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine the first day of school, in a CLASSROOM filled with students finding their seats. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine el primer día de clases, en un AULA llena de estudiantes buscando sus asientos. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los los ojos y presione Continuar.",
+            },
+          },
+        },
+        // --- OUTDOOR IMAGES (6) ---
+        {
+          id: "image02",
+          type: "outdoor",
+          filename: "image02.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of walking down an empty CITY STREET early in the morning. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de caminar por una CALLE de una CIUDAD vacía temprano en la mañana. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a wide CITY STREET in a futuristic city, with sleek, silent vehicles. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine una CALLE ancha en una CIUDAD futurista, con vehículos elegantes y silenciosos. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image05",
+          type: "outdoor",
+          filename: "image05.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of standing on a BEACH, feeling the spray from the waves. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de estar en una PLAYA, sintiendo la brisa de las olas. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a secret BEACH on a tropical island, with a hidden waterfall and no footprints in the sand. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine una PLAYA secreta en una isla tropical, con una cascada escondida y sin huellas en la arena. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image06",
+          type: "outdoor",
+          filename: "image06.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of having a picnic or relaxing in a lush, green PARK. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de tener un picnic o relajarse en un PARQUE verde y frondoso. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a vast botanical PARK with many strange and colorful exotic plants you've never seen before. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine un vasto PARQUE botánico con muchas plantas exóticas, extrañas y coloridas que nunca ha visto. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image07",
+          type: "outdoor",
+          filename: "image07.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of a pleasant walk through a PARK on a cool autumn day. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de un paseo agradable por un PARQUE en un día fresco de otoño. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a PARK in the middle of winter, with bare trees and a light dusting of snow on the ground. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine un PARQUE en pleno invierno, con árboles sin hojas y una fina capa de nieve en el suelo. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image10",
+          type: "outdoor",
+          filename: "image10.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of being in a crowd on a BUSY CITY STREET. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de estar entre una multitud en una CALLE CONCURRIDA de una CIUDAD. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a BUSY CITY STREET during a parade, with confetti in the air and music playing. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine una CALLE CONCURRIDA de una CIUDAD durante un desfile, con confeti en el aire y música sonando. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+        {
+          id: "image11",
+          type: "outdoor",
+          filename: "image11.jpg",
+          prompts: {
+            episodic_recall: {
+              en: "Please recall a vivid memory of playing or building a sandcastle on a sunny BEACH. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, recuerde una memoria vívida de jugar o construir un castillo de arena en una PLAYA soleada. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+            scene_imagination: {
+              en: "Please imagine a BEACH at sunset, with the sky full of orange and purple colors. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "Por favor, imagine una PLAYA al atardecer, con el cielo lleno de colores naranjas y morados. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+            },
+          },
+        },
+      ];
+
+      const ICONS = {
+        perceptual_recall: "images/instructions/icon_perceptual.png",
+        episodic_recall: "images/instructions/icon_memory.png",
+        scene_imagination: "images/instructions/icon_imagination.png",
+        brightness: "images/instructions/icon_brightness.png",
+        contrast: "images/instructions/icon_contrast.png",
+        saturation: "images/instructions/icon_saturation.png",
+        blurriness: "images/instructions/icon_blurriness.png",
+        detailedness: "images/instructions/icon_detailedness.png",
+        precision: "images/instructions/icon_precision.png",
+        //attention_check: 'images/instructions/icon_attention.png' // Assumes you have an icon for this
+      };
+
+      // --- VVIQ-2 Data and Configuration ---
+
+      // Add the new checkbox label to the LANG_STRINGS object
+      LANG_STRINGS.en.vviqCheckboxLabel = "Include VVIQ-2";
+      LANG_STRINGS.es.vviqCheckboxLabel = "Incluir VVIQ-2";
+
+      const VVIQ_DATA = {
+        instructions: {
+          inst_1: {
+            en: "Visual imagery refers to the ability to visualize, that is, the ability to form mental pictures, or to 'see in the mind's eye'. Marked individual differences are found in the strength and clarity of reported visual imagery and these differences are of considerable psychological interest.",
+            es: 'La imaginación visual se refiere a la capacidad de visualizar, es decir, la habilidad de formar imágenes mentales o de "ver con los ojos de la mente". Existen diferencias individuales marcadas en cuanto a la intensidad y claridad con que las personas experimentan estas imágenes, y dichas diferencias son de gran interés psicológico.',
+          },
+          inst_2: {
+            en: "The aim of this test is to determine the vividness of your visual imagery. The items of the test will possibly bring certain images to your mind. You are asked to rate the vividness of each image by reference to the five-point scale given below. For example, if your image is 'vague and dim', then give it a rating of 2.",
+            es: 'El objetivo de este cuestionario es evaluar la viveza de tu imaginación visual. Los ítems del test pueden evocarte ciertas imágenes. Se te pide que califiques la viveza de cada imagen utilizando la escala de cinco puntos que se presenta a continuación. Por ejemplo, si la imagen que formas es "vaga y borrosa", asígnale una puntuación de 2.',
+          },
+          inst_3: {
+            en: "Before you turn to the items, familiarize yourself with the different categories on the rating scale. Throughout the test, refer to the rating scale when judging the vividness of each image. Try to do each item separately, independent of how you may have done other items.",
+            es: "Antes de comenzar con los ítems, familiarízate con las categorías de la escala de calificación. A lo largo del cuestionario, consulta esta escala cada vez que evalúes la viveza de una imagen. Intenta responder cada ítem por separado, de forma independiente de cómo hayas respondido los anteriores.",
+          },
+          inst_4: {
+            en: 'This test consists of 32 items to be imaged with your eyes closed. When we say "eyes closed", we mean the question is read, you close your eyes, an image is formed with them closed, and then open them to write the score. Try to score each item separately and independently of how you scored the other items.',
+            es: 'Este test consta de 32 ítems, que deberás imaginar con los ojos cerrados. Cuando decimos "los ojos cerrados", significa que debes leer el enunciado, cerrar los ojos, formar la imagen mental con los ojos cerrados, y luego abrirlos para anotar tu puntuación. Intenta calificar cada ítem de forma independiente de los demás.',
+          },
+        },
+        scale: [
+          {
+            score: 5,
+            en: "Perfectly clear and as vivid as real seeing",
+            es: "Perfectamente clara y tan viva como si estuvieses viendo el objeto",
+          },
+          {
+            score: 4,
+            en: "Clear and reasonably vivid",
+            es: "Clara y bastante viva",
+          },
+          {
+            score: 3,
+            en: "Moderately clear and vivid",
+            es: "Moderadamente clara y viva",
+          },
+          { score: 2, en: "Vague and dim", es: "Vaga y borrosa" },
+          {
+            score: 1,
+            en: 'No image at all, you only "know" that you are thinking of the object',
+            es: 'Ninguna imagen, tú sólo "sabes" lo que estás pensando del objeto',
+          },
+        ],
+        prompts: [
+          {
+            prompt: {
+              en: "Think of some relative or friend whom you frequently see (but who is not with you at present) and consider carefully the picture that comes before your mind's eye.",
+              es: "Piensa en algún pariente o amigo al que ves frecuentemente (pero que no está contigo ahora). Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The outline of the face, head, shoulders and body.",
+                es: "El contorno de la cara, cabeza, hombros y cuerpo.",
+              },
+              {
+                en: "Characteristic posture, gesture, movement, etc.",
+                es: "Las posturas características de la cabeza, ademanes corporales, etc.",
+              },
+              {
+                en: "The precise carriage, length of step, etc., in walking.",
+                es: "El modo exacto de andar, la longitud del paso, etc., cuando pasea.",
+              },
+              {
+                en: "The different colours worn in clothes.",
+                es: "Los diferentes colores que utiliza en su ropa habitual.",
+              },
+            ],
+          },
+          {
+            prompt: {
+              en: "Visualise a rising sun. Consider the picture that comes before your mind's eye.",
+              es: "Piensa en un sol naciente. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The sun rising above the horizon into a hazy sky.",
+                es: "El sol está naciendo sobre el horizonte en el cielo nebuloso.",
+              },
+              {
+                en: "The sky clears and surrounds the sun with blueness.",
+                es: "El cielo está claro y rodea al sol con su azul.",
+              },
+              {
+                en: "Clouds. A storm blows up with flashes of lightning.",
+                es: "Nubes. Una tormenta hace explosión, con destellos de relámpago.",
+              },
+              { en: "A rainbow appears.", es: "Aparece un arco iris." },
+            ],
+          },
+          {
+            prompt: {
+              en: "Think of the front of a shop which you often go to. Consider the picture that comes before your mind's eye.",
+              es: "Piensa en la fachada de la tienda a la que tú vas a menudo. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The overall appearance of the shop from the opposite side of the road.",
+                es: "El aspecto total de la tienda desde la acera de enfrente.",
+              },
+              {
+                en: "A window display including colours, shapes, and details of the items for sale.",
+                es: "Un escaparate, con los colores, formas y detalles de los productos expuestos.",
+              },
+              {
+                en: "You are near the entrance. The colour, shape, and details of the door.",
+                es: "Tú estás cerca de la entrada. El color, forma y detalles de la puerta.",
+              },
+              {
+                en: "You enter the shop and go to the counter. The assistant serves you.",
+                es: "Tú entras en la tienda y vas al mostrador. El vendedor te sirve.",
+              },
+            ],
+          },
+          {
+            prompt: {
+              en: "Think of a countryside scene which includes trees, mountains, and a lake. Consider the picture that comes before your mind's eye.",
+              es: "Piensa en una escena de campo que tenga árboles, montañas y un lago. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The contours of the landscape.",
+                es: "Los contornos del paisaje.",
+              },
+              {
+                en: "The colour and shape of the trees.",
+                es: "El color y forma de los árboles.",
+              },
+              {
+                en: "The colour and shape of the lake.",
+                es: "El color y forma del lago.",
+              },
+              {
+                en: "A strong wind blows through the trees and over the lake causing ripples.",
+                es: "Un fuerte viento sopla sobre los árboles y el lago, causando ondulaciones.",
+              },
+            ],
+          },
+          {
+            prompt: {
+              en: "Imagine that a friend or relative is driving you at great speed on a motorway. Consider the picture that comes before your mind's eye.",
+              es: "Piensa que un familiar o amigo te está llevando en coche a gran velocidad por una autopista. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The overall appearance of fast-moving traffic around your car.",
+                es: "Observa el denso tráfico que circula a gran velocidad alrededor de vuestro coche.",
+              },
+              {
+                en: "Your car overtakes and you see worried expressions on other drivers' faces.",
+                es: "Vuestro coche adelanta. Ves preocupación en la cara del conductor y de la gente de otros vehículos.",
+              },
+              {
+                en: "A large truck flashes headlights and your car pulls aside.",
+                es: "Un gran camión te da las luces largas. Tu coche se echa a un lado.",
+              },
+              {
+                en: "A broken-down car with flashing lights and a woman on the phone.",
+                es: "Un vehículo averiado fuera de la carretera. Conductora preocupada llama por teléfono.",
+              },
+            ],
+          },
+          {
+            prompt: {
+              en: "Visualise a beach on a hot summer day. Consider the picture that comes before your mind's eye.",
+              es: "Piensa en una playa en un caluroso día de verano. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The appearance and colour of the sea, waves, and sky.",
+                es: "La apariencia global y el color del agua, el reventar de las olas y el cielo.",
+              },
+              {
+                en: "Swimmers playing with a brightly coloured beach ball.",
+                es: "Los bañistas nadan y chapotean. Algunos juegan con una pelota de playa de colores brillantes.",
+              },
+              {
+                en: "An ocean liner on the horizon trailing smoke.",
+                es: "Un transatlántico cruza el horizonte dejando una estela de humo.",
+              },
+              {
+                en: "A colourful hot-air balloon floats overhead and passengers wave.",
+                es: "Un bonito globo hinchable pasa por encima. Los pasajeros saludan.",
+              },
+            ],
+          },
+          {
+            prompt: {
+              en: "Visualise a railway station. Consider the picture that comes before your mind's eye.",
+              es: "Piensa en una estación de tren. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The overall appearance of the station from the front entrance.",
+                es: "La apariencia general de la estación mirando frente a la entrada principal.",
+              },
+              {
+                en: "Walking through the hall: its colour, shape, and details.",
+                es: "Caminas por la estación. Color, forma y detalles del hall de entrada.",
+              },
+              {
+                en: "Approaching the ticket counter and buying a ticket.",
+                es: "Te acercas a las taquillas, vas a la ventanilla libre y compras tu billete.",
+              },
+              {
+                en: "On the platform: watching passengers and boarding the train.",
+                es: "Caminas por el andén. Observas pasajeros y vías. Llega un tren y te subes.",
+              },
+            ],
+          },
+          {
+            prompt: {
+              en: "Visualise a garden with lawns, trees, flowers, and shrubs. Consider the picture that comes before your mind's eye.",
+              es: "Finalmente, piensa en un jardín con césped, árboles, flores y arbustos. Considera la imagen que te viene a la cabeza.",
+            },
+            items: [
+              {
+                en: "The general layout and appearance of the garden.",
+                es: "El aspecto general y la disposición del jardín.",
+              },
+              {
+                en: "The colour and shape of trees and bushes.",
+                es: "El color y la forma de los árboles y arbustos.",
+              },
+              {
+                en: "The colour and appearance of the flowers.",
+                es: "El color y aspecto de las flores.",
+              },
+              {
+                en: "Birds on the lawn pecking for food.",
+                es: "Algunos pájaros se posan en el césped y comienzan a picotear.",
+              },
+            ],
+          },
+        ],
+      };
+
+      let totalSteps = 0;
+      let completedSteps = 0;
+
+      let parameterStartTime = null;
+
+      const GOOGLE_SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbwkcpn2kATIjVlfgGAT6um4sN2LOcTU6Qde2vj8mKzd19VtfVxHynh3KR-qMBuNeanSkQ/exec";
+      const saveStatus = document.getElementById("saveStatus");
+
+      let currentLanguage = "en";
+      const imageBaseFolder = "images";
+      const imageExtension = ".jpg";
+      const fineTuneRange = 3;
+
+      const DEMO_PARAMS = [
+        {
+          key: "brightness",
+          image: getVariantImagePath("tutorial", "brightness", 11),
+        },
+        {
+          key: "contrast",
+          image: getVariantImagePath("tutorial", "contrast", 11),
+        },
+        {
+          key: "saturation",
+          image: getVariantImagePath("tutorial", "saturation", 11),
+        },
+        {
+          key: "blurriness",
+          image: getVariantImagePath("tutorial", "blurriness", 11),
+        },
+        {
+          key: "detailedness",
+          image: getVariantImagePath("tutorial", "detailedness", 11),
+        },
+        {
+          key: "precision",
+          image: getVariantImagePath("tutorial", "precision", 11),
+        },
+      ];
+
+      let currentSessionTrials = [];
+      let currentGlobalTrialIndex = 0;
+      let currentTrialData = null;
+      let currentTrialResponses = {};
+      let allCollectedResponses = [];
+      let currentTaskMode = null;
+      let sessionID = null;
+      let currentParameterKey = null;
+      let currentParameterConfig = null;
+      let actualTaskOrder = [];
+      let currentParameterIndexInTask = 0;
+      let currentFocusableElements = [];
+      let currentFocusedIndex = -1;
+
+      let onboardingStep = 0;
+      let currentDemoIndex = 0;
+
+      let breakData = [];
+
+      
+
+      // --- DOM Elements ---
+      const coarseButtonContainer = document.getElementById("coarseStep"); // Or a more specific container if you have one (coarseStepDiv?)
+      const mainMenuDiv = document.getElementById("mainMenu");
+      const parameterSelectorDiv = document.getElementById("parameterSelector");
+      const paramButtonsContainer = document.getElementById(
+        "paramButtonsContainer"
+      );
+      const vimTaskInterfaceDiv = document.getElementById("vimTaskInterface");
+      const resultsDisplayDiv = document.getElementById("resultsDisplay");
+      const downloadResultsBtn = document.getElementById("downloadResultsBtn");
+      const conditionInstructionScreenDiv = document.getElementById(
+        "conditionInstructionScreen"
+      );
+      const conditionInstructionTitleH2 = document.getElementById(
+        "conditionInstructionTitle"
+      );
+      const conditionInstructionTextP = document.getElementById(
+        "conditionInstructionText"
+      );
+      const startTrialFromInstructionsBtn = document.getElementById(
+        "startTrialFromInstructionsBtn"
+      );
+      const preVimScreenContainerDiv = document.getElementById(
+        "preVimScreenContainer"
+      );
+      const fixationScreenDiv = document.getElementById("fixationScreen");
+      const preVimImageScreenDiv = document.getElementById(
+        "preVimImageScreenDiv"
+      );
+      const originalImageDisplayImg = document.getElementById(
+        "originalImageDisplay"
+      );
+      const holdImageInstructionScreenDiv = document.getElementById(
+        "holdImageInstructionScreen"
+      );
+      const holdImagePromptP = document.getElementById("holdImagePrompt");
+      const holdImageContinueBtn = document.getElementById(
+        "holdImageContinueBtn"
+      );
+      const vimGeneralInstructionP = document.getElementById(
+        "vimGeneralInstruction"
+      );
+      const currentParamDisplay = document
+        .getElementById("currentParamDisplay")
+        .querySelector("span");
+      const coarseStepDiv = document.getElementById("coarseStep");
+      const coarseParamNameStrong = document.getElementById("coarseParamName");
+      const coarseButtons = coarseStepDiv.querySelectorAll(
+        "button[data-level-key]"
+      );
+      const coarsePreviewImg = document.getElementById("coarsePreviewImg");
+      const coarseImageDisplayP = document.querySelector(
+        "#coarseImageDisplay p.preview-instruction"
+      );
+      const paramNameInlineSpans =
+        document.querySelectorAll(".param-name-inline");
+      const fineTuneStepDiv = document.getElementById("fineTuneStep");
+      const fineTuneParamNameStrong =
+        document.getElementById("fineTuneParamName");
+      const fineTuneImg = document.getElementById("fineTuneImg");
+      const fineTuneSlider = document.getElementById("fineTuneSlider");
+      const fineTuneLevelDisplay = document.getElementById(
+        "fineTuneLevelDisplay"
+      );
+      const backToCoarseBtn = document.getElementById("backToCoarseBtn");
+      const confirmSelectionBtn = document.getElementById(
+        "confirmSelectionBtn"
+      );
+      const resultsListUl = document.getElementById("resultsList");
+      const backToMenuFromTestSelectBtn = document.getElementById(
+        "backToMenuFromTestSelectBtn"
+      );
+      const backToMenuFromTaskBtn = document.getElementById(
+        "backToMenuFromTaskBtn"
+      );
+      const backToMenuFromResultsBtn = document.getElementById(
+        "backToMenuFromResultsBtn"
+      );
+
+      let currentCoarseSelectionLevel = null;
+      let sliderToActualLevelMap = [];
+
+      const confidenceStepDiv = document.getElementById("confidenceStep");
+      const likertButtons = document.querySelectorAll(".likert-button");
+      const confirmConfidenceBtn = document.getElementById(
+        "confirmConfidenceBtn"
+      );
+      let currentConfidenceSelection = null;
+
+      const welcomeScreen = document.getElementById("welcomeScreen");
+      const howToScreen = document.getElementById("howToScreen");
+
+      const paramIntroScreen = document.getElementById("paramIntroScreen");
+      const paramDemoScreen = document.getElementById("paramDemoScreen");
+      const practiceIntroScreen = document.getElementById(
+        "practiceIntroScreen"
+      );
+      const breakScreen = document.getElementById("breakScreen");
+
+      // --- Utility Functions ---
+
+      function updateProgressBar() {
+        if (totalSteps === 0) return; // Don't do anything if we haven't set up the steps
+
+        completedSteps++;
+        const percent = (completedSteps / totalSteps) * 100;
+
+        const bar = document.getElementById("globalProgressBar");
+        if (bar) {
+          bar.style.width = `${percent}%`;
+        }
+      }
+
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        var results = regex.exec(location.search);
+        return results === null
+          ? ""
+          : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
+      }
+
+      // --- Smart Preloader Module ---
+
+      async function preloadDemoAssets() {
+          // 1. Show the loading overlay and disable the continue button
+          const continueBtn = document.getElementById('startDemosBtn');
+          if (continueBtn) continueBtn.disabled = true;
+          loadingOverlay.classList.remove('hidden');
+          progressBar.style.width = '0%';
+          loadingText.textContent = "Loading Demos...";
+
+          // 2. Create the list of all image URLs needed for the demos
+          let urlsToPreload = [];
+          DEMO_PARAMS.forEach(demo => {
+              // For each demo, we need all 21 variants for its slider
+              for (let level = 1; level <= 21; level++) {
+                  urlsToPreload.push(getVariantImagePath('tutorial', demo.key, level));
+              }
+          });
+
+          // 3. Preload all images and update the progress bar
+          let loadedCount = 0;
+          const totalToLoad = urlsToPreload.length;
+
+          for (const url of urlsToPreload) {
+              try {
+                  await preloadImage(url);
+                  loadedCount++;
+                  const percent = Math.round((loadedCount / totalToLoad) * 100);
+                  progressBar.style.width = `${percent}%`;
+              } catch (error) {
+                  console.warn(`Could not preload demo image: ${url}`, error);
+                  loadedCount++; // Increment anyway to not get stuck
+              }
+          }
+          
+          // 4. Hide overlay and proceed to the first demo
+          loadingText.textContent = "Loading complete!";
+          setTimeout(() => {
+              loadingOverlay.classList.add('hidden');
+              if (continueBtn) continueBtn.disabled = false;
+              // Now that everything is loaded, start the demos
+              advanceOnboarding(); 
+          }, 250);
+      }
+
+      async function preloadTrialAssets(trialData) {
+        // 1. Show the loading overlay and disable the continue button
+        const continueBtn = document.getElementById(
+          "startTrialFromInstructionsBtn"
+        );
+        if (continueBtn) continueBtn.disabled = true;
+        loadingOverlay.classList.remove("hidden");
+        progressBar.style.width = "0%";
+        loadingText.textContent = "Loading...";
+
+        // 2. Create the list of all image URLs needed for this trial
+        let urlsToPreload = [];
+
+        // For perceptual recall, the original image is the most important
+        if (trialData.condition === "perceptual_recall") {
+          urlsToPreload.push(
+            getOriginalImagePath(trialData.original_image_filename)
+          );
+        }
+
+        // Add all the VIM variant images needed
+        const realParameters = Object.keys(PARAMETERS).filter(
+          (p) => p !== "attention_check"
+        );
+        realParameters.forEach((paramKey) => {
+          const coarseLevels = Object.values(PARAMETERS[paramKey].coarse);
+          const fineTuneCenter = coarseLevels[1];
+          let levels = [...coarseLevels];
+          for (let i = -3; i <= 3; i++) {
+            const level = fineTuneCenter + i;
+            if (level >= 1 && level <= 21) levels.push(level);
+          }
+          const uniqueLevels = [...new Set(levels)];
+          uniqueLevels.forEach((level) => {
+            urlsToPreload.push(
+              getVariantImagePath(trialData.base_image_id, paramKey, level)
+            );
+          });
+        });
+
+        // 3. Preload all images and update the progress bar
+        let loadedCount = 0;
+        const totalToLoad = urlsToPreload.length;
+
+        for (const url of urlsToPreload) {
+          try {
+            await preloadImage(url);
+            loadedCount++;
+            // Update progress bar
+            const percent = Math.round((loadedCount / totalToLoad) * 100);
+            progressBar.style.width = `${percent}%`;
+          } catch (error) {
+            console.warn(`Could not preload image: ${url}`, error);
+            // Even if one image fails, we increment the count to not get stuck
+            loadedCount++;
+          }
+        }
+
+        // 4. Hide overlay and re-enable the button
+        loadingText.textContent = "Loading complete!";
+        setTimeout(() => {
+          // A brief delay to let the user see "complete"
+          loadingOverlay.classList.add("hidden");
+          if (continueBtn) continueBtn.disabled = false;
+        }, 250);
+      }
+
+      // Helper function that returns a Promise which resolves when an image loads
+      function preloadImage(src) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+      }
+
+      // --- End Preloader Module ---
+
+      function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      }
+
+      function getVariantImagePath(baseImageId, paramKey, level) {
+        // If the parameter is an attention check, we need to get an image from a REAL parameter's folder.
+        // We can just default to using the 'brightness' folder for this purpose.
+        const folderParam =
+          paramKey === "attention_check" ? "brightness" : paramKey;
+
+        const levelStr = level < 10 ? "0" + level : level.toString();
+
+        // Construct the path using the corrected folder parameter.
+        return `${imageBaseFolder}/${folderParam}/${baseImageId}_${folderParam}_${levelStr}${imageExtension}`;
+      }
+
+      function getOriginalImagePath(originalFilename) {
+        return `${imageBaseFolder}/originals/${originalFilename}`;
+      }
+
+      function resetFullTaskState() {
+        if (vviqScreen) vviqScreen.classList.add("hidden");
+        document
+          .getElementById("globalProgressContainer")
+          .classList.add("hidden");
+
+        onboardingStep = 0;
+        currentDemoIndex = 0;
+        console.log(
+          `RESET: onboardingStep is now ${onboardingStep}, currentDemoIndex is now ${currentDemoIndex}`
+        );
+
+        currentTrialData = null;
+        currentTrialResponses = {};
+        currentTaskMode = null;
+        sessionID = null;
+        currentParameterKey = null;
+        currentParameterConfig = null;
+        actualTaskOrder = [];
+        currentParameterIndexInTask = 0;
+        currentSessionTrials = [];
+        currentGlobalTrialIndex = 0;
+        allCollectedResponses = [];
+        console.log("Full task state reset.");
+      }
+
+      function clearAllFocus() {
+        // This function finds ANY element that currently has the focus class and removes it.
+        const focusedEl = document.querySelector("." + KEYBOARD_FOCUS_CLASS);
+        if (focusedEl) {
+          focusedEl.classList.remove(KEYBOARD_FOCUS_CLASS);
+        }
+        // It also resets the global tracking variables for safety.
+        currentFocusableElements = [];
+        currentFocusedIndex = -1;
+      }
+
+      function updateKeyboardFocus(newIndex) {
+        if (
+          currentFocusableElements &&
+          currentFocusableElements[currentFocusedIndex]
+        ) {
+          currentFocusableElements[currentFocusedIndex].classList.remove(
+            KEYBOARD_FOCUS_CLASS
+          );
+        }
+        currentFocusedIndex = newIndex;
+        if (
+          currentFocusableElements &&
+          currentFocusableElements[currentFocusedIndex]
+        ) {
+          currentFocusableElements[currentFocusedIndex].classList.add(
+            KEYBOARD_FOCUS_CLASS
+          );
+          currentFocusableElements[currentFocusedIndex].focus(); // Also set browser focus
+        }
+      }
+
+      function setupMainMenuFocus() {
+        // This function now only sets the initial focus, it does not set global variables.
+        const firstButton = document.getElementById("testParameterBtn");
+        if (firstButton) {
+          // Add the focus class directly
+          firstButton.classList.add(KEYBOARD_FOCUS_CLASS);
+          firstButton.focus();
+        }
+      }
+
+      function setupParameterSelectorFocus() {
+        currentFocusableElements = Array.from(
+          paramButtonsContainer.querySelectorAll("button")
+        );
+        updateKeyboardFocus(currentFocusableElements.length > 0 ? 0 : -1);
+      }
+
+      function setupCoarseStepFocus() {
+        // The list is now a simple list of 4 buttons
+        currentFocusableElements = [
+          document.getElementById("noInfoBtn"),
+          ...coarseButtons,
+        ];
+        updateKeyboardFocus(2); // Start focus on "Medium"
+      }
+
+      function showDiv(divToShow) {
+        // This is the complete list of all possible screens/containers in the app.
+        const allScreens = [
+          mainMenuDiv,
+          welcomeScreen,
+          howToScreen,
+          paramIntroScreen,
+          paramDemoScreen,
+          practiceIntroScreen,
+          readyScreen,
+          parameterSelectorDiv,
+          conditionInstructionScreenDiv,
+          preVimScreenContainerDiv,
+          vimTaskInterfaceDiv,
+          vviqScreen,
+          resultsDisplayDiv,
+          breakScreen,
+        ];
+
+        // 1. Unconditionally hide every single screen.
+        allScreens.forEach((div) => {
+          if (div) div.classList.add("hidden");
+        });
+
+        // 2. Clear any lingering keyboard focus from the previous screen.
+        clearAllFocus(); // We already have this robust function
+
+        const langSelector = document.getElementById("languageSelector");
+
+        // 3. If a specific screen was requested, show it.
+        if (divToShow) {
+          divToShow.classList.remove("hidden");
+
+          // Check if the screen being shown is the main menu
+          if (divToShow === mainMenuDiv) {
+            langSelector.classList.remove("hidden"); // Show language buttons
+          } else {
+            langSelector.classList.add("hidden"); // Hide language buttons on all other screens
+          }
+
+          // --- Handle setting initial focus for the new screen ---
+          if (divToShow === mainMenuDiv) setupMainMenuFocus();
+          else if (divToShow === parameterSelectorDiv)
+            setupParameterSelectorFocus();
+          else if (divToShow === conditionInstructionScreenDiv) {
+            currentFocusableElements = [startTrialFromInstructionsBtn];
+            updateKeyboardFocus(0);
+          } else if (
+            divToShow === vimTaskInterfaceDiv &&
+            !coarseStepDiv.classList.contains("hidden")
+          ) {
+            setupCoarseStepFocus();
+          }
+          // (We can add focus setters for other screens here if needed)
+        } else {
+          // If we are hiding everything (e.g., in-between states), also hide the selector
+          langSelector.classList.add("hidden");
+        }
+      }
+
+      // --- LANGUAGE SWITCHING ---
+      function setLanguage(lang) {
+        currentLanguage = lang;
+        document.getElementById("htmlTag").lang = lang;
+
+        document.querySelectorAll("#languageSelector button").forEach((btn) => {
+          btn.classList.toggle("active-lang", btn.dataset.lang === lang);
+        });
+
+        document.querySelectorAll("[data-lang-key]").forEach((el) => {
+          const key = el.dataset.langKey;
+          if (
+            LANG_STRINGS[currentLanguage] &&
+            LANG_STRINGS[currentLanguage][key]
+          ) {
+            el.innerHTML = LANG_STRINGS[currentLanguage][key];
+          }
+        });
+
+        // Update the text in the orientation overlay
+        document.getElementById("orientationText_en").style.display =
+          lang === "en" ? "block" : "none";
+        document.getElementById("orientationText_es").style.display =
+          lang === "es" ? "block" : "none";
+
+        if (!parameterSelectorDiv.classList.contains("hidden")) {
+          populateParameterSelector();
+        }
+
+        document.getElementById("confidencePrompt").textContent =
+          LANG_STRINGS[lang].confidencePrompt;
+        document.getElementById("likertLabelLow").textContent =
+          LANG_STRINGS[lang].likertLabelLow;
+        document.getElementById("likertLabelHigh").textContent =
+          LANG_STRINGS[lang].likertLabelHigh;
+      }
+
+      // --- Core Application Logic ---
+
+      function showBreakScreen(onContinueCallback) {
+        const breakScreen = document.getElementById("breakScreen");
+        const continueBtn = document.getElementById("breakContinueBtn");
+        const timerDisplay = document.getElementById("breakTimerDisplay");
+
+        let countdownInterval = null; // Use null to track if a timer is active
+        const breakStartTime = Date.now(); // Record when the break screen appears
+
+        // This is the function that will be called when the user can finally proceed.
+        const enableContinue = () => {
+          // 1. Clean up the timer
+          clearInterval(countdownInterval);
+
+          // 2. Update the UI to show that the user can continue
+          timerDisplay.textContent = "You may now continue.";
+          continueBtn.textContent =
+            LANG_STRINGS[currentLanguage].continueButton;
+          continueBtn.disabled = false;
+          continueBtn.style.animation = "pulse 1.5s infinite";
+
+          // 3. NOW, we attach the real "continue" logic to the button
+          const newContinueBtn = continueBtn.cloneNode(true); // Clear any old listeners
+          continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
+
+          newContinueBtn.addEventListener(
+            "click",
+            () => {
+              // 1. Calculate the total duration of the break.
+              const breakDuration = Date.now() - breakStartTime;
+              // 2. Store the data.
+              breakData.push({
+                after_trial:
+                  allCollectedResponses.length > 0
+                    ? allCollectedResponses.length
+                    : "VVIQ_midpoint",
+                duration_ms: breakDuration,
+              });
+              console.log(`Break taken for ${breakDuration}ms`);
+              // When clicked, clean up and execute the callback
+              document.removeEventListener("keydown", handleDebugSkip);
+              newContinueBtn.style.animation = "";
+              onContinueCallback();
+            },
+            { once: true }
+          );
+        };
+
+        // --- Timer Function ---
+        const startTimer = () => {
+          let secondsLeft = 120;
+          continueBtn.disabled = true; // Button is disabled from the start
+
+          const updateDisplay = () => {
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            timerDisplay.textContent = `${minutes}:${
+              seconds < 10 ? "0" : ""
+            }${seconds}`;
+            continueBtn.textContent = `Continue (available in ${secondsLeft}s)`;
+          };
+
+          updateDisplay(); // Show initial time
+
+          countdownInterval = setInterval(() => {
+            secondsLeft--;
+            updateDisplay();
+            if (secondsLeft <= 0) {
+              enableContinue(); // Timer finished, enable the continue functionality
+            }
+          }, 1000);
+        };
+
+        // --- Debug Skip Logic ---
+        const handleDebugSkip = (event) => {
+          if (DEBUG_SKIP_BREAK_TIMER && event.key === "s") {
+            console.log("Debug: Skipping break timer.");
+            enableContinue(); // Call the same function as when the timer finishes
+          }
+        };
+        // We add and remove this listener carefully to avoid it firing on other screens
+        document.addEventListener("keydown", handleDebugSkip);
+
+        // --- Main Logic ---
+        // Show the break screen and start the timer
+        showDiv(breakScreen);
+        startTimer();
+      }
+
+      function showConditionInstructions(trialDataObject) {
+        currentTrialData = trialDataObject;
+        if (!currentTrialData) {
+          console.error(
+            "showConditionInstructions called with invalid trialData!"
+          );
+          return;
+        }
+
+        // Update the condition icon
+        const conditionIcon = document.getElementById("conditionIcon");
+        if (ICONS[currentTrialData.condition]) {
+          conditionIcon.src = ICONS[currentTrialData.condition];
+          conditionIcon.style.display = "block";
+        } else {
+          conditionIcon.style.display = "none"; // Hide if no icon is defined
+        }
+
+        // Start preloading the images for THIS trial in the background.
+        //preloadTrialImages(currentTrialData.base_image_id);
+
+        const conditionName = {
+          en: currentTrialData.condition.replace(/_/g, " "),
+          es:
+            currentTrialData.condition === "perceptual_recall"
+              ? "Recuerdo Perceptual"
+              : currentTrialData.condition === "episodic_recall"
+              ? "Recuerdo Episódico"
+              : "Imaginación de Escena",
+        }[currentLanguage];
+
+        let titlePrefix =
+          currentTaskMode === "test"
+            ? "Test Mode"
+            : `Trial ${currentGlobalTrialIndex + 1} of ${
+                currentSessionTrials.length
+              }`;
+        conditionInstructionTitleH2.textContent = `${titlePrefix}: ${conditionName}`;
+        conditionInstructionTextP.textContent =
+          currentTrialData.condition_instruction[currentLanguage];
+        showDiv(conditionInstructionScreenDiv);
+        // Start preloading the assets for this specific trial
+        preloadTrialAssets(currentTrialData);
+        currentFocusableElements = [startTrialFromInstructionsBtn];
+        updateKeyboardFocus(0);
+      }
+
+      startTrialFromInstructionsBtn.addEventListener("click", () => {
+        if (!currentTrialData) return;
+        if (currentTrialData.condition === "perceptual_recall") {
+          startPreVimPhase(currentTrialData);
+        } else {
+          currentTrialResponses = {
+            trial_id: currentTrialData.trial_id,
+            condition: currentTrialData.condition,
+            image_id: currentTrialData.base_image_id,
+            parameter_responses: {},
+          };
+          beginVimRating();
+        }
+      });
+
+      // --- Pre-VIM Task Flow ---
+      function startPreVimPhase(trialData) {
+        currentTrialResponses = {
+          trial_id: trialData.trial_id,
+          condition: trialData.condition,
+          image_id: trialData.base_image_id,
+          parameter_responses: {},
+        };
+
+        showDiv(preVimScreenContainerDiv);
+
+        fixationScreenDiv.classList.add("hidden");
+        preVimImageScreenDiv.classList.add("hidden");
+        holdImageInstructionScreenDiv.classList.add("hidden");
+
+        fixationScreenDiv.classList.remove("hidden");
+
+        setTimeout(() => {
+          fixationScreenDiv.classList.add("hidden");
+          preVimImageScreenDiv.classList.remove("hidden");
+          originalImageDisplayImg.src = getOriginalImagePath(
+            trialData.original_image_filename
+          );
+
+          setTimeout(() => {
+            preVimImageScreenDiv.classList.add("hidden");
+            originalImageDisplayImg.src = "";
+
+            holdImagePromptP.textContent =
+              LANG_STRINGS[currentLanguage].holdImagePrompt_recall;
+            holdImageInstructionScreenDiv.classList.remove("hidden");
+
+            currentFocusableElements = [holdImageContinueBtn];
+            updateKeyboardFocus(0);
+          }, 1000); // Image display duration: 4 seconds
+        }, 2000); // Fixation duration: 1 second
+      }
+
+      holdImageContinueBtn.addEventListener("click", () => {
+        beginVimRating();
+      });
+
+      // --- VIM Parameter Rating Functions ---
+
+      function beginVimRating() {
+        if (currentTaskMode === "tutorial") {
+          actualTaskOrder = ["brightness"];
+        } else if (currentTaskMode === "test") {
+          actualTaskOrder = [currentParameterKey];
+        } else {
+          const realParameters = Object.keys(PARAMETERS).filter(
+            (p) => p !== "attention_check"
+          );
+          let parametersForThisTrial = shuffleArray(realParameters);
+
+          // --- THIS IS THE NEW LOGIC ---
+          // If the trial is tagged, simply add the attention check as the 7th and final parameter.
+          if (currentTrialData.has_attention_check) {
+            parametersForThisTrial.push("attention_check");
+          }
+          actualTaskOrder = parametersForThisTrial;
+        }
+
+        // This part of the logic remains the same
+        const sceneTypeKey =
+          currentTrialData.condition === "perceptual_recall"
+            ? "recalled photo"
+            : currentTrialData.condition === "Practice"
+            ? "practice image"
+            : "mental scene";
+        const sceneTypeString = {
+          en: sceneTypeKey,
+          es: sceneTypeKey
+            .replace("photo", "foto")
+            .replace("image", "imagen")
+            .replace("scene", "escena"),
+        }[currentLanguage];
+        vimGeneralInstructionP.textContent = LANG_STRINGS[
+          currentLanguage
+        ].vimGeneralInstruction.replace("{sceneType}", sceneTypeString);
+
+        showDiv(vimTaskInterfaceDiv);
+        currentParameterIndexInTask = 0;
+        loadNextParameterInVim();
+      }
+
+      function loadNextParameterInVim() {
+        if (currentParameterIndexInTask < actualTaskOrder.length) {
+          // More parameters to rate for the current trial, so this part is unchanged
+          currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
+          currentParameterConfig = PARAMETERS[currentParameterKey];
+          setupCoarseStepVim();
+        } else {
+          // --- All parameters for the current trial are FINISHED ---
+
+          if (currentTaskMode === "actual_task_full") {
+            // Only add VIM trials to the results array
+            if (!currentTrialData.is_attention_check) {
+              allCollectedResponses.push({ ...currentTrialResponses });
+            }
+          }
+
+          if (currentTaskMode === "tutorial" || currentTaskMode === "test") {
+            // Handle end of tutorial or test modes (unchanged)
+            if (currentTaskMode === "tutorial") showReadyScreen();
+            if (currentTaskMode === "test") {
+              alert(
+                `Test complete for ${PARAMETERS[currentParameterKey].name.en}`
+              );
+              showDiv(parameterSelectorDiv);
+            }
+            return;
+          }
+
+          // --- THIS IS THE NEW BREAK LOGIC ---
+          // This code now runs ONLY at the end of a main task trial (VIM or Attention Check)
+
+          // Count how many MAIN (non-attention-check) trials have been completed
+          const mainTrialsCompleted = allCollectedResponses.length;
+
+          // Check if it's time for a break (after 4 or 8 main trials)
+          if (mainTrialsCompleted === 4 || mainTrialsCompleted === 8) {
+            // Show the break screen. The callback function is what will run AFTER the break.
+            showBreakScreen(() => {
+              currentGlobalTrialIndex++; // Advance to the next trial
+              showConditionInstructions(
+                currentSessionTrials[currentGlobalTrialIndex]
+              );
+            });
+            return; // IMPORTANT: Stop here and wait for the user to finish their break.
+          }
+
+          // If it's NOT break time, proceed to the next trial as normal.
+          currentGlobalTrialIndex++;
+          if (currentGlobalTrialIndex < currentSessionTrials.length) {
+            showConditionInstructions(
+              currentSessionTrials[currentGlobalTrialIndex]
+            );
+          } else {
+            // All trials are done, go to the results/VVIQ phase
+            displayFullResults();
+          }
+        }
+      }
+
+      // function loadNextParameterInVim() {
+      //     if (currentParameterIndexInTask < actualTaskOrder.length) {
+      //         // More parameters to rate for the current trial
+      //         currentParameterKey = actualTaskOrder[currentParameterIndexInTask];
+      //         currentParameterConfig = PARAMETERS[currentParameterKey];
+      //         setupCoarseStepVim();
+      //     } else {
+      //         // --- All parameters for the current trial are FINISHED ---
+      //         if (currentTaskMode === 'actual_task_full') {
+      //             allCollectedResponses.push({...currentTrialResponses});
+      //         }
+
+      //         if (currentTaskMode === 'tutorial') {
+      //             showReadyScreen();
+      //         } else if (currentTaskMode === 'test') {
+      //             alert(`Test complete for ${PARAMETERS[currentParameterKey].name.en}`);
+      //             showDiv(parameterSelectorDiv);
+      //         } else {
+      //             // This was a main trial. Just load the next one.
+      //             currentGlobalTrialIndex++;
+      //             if (currentGlobalTrialIndex < currentSessionTrials.length) {
+      //                 showConditionInstructions(currentSessionTrials[currentGlobalTrialIndex]);
+      //             } else {
+      //                 displayFullResults();
+      //             }
+      //         }
+      //     }
+      // }
+
+      // This is your working function with the one necessary line added.
+      // REPLACE your function with this corrected version
+
+        function setupCoarseStepVim() {
+            clearAllFocus();
+            if (fineTuneImg) fineTuneImg.src = "";
+            if (coarsePreviewImg) coarsePreviewImg.src = "";
+
+            const parameterIcon = document.getElementById("parameterIcon");
+            if (ICONS[currentParameterKey]) {
+                parameterIcon.src = ICONS[currentParameterKey];
+                parameterIcon.style.display = "block";
+            } else {
+                parameterIcon.style.display = "none";
+            }
+
+            const paramConfig = PARAMETERS[currentParameterKey];
+            const lang = currentLanguage;
+
+            // Set the main parameter title
+            currentParamDisplay.textContent = paramConfig.name[lang];
+
+            // --- THIS IS THE NEW INTEGRATED LOGIC ---
+            // 1. Determine which instruction string to use based on the current task mode
+            let instructionText = '';
+            if (currentTaskMode === 'tutorial') {
+                instructionText = paramConfig.instructions.tutorial.coarse[lang];
+            } else {
+                instructionText = paramConfig.instructions.task.coarse[lang];
+            }
+            coarseParamNameStrong.innerHTML = instructionText;
+            
+            // 2. Set the text for both the coarse and fine-tune steps using the selected string
+            coarseParamNameStrong.innerHTML = instructionText;
+            fineTuneParamNameStrong.innerHTML = instructionText; // Also prepares the next screen
+            
+            // --- The rest of your function is the same ---
+            
+            coarseButtons.forEach((button) => {
+                const levelKey = button.dataset.levelKey;
+                button.dataset.level = currentParameterConfig.coarse[levelKey];
+            });
+
+            coarseStepDiv.classList.remove("hidden");
+            fineTuneStepDiv.classList.add("hidden");
+            confidenceStepDiv.classList.add("hidden");
+
+            document.querySelectorAll(".likert-button.selected, .coarse-selection button.selected").forEach((btn) => btn.classList.remove("selected"));
+
+            document.getElementById("coarseImageDisplay").classList.remove("hidden");
+            document.getElementById("fineTuneImageDisplay").classList.add("hidden");
+
+            backToCoarseBtn.classList.add("hidden");
+            confirmSelectionBtn.classList.add("hidden");
+            confirmConfidenceBtn.classList.add("hidden");
+
+            coarsePreviewImg.src = "";
+            if (coarseImageDisplayP) coarseImageDisplayP.classList.remove("hidden");
+            
+            setupCoarseStepFocus();
+            parameterStartTime = Date.now();
+        }
+
+      function setupFineTuneStepVim(coarseLevelValue) {
+            clearAllFocus();
+            currentCoarseSelectionLevel = coarseLevelValue;
+            
+            const paramConfig = PARAMETERS[currentParameterKey];
+            const lang = currentLanguage;
+
+            // --- THIS IS THE FIX ---
+            // Determine which instruction to use based on the current task mode.
+            let instructionText = '';
+            if (currentTaskMode === 'tutorial') {
+                instructionText = paramConfig.instructions.tutorial.fineTune[lang];
+            } else {
+                instructionText = paramConfig.instructions.task.fineTune[lang];
+            }
+            fineTuneParamNameStrong.innerHTML = instructionText;
+
+            // --- The rest of the function is unchanged ---
+            const totalParamLevels = paramConfig.levels;
+            let minL, maxL;
+            if (coarseLevelValue === paramConfig.coarse.low) { minL = 1; maxL = 7; } 
+            else if (coarseLevelValue === paramConfig.coarse.mid) { minL = 8; maxL = 14; } 
+            else { minL = 15; maxL = 21; }
+            
+            sliderToActualLevelMap = [];
+            for (let i = minL; i <= maxL; i++) { sliderToActualLevelMap.push(i); }
+
+            const randomSliderIndex = Math.floor(Math.random() * sliderToActualLevelMap.length);
+            const initialSliderValue = randomSliderIndex + 1;
+
+            fineTuneSlider.min = 1;
+            fineTuneSlider.max = sliderToActualLevelMap.length;
+            fineTuneSlider.value = initialSliderValue; 
+
+            updateFineTuneImageVim(fineTuneSlider.value);
+            
+            coarseStepDiv.classList.add('hidden');
+            fineTuneStepDiv.classList.remove('hidden');
+            document.getElementById('coarseImageDisplay').classList.add('hidden');
+            document.getElementById('fineTuneImageDisplay').classList.remove('hidden');
+            
+            backToCoarseBtn.classList.remove('hidden');
+            confirmSelectionBtn.classList.remove('hidden');
+            
+            fineTuneSlider.focus(); 
+            currentFocusableElements = [fineTuneSlider, backToCoarseBtn, confirmSelectionBtn];
+            updateKeyboardFocus(0); 
+        }
+
+      function updateFineTuneImageVim(sliderValStr) {
+        const sliderValue = parseInt(sliderValStr);
+        const actualLevel = sliderToActualLevelMap[sliderValue - 1];
+        if (
+          actualLevel !== undefined &&
+          currentTrialData &&
+          currentParameterKey
+        ) {
+          fineTuneImg.src = getVariantImagePath(
+            currentTrialData.base_image_id,
+            currentParameterKey,
+            actualLevel
+          );
+          fineTuneLevelDisplay.textContent = actualLevel;
+        }
+      }
+
+      // --- Start/Setup Functions ---
+      function populateParameterSelector() { 
+        paramButtonsContainer.innerHTML = ''; 
+        
+        const realParameters = Object.keys(PARAMETERS).filter(key => key !== 'attention_check');
+        
+        realParameters.forEach(key => {
+            const button = document.createElement('button');
+            button.className = 'param-icon-button';
+            
+            const iconImg = document.createElement('img');
+            iconImg.src = ICONS[key];
+            iconImg.alt = PARAMETERS[key].name[currentLanguage];
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = PARAMETERS[key].name[currentLanguage];
+            
+            button.appendChild(iconImg);
+            button.appendChild(labelSpan);
+            
+            // --- THIS IS THE FIX ---
+            // We add the event listener directly to the button as we create it.
+            // This is simple, robust, and avoids the const-assignment error.
+            button.addEventListener('click', () => {
+                startParameterTest(key);
+            });
+            
+            paramButtonsContainer.appendChild(button);
+        });
+
+        // We no longer need the complex cloneNode/re-assignment logic.
+            
+        setupParameterSelectorFocus(); 
+    }
+
+      function startParameterTest(paramKey) {
+        resetFullTaskState();
+        currentTaskMode = "test";
+        currentParameterKey = paramKey;
+        currentParameterConfig = PARAMETERS[paramKey];
+        currentTrialData = {
+          trial_id: "TestRun",
+          condition: "Parameter Test",
+          base_image_id: IMAGE_DATA.length > 0 ? IMAGE_DATA[0].id : "image01",
+        };
+        // It now calls our single, unified function.
+        beginVimRating();
+      }
+
+      function createTrialList(set = "A") {
+        const conditions = [
+          "perceptual_recall",
+          "episodic_recall",
+          "scene_imagination",
+        ];
+        const indoorImages = IMAGE_DATA.filter((img) => img.type === "indoor");
+        const outdoorImages = IMAGE_DATA.filter(
+          (img) => img.type === "outdoor"
+        );
+
+        const groupAssignments = { A: [0, 1, 2], B: [1, 2, 0], C: [2, 0, 1] };
+
+        const effectiveSet = groupAssignments[set.toUpperCase()]
+          ? set.toUpperCase()
+          : "A";
+        const assignment = groupAssignments[effectiveSet];
+
+        let trialList = [];
+        let trialCounter = 1;
+        conditions.forEach((condition, i) => {
+          const groupIndex = assignment[i];
+          const indoorGroup = indoorImages.slice(
+            groupIndex * 2,
+            groupIndex * 2 + 2
+          );
+          const outdoorGroup = outdoorImages.slice(
+            groupIndex * 2,
+            groupIndex * 2 + 2
+          );
+
+          [...indoorGroup, ...outdoorGroup].forEach((img) => {
+            let instruction =
+              condition === "perceptual_recall"
+                ? {
+                    en: "You will be shown an image...",
+                    es: "Se le mostrará una imagen...",
+                  } // Simplified for brevity
+                : img.prompts[condition];
+
+            trialList.push({
+              trial_id: `main_${trialCounter++}`,
+              condition: condition,
+              base_image_id: img.id,
+              original_image_filename: img.filename.replace(".png", ".jpg"), // Assuming optimization
+              condition_instruction: instruction,
+              has_attention_check: false,
+            });
+          });
+        });
+
+        // Return an object containing both the list and the set name used
+        return { trials: trialList, usedSet: effectiveSet };
+      }
+
+      function updateDemoImage() {
+        const demo = DEMO_PARAMS[currentDemoIndex];
+        const level = paramDemoSlider.value;
+        // Dynamically get the correct image variant based on the slider's value
+        paramDemoImg.src = getVariantImagePath("tutorial", demo.key, level);
+      }
+
+      function startTutorial() {
+        currentTaskMode = "tutorial";
+        currentTrialData = {
+          trial_id: "TutorialRun",
+          condition: "Practice",
+          base_image_id: "tutorial",
+        };
+        beginVimRating();
+
+        // --- NEW PROGRESS BAR LOGIC ---
+        completedSteps = 0;
+        totalSteps = 1; // The tutorial has only one parameter to rate
+        document
+          .getElementById("globalProgressContainer")
+          .classList.remove("hidden");
+      }
+
+      function startParameterDemos() {
+        currentDemoIndex = 0;
+        // --- THIS IS THE FIX ---
+        // Ensure the listener is attached every time the demos start.
+        // paramDemoSlider.removeEventListener('input', updateDemoImage);
+        paramDemoSlider.addEventListener("input", updateDemoImage);
+        displayDemoScreen();
+      }
+
+      // REPLACE your existing displayDemoScreen function with this one.
+
+        function displayDemoScreen() {
+            if (currentDemoIndex < DEMO_PARAMS.length) {
+                const demo = DEMO_PARAMS[currentDemoIndex];
+                const paramConfig = PARAMETERS[demo.key];
+                const lang = currentLanguage;
+                
+                // Update the parameter icon for the demo
+                const paramDemoIcon = document.getElementById('paramDemoIcon');
+                if (ICONS[demo.key]) {
+                    paramDemoIcon.src = ICONS[demo.key];
+                    paramDemoIcon.style.display = 'block';
+                } else {
+                    paramDemoIcon.style.display = 'none';
+                }
+
+                // --- THIS IS THE FIX ---
+                // It now correctly gets the 'demo' instruction text from the new 'instructions' object.
+                document.getElementById('paramDemoTitle').textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
+                document.getElementById('paramDemoText').innerHTML = paramConfig.instructions.demo[lang];
+
+                // --- The rest of the function is unchanged ---
+                document.getElementById('paramDemoSlider').value = 11;
+                updateDemoImage();
+                showDiv(paramDemoScreen);
+                currentFocusableElements = [paramDemoSlider, document.getElementById('nextDemoBtn')];
+                updateKeyboardFocus(0);
+
+            } else {
+                paramDemoSlider.removeEventListener('input', updateDemoImage);
+                advanceOnboarding();
+            }
+        }
+
+    //   function displayDemoScreen() {
+    //     console.log(`DISPLAY DEMO: currentDemoIndex is ${currentDemoIndex}`);
+    //     console.log(DEMO_PARAMS.length);
+    //     if (currentDemoIndex < DEMO_PARAMS.length) {
+    //       // --- This is YOUR working logic for showing a demo. It is unchanged. ---
+    //       const demo = DEMO_PARAMS[currentDemoIndex];
+    //       const paramConfig = PARAMETERS[demo.key];
+    //       const lang = currentLanguage;
+
+    //       // Update the parameter icon for the demo
+    //       const paramDemoIcon = document.getElementById("paramDemoIcon");
+    //       if (ICONS[demo.key]) {
+    //         paramDemoIcon.src = ICONS[demo.key];
+    //         paramDemoIcon.style.display = "block";
+    //       } else {
+    //         paramDemoIcon.style.display = "none";
+    //       }
+
+    //       // 1. Get the template strings from our LANG_STRINGS object.
+    //     const titleTemplate = LANG_STRINGS[lang].paramDemoTitleTemplate;
+    //     const textTemplate = LANG_STRINGS[lang].paramDemoTextTemplate;
+
+    //     // 2. Replace the placeholders with the dynamic content.
+    //     const finalTitle = titleTemplate
+    //         .replace('{X}', currentDemoIndex + 1)
+    //         .replace('{paramName}', paramConfig.name[lang]);
+        
+    //     const finalText = textTemplate
+    //         .replace('{paramDescription}', paramConfig.parameter_specific_instruction[lang]);
+
+    //     // 3. Update the text on the screen using the final, translated strings.
+    //     document.getElementById('paramDemoTitle').textContent = finalTitle;
+    //     document.getElementById('paramDemoText').innerHTML = paramConfig.instructions.demo[lang];
+          
+    //       document.getElementById("paramDemoSlider").value = 11;
+    //       updateDemoImage();
+
+    //       showDiv(paramDemoScreen);
+
+    //       // 1. Set the slider as the only focusable element for this screen.
+    //       currentFocusableElements = [paramDemoSlider];
+    //       // 2. Set the initial focus on it.
+    //       updateKeyboardFocus(0);
+    //     } else {
+    //       advanceOnboarding();
+    //     }
+    //   }
+
+      // This is the single entry point to start the onboarding process.
+      // function startOnboarding() {
+      //   onboardingStep = 0;
+      //   currentDemoIndex = 0; // Also reset the demo counter
+      //   runOnboardingStep();
+      // }
+
+      // This is the single "brain" function for the entire onboarding flow.
+      // function advanceOnboarding() {
+      //   onboardingStep++;
+      //   runOnboardingStep();
+      // }
+
+      // This function determines which screen to show based on the current step.
+      function runOnboardingStep() {
+        console.log(`RUNNING ONBOARDING STEP: ${onboardingStep}`); // For debugging
+
+        if (onboardingStep === 0) {
+          // Welcome
+          showDiv(welcomeScreen);
+        } else if (onboardingStep === 1) {
+          // How To
+          showDiv(howToScreen);
+        } else if (onboardingStep === 2) {
+          // Parameter Intro
+          showDiv(paramIntroScreen);
+        } else if (onboardingStep === 3) {
+          // Start Demos
+          startParameterDemos();
+        } else if (onboardingStep === 4) {
+          // Practice Trial Intro
+          showDiv(practiceIntroScreen);
+          //showPracticeIntroScreen();
+        } else if (onboardingStep === 5) {
+          // Start the actual practice VIM trial
+          startTutorial();
+        } else if (onboardingStep === 6) {
+          // Show the "Ready" screen
+          showReadyScreen();
+        }
+      }
+
+      // This function is now just a helper, called by the state machine.
+      function showPracticeIntroScreen() {
+        const practiceIntroScreen = document.getElementById(
+          "practiceIntroScreen"
+        );
+        practiceIntroScreen.querySelector("h2").textContent =
+          "Putting It All Together: A Practice Round";
+        practiceIntroScreen.querySelector("p").innerHTML = `
+                You will now complete one full practice rating.<br><br>
+                <b>1. Coarse Selection:</b> First, choose a general level (Low, Medium, or High).<br>
+                <b>2. Fine-Tuning:</b> Next, use a slider to make a more precise match.<br>
+                <b>3. Confidence Rating:</b> Finally, rate how confident you are in your match.
+            `;
+        const nextButton = practiceIntroScreen.querySelector("button");
+        nextButton.textContent =
+          LANG_STRINGS[currentLanguage].startPracticeButton;
+        showDiv(practiceIntroScreen);
+      }
+
+      function showReadyScreen() {
+        // This function now correctly uses the showDiv system.
+        const readyScreenDiv = document.getElementById("readyScreen");
+
+        // Populate the text content based on the current language
+        readyScreenDiv.querySelector(
+          '[data-lang-key="readyTitle"]'
+        ).textContent = LANG_STRINGS[currentLanguage].readyTitle;
+        readyScreenDiv.querySelector(
+          '[data-lang-key="readyText"]'
+        ).textContent = LANG_STRINGS[currentLanguage].readyText;
+        readyScreenDiv.querySelector(
+          '[data-lang-key="startExperimentButton"]'
+        ).textContent = LANG_STRINGS[currentLanguage].startExperimentButton;
+
+        // Show the screen
+        showDiv(readyScreenDiv);
+      }
+
+      function startActualTask() {
+        resetFullTaskState();
+        currentTaskMode = "actual_task_full";
+        sessionID = Date.now();
+
+        const requestedSet = getUrlParameter("set") || "A";
+
+        const generated = createTrialList(requestedSet);
+        currentSessionTrials = shuffleArray(generated.trials);
+        const actualSetUsed = generated.usedSet; // Get the name of the set that was really used
+
+        // Display the set info clearly on the main menu
+        const setInfoP = document.getElementById("setInfo");
+        if (setInfoP) {
+          let infoText = `(Using trial set: ${actualSetUsed})`;
+          if (requestedSet.toUpperCase() !== actualSetUsed) {
+            infoText += ` - Note: Requested set '${requestedSet}' was invalid, defaulted to 'A'`;
+          }
+          setInfoP.textContent = infoText;
+          setInfoP.style.color =
+            requestedSet.toUpperCase() !== actualSetUsed ? "orange" : "#888";
+        }
+
+        const attentionCheckCount = 3;
+        let indices = Array.from(Array(currentSessionTrials.length).keys());
+        let shuffledIndices = shuffleArray(indices);
+        let attentionCheckIndices = shuffledIndices.slice(
+          0,
+          attentionCheckCount
+        );
+        attentionCheckIndices.forEach((index) => {
+          currentSessionTrials[index].has_attention_check = true;
+        });
+        console.log("Trials with an attention check:", attentionCheckIndices);
+        currentSessionTrials = shuffleArray(currentSessionTrials);
+
+        // --- NEW PROGRESS BAR LOGIC ---
+        completedSteps = 0;
+        // Calculate total steps: 6 real params * 12 trials + 3 attention check params
+        totalSteps = 6 * 12 + 3;
+        if (vviqEnabled) {
+          totalSteps += 32; // Add the 32 VVIQ items
+        }
+        document
+          .getElementById("globalProgressContainer")
+          .classList.remove("hidden");
+
+        currentGlobalTrialIndex = 0;
+        allCollectedResponses = [];
+        showConditionInstructions(currentSessionTrials[0]);
+      }
+
+      function displayFullResults() {
+        // This function's only job is to decide whether to show VVIQ or the end screen.
+        // The data handling will happen at the very end.
+        if (vviqEnabled) {
+          startVVIQ();
+        } else {
+          // If no VVIQ, go straight to the final collection and saving step.
+          collectAndFinish();
+        }
+      }
+
+      function downloadResults() {
+        const dataToDownload = window.finalDataForDownload || {
+          sessionID: sessionID,
+          vim_results: allCollectedResponses,
+          vviq_scores: [],
+        };
+
+        if (!dataToDownload.sessionID) {
+          alert("No data to download.");
+          return;
+        }
+
+        const jsonString = JSON.stringify(dataToDownload, null, 2);
+
+        // 3. Create a Blob from the JSON string
+        const blob = new Blob([jsonString], { type: "application/json" });
+
+        // 4. Create a temporary URL for the Blob
+        const url = URL.createObjectURL(blob);
+
+        // 5. Create a temporary anchor element to trigger the download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `VIM_results_session_${sessionID}.json`; // Set the filename
+        document.body.appendChild(a); // Append to body to ensure it's clickable
+        a.click(); // Programmatically click the link
+
+        // 6. Clean up by removing the temporary anchor and URL
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      async function sendDataToGoogleSheet(dataToPost) {
+        if (!dataToPost) {
+          console.error("No data provided to send.");
+          backToMenuFromResultsBtn.classList.remove("hidden");
+          return;
+        }
+
+        saveStatus.textContent =
+          LANG_STRINGS[currentLanguage].resultsTitle === "Trial Results"
+            ? "Saving data..."
+            : "Guardando datos...";
+
+        // We convert the object to a string and then to a special format.
+        const formData = new FormData();
+        formData.append("data", JSON.stringify(dataToPost));
+
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: formData,
+          });
+
+          saveStatus.textContent =
+            LANG_STRINGS[currentLanguage].resultsTitle === "Trial Results"
+              ? "Data saved successfully. Thank you!"
+              : "Datos guardados con éxito. ¡Gracias!";
+          saveStatus.style.color = "green";
+          console.log("Data submission successful.");
+        } catch (error) {
+          saveStatus.textContent =
+            LANG_STRINGS[currentLanguage].resultsTitle === "Trial Results"
+              ? "Error: Could not save data. Please use the download button."
+              : "Error: No se pudieron guardar los datos. Por favor, use el botón de descarga.";
+          saveStatus.style.color = "red";
+          console.error("Error sending data to Google Sheet:", error);
+        } finally {
+          backToMenuFromResultsBtn.classList.remove("hidden");
+        }
+      }
+
+      // ADD THIS NEW FUNCTION
+      function handleNoInfoSelection() {
+          if (!currentTrialData || !currentParameterKey) return;
+
+          // Record the "no_info" response
+          if (!currentTrialResponses.parameter_responses) {
+              currentTrialResponses.parameter_responses = {};
+          }
+          currentTrialResponses.parameter_responses[currentParameterKey] = {
+              level: 'no_info',
+              // Confidence will be collected in the next step
+          };
+
+          // First, explicitly hide the coarse selection controls
+          coarseStepDiv.classList.add('hidden');
+          
+          // Then, go DIRECTLY to the confidence step
+          showConfidenceStep();
+      }
+
+      function handleConfirmSelection() {
+        if (!currentTrialData || !currentParameterKey) return;
+
+        // Get the selected level from the slider
+        const finalLevel =
+          sliderToActualLevelMap[parseInt(fineTuneSlider.value) - 1];
+
+        if (!currentTrialResponses.parameter_responses) {
+          currentTrialResponses.parameter_responses = {};
+        }
+        // Store the level response
+        currentTrialResponses.parameter_responses[currentParameterKey] = {
+          level: finalLevel,
+        };
+
+        // Transition to the confidence rating step
+        showConfidenceStep();
+      }
+
+      function handleConfirmConfidence() {
+        if (currentConfidenceSelection === null) return;
+
+        // Start the timer for this parameter rating
+        const responseTime = Date.now() - parameterStartTime;
+
+        // Save the confidence and response time to the existing parameter response
+        if (currentTrialResponses.parameter_responses[currentParameterKey]) {
+          currentTrialResponses.parameter_responses[
+            currentParameterKey
+          ].confidence = currentConfidenceSelection;
+          currentTrialResponses.parameter_responses[currentParameterKey].rt =
+            responseTime;
+        }
+
+        updateProgressBar();
+
+        // Advance to the next parameter
+        currentParameterIndexInTask++;
+        loadNextParameterInVim();
+      }
+
+      // ADD THIS ENTIRE NEW MODULE
+
+      // --- Onboarding State Machine ---
+      //let onboardingStep = 0;
+      const ONBOARDING_FLOW = [
+          'welcomeScreen',
+          'howToScreen',
+          'paramIntroScreen',
+          'preloadDemos',
+          'paramDemos',
+          'practiceIntroScreen',
+          'practiceTrial',
+          'readyScreen'
+      ];
+
+      function startOnboarding() {
+          onboardingStep = 0;
+          currentDemoIndex = 0;
+          runOnboardingStep();
+      }
+
+      function advanceOnboarding() {
+          onboardingStep++;
+          runOnboardingStep();
+      }
+
+      function runOnboardingStep() {
+          const currentStepName = ONBOARDING_FLOW[onboardingStep];
+          console.log(`Running Onboarding Step: ${currentStepName}`);
+
+          if (currentStepName.endsWith('Screen')) {
+              showDiv(document.getElementById(currentStepName));
+          } 
+          else if (currentStepName === 'preloadDemos') {
+              // --- THIS IS THE FIX ---
+              // When we hit this step, call the preloader function.
+              // The preloader will automatically call startParameterDemos when it's done.
+              preloadDemoAssets(); 
+          }
+          else if (currentStepName === 'paramDemos') {
+              // This step is now only entered AFTER preloading is complete.
+              startParameterDemos();
+          }
+          else if (currentStepName === 'practiceTrial') {
+              startTutorial();
+          }
+      }
+      // --- End Onboarding State Machine ---
+
+      // --- VVIQ-2 Module (Corrected with Event Delegation) ---
+
+      let vviqEnabled = true;
+      const vviqScreen = document.getElementById("vviqScreen");
+      let vviqItems = [];
+      let vviqCurrentStep = 0;
+      let vviqCurrentResponse = null;
+      let vviqResponses = [];
+
+      function startVVIQ() {
+        vviqCurrentStep = 0;
+        vviqItems = createVVIQItems();
+        vviqResponses = [];
+
+        // Generate the static HTML shell for the VVIQ screen
+        vviqScreen.innerHTML = generateVVIQ_BaseHTML();
+
+        // Attach ONE smart event listener to the parent container. This is the key.
+        vviqScreen.addEventListener("click", handleVVIQ_Clicks);
+
+        // Display the first instruction screen
+        displayVVIQStep();
+      }
+
+      // The single, smart click handler for the entire VVIQ screen
+      function handleVVIQ_Clicks(event) {
+        const target = event.target.closest("button");
+        if (!target || target.disabled) return;
+
+        if (target.id === "vviqBackToMenuBtn") {
+          if (confirm(LANG_STRINGS[currentLanguage].exitConfirmMessage)) {
+            resetFullTaskState();
+            showDiv(mainMenuDiv);
+          }
+          return;
+        }
+
+        if (target.id === "vviqNextBtn") {
+          advanceVVIQ();
+        } else if (target.id === "vviqSubmitBtn") {
+          // This now calls our new, unified function
+          collectAndFinish();
+        } else if (target.classList.contains("likert-button")) {
+          handleLikertSelection(target);
+        }
+      }
+
+      function handleLikertSelection(button) {
+        vviqCurrentResponse = parseInt(button.dataset.value);
+        // Highlight the selected button
+        vviqScreen
+          .querySelectorAll(".likert-button")
+          .forEach((btn) => btn.classList.remove("selected"));
+        button.classList.add("selected");
+        vviqScreen.querySelector("#vviqNextBtn").disabled = false;
+
+        // Update keyboard focus for arrow key navigation
+        currentFocusableElements = Array.from(
+          vviqScreen.querySelectorAll(".likert-button")
+        );
+        updateKeyboardFocus(currentFocusableElements.indexOf(button));
+      }
+
+      function createVVIQItems() {
+        const shuffledPrompts = shuffleArray(VVIQ_DATA.prompts);
+        const allItems = [];
+        let itemCounter = 0;
+        shuffledPrompts.forEach((prompt) => {
+          prompt.items.forEach((item) => {
+            allItems.push({
+              id: ++itemCounter,
+              prompt: prompt.prompt,
+              item: item,
+            });
+          });
+        });
+        return allItems;
+      }
+
+      // This function finds elements inside the vviqScreen
+      function displayVVIQStep() {
+        const lang = currentLanguage;
+        const titleEl = vviqScreen.querySelector("#vviqTitle");
+        const instructionEl = vviqScreen.querySelector("#vviqInstructionText");
+        const scaleTableEl = vviqScreen.querySelector(
+          "#vviqScaleTableContainer"
+        );
+        const itemScreenEl = vviqScreen.querySelector("#vviqItemScreen");
+        const nextBtn = vviqScreen.querySelector("#vviqNextBtn");
+
+        // Hide all optional components first
+        instructionEl.style.display = "none";
+        scaleTableEl.style.display = "none";
+        itemScreenEl.style.display = "none";
+
+        titleEl.textContent = "Vividness of Visual Imagery Questionnaire";
+        nextBtn.textContent = LANG_STRINGS[lang].continueButton;
+        nextBtn.disabled = false;
+
+        if (vviqCurrentStep === 0) {
+          instructionEl.style.display = "block";
+          instructionEl.innerHTML = `<p>${VVIQ_DATA.instructions.inst_1[lang]}</p>`;
+        } else if (vviqCurrentStep === 1) {
+          instructionEl.style.display = "block";
+          scaleTableEl.style.display = "block";
+          instructionEl.innerHTML = `<p>${VVIQ_DATA.instructions.inst_2[lang]}</p><p>${VVIQ_DATA.instructions.inst_3[lang]}</p>`;
+          scaleTableEl.innerHTML = generateVVIQScaleTableHTML();
+        } else if (vviqCurrentStep === 2) {
+          instructionEl.style.display = "block";
+          instructionEl.innerHTML = `<p><strong>${VVIQ_DATA.instructions.inst_4[lang]}</strong></p>`;
+          nextBtn.textContent = LANG_STRINGS[lang].startPracticeButton.replace(
+            "Practice Round",
+            "Questionnaire"
+          );
+        } else {
+          const itemIndex = vviqCurrentStep - 3;
+          displayVVIQItem(vviqItems[itemIndex]);
+        }
+        showDiv(vviqScreen);
+      }
+
+      function displayVVIQItem(itemData) {
+        const lang = currentLanguage;
+        const itemScreen = vviqScreen.querySelector("#vviqItemScreen");
+
+        // --- This part is the same: build the UI ---
+        vviqScreen.querySelector(
+          "#vviqTitle"
+        ).textContent = `Question ${itemData.id} of 32`;
+        itemScreen.style.display = "block";
+        itemScreen.querySelector("#vviqItemPrompt").textContent =
+          itemData.prompt[lang];
+        itemScreen.querySelector(
+          "#vviqItemText"
+        ).textContent = `${itemData.id}. ${itemData.item[lang]}`;
+        vviqScreen.querySelector("#vviqLikertLabelLow").textContent =
+          VVIQ_DATA.scale[4][lang];
+        vviqScreen.querySelector("#vviqLikertLabelHigh").textContent =
+          VVIQ_DATA.scale[0][lang];
+
+        const scaleContainer = vviqScreen.querySelector("#vviqLikertScale");
+        scaleContainer.innerHTML = "";
+        VVIQ_DATA.scale
+          .slice()
+          .reverse()
+          .forEach((scalePoint) => {
+            const button = document.createElement("button");
+            button.className = "likert-button";
+            button.dataset.value = scalePoint.score;
+            button.textContent = scalePoint.score;
+            scaleContainer.appendChild(button);
+          });
+
+        vviqCurrentResponse = null;
+        vviqScreen.querySelector("#vviqNextBtn").disabled = true;
+        vviqScreen.querySelector("#vviqNextBtn").textContent = LANG_STRINGS[
+          lang
+        ].confirmConfidenceButton.replace("Confidence", "Rating");
+
+        // 1. Define the focusable elements for this screen every time.
+        currentFocusableElements = Array.from(scaleContainer.children);
+
+        // 2. Remove any old focus class from a previous trial to prevent visual artifacts.
+        currentFocusableElements.forEach((el) =>
+          el.classList.remove(KEYBOARD_FOCUS_CLASS)
+        );
+
+        // 3. Set the initial focus state to the middle button (index 2 corresponds to button "3").
+        const initialFocusIndex = 2;
+
+        // 4. Call the single, reliable updateKeyboardFocus function to synchronize
+        //    both the internal state (currentFocusedIndex) and the visual state (.keyboard-focus class).
+        updateKeyboardFocus(initialFocusIndex);
+      }
+
+      function advanceVVIQ() {
+        // Only save the response if we are actually on an item screen
+        if (vviqCurrentStep >= 3 && vviqCurrentStep - 3 < vviqItems.length) {
+          if (vviqCurrentResponse !== null) {
+            vviqResponses.push({
+              id: vviqItems[vviqCurrentStep - 3].id,
+              response: vviqCurrentResponse,
+            });
+            updateProgressBar();
+          }
+        }
+
+        vviqCurrentStep++;
+        const itemIndex = vviqCurrentStep - 3;
+
+        if (itemIndex < vviqItems.length) {
+          displayVVIQStep();
+        } else {
+          // Finished last item, show the final submit screen
+          vviqScreen.querySelector("#vviqItemScreen").style.display = "none";
+          vviqScreen.querySelector("#vviqInstructionText").style.display =
+            "block";
+          vviqScreen.querySelector(
+            "#vviqInstructionText"
+          ).innerHTML = `<p>You have completed the questionnaire. Click Submit to finish the experiment.</p>`;
+          vviqScreen.querySelector("#vviqNextBtn").style.display = "none";
+          const submitBtn = vviqScreen.querySelector("#vviqSubmitBtn");
+          submitBtn.style.display = "block";
+          submitBtn.textContent = "Submit VVIQ";
+          submitBtn.disabled = false;
+
+          currentFocusableElements = [submitBtn];
+          updateKeyboardFocus(0);
+        }
+      }
+
+      function collectAndFinish() {
+        let finalScores = [];
+        // If the VVIQ was run, get the scores.
+        if (vviqEnabled && vviqResponses.length > 0) {
+          vviqResponses.sort((a, b) => a.id - b.id);
+          finalScores = vviqResponses.map((r) => r.response);
+        }
+
+        // Create the final data payload, combining VIM and VVIQ (if any)
+        const finalDataObject = {
+          sessionID: sessionID,
+          vim_results: allCollectedResponses,
+          vviq_scores: finalScores,
+          break_data: breakData,
+        };
+
+        // Make the data available for download
+        window.finalDataForDownload = finalDataObject;
+
+        // Hide the VVIQ screen just in case it was visible
+        vviqScreen.classList.add("hidden");
+        // Show the final saving screen
+        showDiv(resultsDisplayDiv);
+
+        // Send the complete, final data object to Google
+        sendDataToGoogleSheet(finalDataObject);
+      }
+
+      function generateVVIQ_BaseHTML() {
+        // Get the correct button text from our language object
+        const backButtonText = LANG_STRINGS[currentLanguage].exitTaskButton;
+
+        return `
+                <h2 id="vviqTitle"></h2>
+                <div id="vviqInstructionText" class="vviq-instructions"></div>
+                <div id="vviqScaleTableContainer"></div>
+                <div id="vviqItemScreen" style="display:none;">
+                    <p id="vviqItemPrompt" class="vviq-prompt-header"></p>
+                    <div class="vviq-item">
+                        <span id="vviqItemText" class="vviq-item-text"></span>
+                        <div class="likert-container">
+                            <span id="vviqLikertLabelLow" class="likert-label-end"></span>
+                            <div id="vviqLikertScale" class="likert-scale"></div>
+                            <span id="vviqLikertLabelHigh" class="likert-label-end"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-spacer"></div>
+                <button id="vviqNextBtn"></button>
+                <button id="vviqSubmitBtn" style="display:none;"></button>
+                
+                <!-- The button now gets its text content immediately upon creation -->
+                <button id="vviqBackToMenuBtn" class="back-button">${backButtonText}</button>
+            `;
+      }
+
+      function generateVVIQScaleTableHTML() {
+        const lang = currentLanguage;
+        let table = `<table class="vviq-rating-scale-table"><tr><th>Rating</th><th>Description</th></tr>`;
+        VVIQ_DATA.scale.forEach((item) => {
+          table += `<tr><td><strong>${item.score}</strong></td><td>${item[lang]}</td></tr>`;
+        });
+        return table + `</table>`;
+      }
+
+      // --- End VVIQ-2 Module ---
+
+      // --- EVENT LISTENERS ---
+
+      document.addEventListener("DOMContentLoaded", () => {
+        resetFullTaskState();
+        setLanguage("en");
+        showDiv(mainMenuDiv);
+        if (isTouchDevice) document.body.classList.add("touch-device");
+
+        // --- Onboarding Listeners (Unified) ---
+        document.getElementById('startActualTaskBtn').addEventListener('click', startOnboarding);
+        document.getElementById('welcomeContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('howToContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('paramIntroContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('practiceIntroContinueBtn').addEventListener('click', advanceOnboarding);
+        document.getElementById('startExperimentBtn').addEventListener('click', startActualTask);
+
+        // The demo "next" button has its own special logic
+        document.getElementById('nextDemoBtn').addEventListener('click', () => {
+            currentDemoIndex++;
+            displayDemoScreen();
+        });
+
+        // --- Onboarding Flow Listeners ---
+        // Step 1: Main Menu -> Welcome Screen
+        // document
+        //   .getElementById("startActualTaskBtn")
+        //   .addEventListener("click", () => {
+        //     // Reset the state every time the flow begins
+        //     onboardingStep = 0;
+        //     currentDemoIndex = 0;
+        //     showDiv(welcomeScreen);
+        //     //advanceOnboarding();
+        //   });
+
+        // // Step 2: Welcome Screen -> How To Screen
+        // document
+        //   .getElementById("welcomeContinueBtn")
+        //   .addEventListener("click", () => {
+        //     showDiv(howToScreen);
+        //     advanceOnboarding();
+        //   });
+
+        // // Step 3: How To Screen -> Parameter Intro Screen
+        // document
+        //   .getElementById("howToContinueBtn")
+        //   .addEventListener("click", () => {
+        //     showDiv(paramIntroScreen);
+        //     advanceOnboarding();
+        //   });
+
+        // // Step 4: Parameter Intro Screen -> Start Interactive Demos
+        // document.getElementById("paramIntroContinueBtn").addEventListener("click", preloadDemoAssets);
+
+        // // Step 5: Cycling through the Demos
+        // document.getElementById("nextDemoBtn").addEventListener("click", () => {
+        //   currentDemoIndex++;
+        //   console.log(`1. 'nextDemoBtn' clicked. currentDemoIndex (before increment) is: ${currentDemoIndex}`);
+        //   if (currentDemoIndex >= DEMO_PARAMS.length) {
+        //         // If they are finished, explicitly remove the listener before proceeding.
+        //         document.getElementById('paramDemoSlider').removeEventListener('input', updateDemoImage);
+        //     }
+        //   displayDemoScreen();
+        //   //advanceOnboarding();
+        // });
+
+        // // Step 6: Parameter Intro Screen -> Start Interactive Demos
+        // document
+        //   .getElementById("practiceIntroContinueBtn")
+        //   .addEventListener("click", () => {
+        //     startTutorial();
+        //     advanceOnboarding();
+        //   });
+
+        // Step 7: Ready Screen -> Start the Real Experiment
+        document
+          .getElementById("startExperimentBtn")
+          .addEventListener("click", startActualTask);
+
+        document.getElementById('noInfoBtn').addEventListener('click', handleNoInfoSelection);
+
+        // document.getElementById("noInfoBtn").addEventListener("click", () => {
+        //   if (!currentTrialData || !currentParameterKey) return;
+
+        //   // Record the "no_info" response for the level
+        //   if (!currentTrialResponses.parameter_responses) {
+        //     currentTrialResponses.parameter_responses = {};
+        //   }
+        //   currentTrialResponses.parameter_responses[currentParameterKey] = {
+        //     level: "no_info",
+        //     // Confidence will be collected in the next step
+        //   };
+
+        //   // First, explicitly hide the coarse selection controls.
+        //   coarseStepDiv.classList.add("hidden");
+        //   // Go DIRECTLY to the confidence step, skipping fine-tune.
+        //   showConfidenceStep();
+        // });
+        document.getElementById("testVVIQBtn").addEventListener("click", () => {
+          // --- NEW PROGRESS BAR LOGIC ---
+          completedSteps = 0;
+          totalSteps = 32; // The VVIQ test has 32 items
+          document
+            .getElementById("globalProgressContainer")
+            .classList.remove("hidden");
+
+          // We just need to call the function that starts the VVIQ
+          startVVIQ();
+        });
+
+        document
+          .getElementById("vviqCheckbox")
+          .addEventListener("change", (event) => {
+            vviqEnabled = event.target.checked;
+          });
+        // Language Buttons
+        document
+          .querySelectorAll("#languageSelector button")
+          .forEach((button) => {
+            button.addEventListener("click", () =>
+              setLanguage(button.dataset.lang)
+            );
+          });
+
+        // Main Menu Buttons
+        document
+          .getElementById("testParameterBtn")
+          .addEventListener("click", () => {
+            resetFullTaskState();
+            populateParameterSelector();
+            showDiv(parameterSelectorDiv);
+          });
+        // Back Buttons
+        document.querySelectorAll(".back-to-menu-btn").forEach((button) => {
+          button.addEventListener("click", () => {
+            // The confirmation logic is now centralized
+            if (currentTaskMode && currentTaskMode !== "test") {
+              // Only confirm if in a real task
+              if (!confirm(LANG_STRINGS[currentLanguage].exitConfirmMessage)) {
+                return; // User clicked "Cancel", so do nothing
+              }
+            }
+            // If confirmed, or not in a real task, reset and show the menu
+            resetFullTaskState();
+            showDiv(mainMenuDiv);
+          });
+        });
+
+        // Download Button
+        downloadResultsBtn.addEventListener("click", downloadResults);
+
+        coarseButtons.forEach((button) => {
+            // MOUSEOVER for DESKTOP PREVIEW (and keyboard-triggered preview)
+            button.addEventListener("mouseover", () => {
+                if (isTouchDevice) return; // Critically, do nothing on touch devices.
+
+                if (!currentParameterConfig || coarseStepDiv.classList.contains("hidden") || !currentTrialData) return;
+                
+                const level = parseInt(button.dataset.level);
+                coarsePreviewImg.src = getVariantImagePath(
+                    currentTrialData.base_image_id,
+                    currentParameterKey,
+                    level
+                );
+                if (coarseImageDisplayP) coarseImageDisplayP.classList.add("hidden");
+            });
+
+            // CLICK handler for BOTH desktop and mobile
+            button.addEventListener("click", () => {
+                if (!currentParameterConfig) return;
+
+                const realLevel = PARAMETERS[currentParameterKey].coarse[button.dataset.levelKey];
+
+                if (isTouchDevice) {
+                    // --- Mobile "Tap to Preview, Tap Again to Confirm" Logic ---
+                    if (button.classList.contains('selected')) {
+                        // This is the second tap (CONFIRM), so proceed.
+                        setupFineTuneStepVim(realLevel);
+                    } else {
+                        // This is the first tap (PREVIEW).
+                        coarseButtons.forEach(btn => btn.classList.remove('selected'));
+                        button.classList.add('selected');
+                        
+                        // Show the preview image.
+                        coarsePreviewImg.src = getVariantImagePath(
+                            currentTrialData.base_image_id,
+                            currentParameterKey,
+                            parseInt(button.dataset.level)
+                        );
+                        if (coarseImageDisplayP) coarseImageDisplayP.classList.add("hidden");
+                    }
+                } else {
+                    // --- Desktop Logic (Simple and Direct) ---
+                    // A single click always confirms the choice immediately.
+                    setupFineTuneStepVim(realLevel);
+                }
+            });
+        });
+
+        fineTuneSlider.addEventListener("input", (event) => {
+          if (currentTrialData && currentParameterKey)
+            updateFineTuneImageVim(event.target.value);
+        });
+
+        backToCoarseBtn.addEventListener("click", setupCoarseStepVim);
+
+        confirmSelectionBtn.addEventListener("click", handleConfirmSelection);
+
+        confirmConfidenceBtn.addEventListener("click", handleConfirmConfidence);
+
+        // Event listener block for the Likert scale
+
+        likertButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            // Remove 'selected' from all buttons
+            likertButtons.forEach((btn) => btn.classList.remove("selected"));
+            // Add 'selected' to the clicked button
+            button.classList.add("selected");
+            // Store the value
+            currentConfidenceSelection = parseInt(button.dataset.value);
+            // Enable the confirm button
+            confirmConfidenceBtn.disabled = false;
+
+            // Update keyboard focus to the clicked button
+            const buttonIndex = Array.from(likertButtons).indexOf(button);
+            if (buttonIndex !== -1) {
+              updateKeyboardFocus(buttonIndex);
+            }
+          });
+        });
+
+        // --- UNIFIED KEYBOARD INPUT HANDLING ---
+
+        document.addEventListener("keydown", (event) => {
+          // Ignore key presses if a user is typing in a text box
+          if (
+            document.activeElement.tagName === "INPUT" &&
+            document.activeElement.type !== "range"
+          )
+            return;
+
+          // --- Global Escape Key ---
+          if (event.key === "Escape") {
+            event.preventDefault();
+            const visibleScreen = document.querySelector(
+              ".main-container:not(.hidden), .split-container:not(.hidden)"
+            );
+            if (visibleScreen) {
+              const backButton = visibleScreen.querySelector(
+                ".back-button, #vviqBackToMenuBtn"
+              );
+              if (backButton) backButton.click();
+            }
+            return;
+          }
+
+          // --- Main Router for ALL screens ---
+
+          // Check which screen is currently visible and call the appropriate handler
+          if (!mainMenuDiv.classList.contains("hidden"))
+            handleMainMenuKeys(event);
+          else if (!vviqScreen.classList.contains("hidden"))
+            handleVVIQ_Keys(event);
+          else if (!vimTaskInterfaceDiv.classList.contains("hidden"))
+            handleVimTaskKeys(event);
+          // --- THIS IS THE NEW, CONSOLIDATED LOGIC FOR ONBOARDING & INSTRUCTIONS ---
+          else if (!welcomeScreen.classList.contains("hidden")) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              document.getElementById("welcomeContinueBtn").click();
+            }
+          } else if (!howToScreen.classList.contains("hidden")) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              document.getElementById("howToContinueBtn").click();
+            }
+          } else if (
+            !document.getElementById("breakScreen").classList.contains("hidden")
+          ) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              document.getElementById("breakContinueBtn").click();
+            }
+          } else if (!paramIntroScreen.classList.contains("hidden")) {
+            if (event.key === "Enter") {
+              // Find whatever the main action button is on this screen (could be startDemosBtn or a cloned version)
+              const button = paramIntroScreen.querySelector("button");
+              if (button) {
+                event.preventDefault();
+                button.click();
+              }
+            }
+          } else if (!paramDemoScreen.classList.contains("hidden")) {
+            let handled = false;
+            if (event.key === "ArrowLeft") {
+              // Decrease slider value
+              paramDemoSlider.value = parseInt(paramDemoSlider.value) - 1;
+              paramDemoSlider.dispatchEvent(new Event("input")); // Trigger update
+              handled = true;
+            } else if (event.key === "ArrowRight") {
+              // Increase slider value
+              paramDemoSlider.value = parseInt(paramDemoSlider.value) + 1;
+              paramDemoSlider.dispatchEvent(new Event("input")); // Trigger update
+              handled = true;
+            } else if (event.key === "Enter") {
+              document.getElementById("nextDemoBtn").click();
+              handled = true;
+            }
+
+            if (handled) event.preventDefault();
+          } else if (!practiceIntroScreen.classList.contains("hidden")) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              document.getElementById("practiceIntroContinueBtn").click();
+            }
+          } else if (!readyScreen.classList.contains("hidden")) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              document.getElementById("startExperimentBtn").click();
+            }
+          }
+          // --- End of Onboarding Logic ---
+          else if (!parameterSelectorDiv.classList.contains("hidden"))
+            handleParameterSelectorKeys(event);
+          else if (
+            !conditionInstructionScreenDiv.classList.contains("hidden")
+          ) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              startTrialFromInstructionsBtn.click();
+            }
+          } else if (
+            !preVimScreenContainerDiv.classList.contains("hidden") &&
+            !holdImageInstructionScreenDiv.classList.contains("hidden")
+          ) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              beginVimRating();
+            }
+          }
+        });
+      });
+
+      function showConfidenceStep() {
+        clearAllFocus();
+        // Hide the fine-tune UI elements
+        fineTuneStepDiv.classList.add("hidden");
+        // Hide the individual buttons from the previous step
+        backToCoarseBtn.classList.add("hidden");
+        confirmSelectionBtn.classList.add("hidden");
+
+        // Show the confidence UI elements
+        confidenceStepDiv.classList.remove("hidden");
+        confirmConfidenceBtn.classList.remove("hidden");
+        confirmConfidenceBtn.disabled = true;
+
+        // Reset previous selection
+        currentConfidenceSelection = null;
+        likertButtons.forEach((btn) => btn.classList.remove("selected"));
+
+        // Set up keyboard focus
+        currentFocusableElements =
+          Array.from(likertButtons).concat(confirmConfidenceBtn);
+        updateKeyboardFocus(3); // Start focus on button '4'
+      }
+
+      // Generic handler for simple screens with one "continue" button
+      function handleInstructionKeys(event, buttonId) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById(buttonId).click();
+        }
+      }
+
+      function handleMainMenuKeys(event) {
+        let handled = false;
+        // This function now manages its own list of elements.
+        const menuButtons = [
+          document.getElementById("testParameterBtn"),
+          document.getElementById("testVVIQBtn"),
+          document.getElementById("startActualTaskBtn"),
+        ];
+        const currentFocused = document.querySelector(
+          ".main-container:not(.hidden) .keyboard-focus"
+        );
+        let currentIndex = currentFocused
+          ? menuButtons.indexOf(currentFocused)
+          : 0;
+
+        if (event.key === "ArrowUp") {
+          if (currentIndex > 0) {
+            currentIndex--;
+          } else {
+            currentIndex = menuButtons.length - 1; // Loop to bottom
+          }
+          handled = true;
+        } else if (event.key === "ArrowDown") {
+          if (currentIndex < menuButtons.length - 1) {
+            currentIndex++;
+          } else {
+            currentIndex = 0; // Loop to top
+          }
+          handled = true;
+        } else if (event.key === "Enter") {
+          if (currentFocused) {
+            currentFocused.click();
+          }
+          handled = true;
+        }
+
+        if (handled) {
+          event.preventDefault();
+          // Remove old focus and apply new focus manually
+          if (currentFocused)
+            currentFocused.classList.remove(KEYBOARD_FOCUS_CLASS);
+          const newFocusedButton = menuButtons[currentIndex];
+          if (newFocusedButton) {
+            newFocusedButton.classList.add(KEYBOARD_FOCUS_CLASS);
+            newFocusedButton.focus();
+          }
+        }
+      }
+
+      function handleParameterSelectorKeys(event) {
+        let handled = false;
+        let newIndex = currentFocusedIndex;
+        if (event.key === "ArrowUp") {
+          newIndex =
+            currentFocusedIndex > 0
+              ? currentFocusedIndex - 1
+              : currentFocusableElements.length - 1;
+          handled = true;
+        } else if (event.key === "ArrowDown") {
+          newIndex =
+            currentFocusedIndex < currentFocusableElements.length - 1
+              ? currentFocusedIndex + 1
+              : 0;
+          handled = true;
+        } else if (event.key === "Enter") {
+          if (currentFocusedIndex > -1)
+            currentFocusableElements[currentFocusedIndex].click();
+          handled = true;
+        }
+
+        if (newIndex !== currentFocusedIndex) updateKeyboardFocus(newIndex);
+        if (handled) event.preventDefault();
+      }
+
+      function handleVimTaskKeys(event) {
+        let handled = false;
+        // --- Coarse Step ---
+        if (!coarseStepDiv.classList.contains("hidden")) {
+            let handled = false;
+            let newIndex = currentFocusedIndex;
+
+            if (event.key === "ArrowLeft") {
+                newIndex = (currentFocusedIndex > 0) ? newIndex - 1 : currentFocusableElements.length - 1;
+                handled = true;
+            } else if (event.key === "ArrowRight") {
+                newIndex = (currentFocusedIndex < currentFocusableElements.length - 1) ? newIndex + 1 : 0;
+                handled = true;
+            }
+            
+            if (newIndex !== currentFocusedIndex) {
+                updateKeyboardFocus(newIndex);
+                // Dispatch mouseover to trigger preview (this is correct for desktop)
+                currentFocusableElements[newIndex].dispatchEvent(new Event("mouseover"));
+            }
+            
+            if (event.key === 'Enter' && currentFocusedIndex > -1) {
+                // --- THIS IS THE FIX ---
+                const focusedElement = currentFocusableElements[currentFocusedIndex];
+                
+                
+                
+                // Check if the focused element is the No Info button
+                if (focusedElement.id === 'noInfoBtn') {
+                    // If it is, call our new, dedicated handler
+                    handleNoInfoSelection();
+                } else {
+                    // Otherwise, it's a Low/Medium/High button, so click it normally
+                    const realLevel = PARAMETERS[currentParameterKey].coarse[focusedElement.dataset.levelKey];
+                    // Keyboard Enter should ALWAYS be a direct confirmation, never a preview.
+                    setupFineTuneStepVim(realLevel);
+                    focusedElement.click();
+                }
+                
+                handled = true;
+            }
+
+            if (handled) event.preventDefault();
+        }
+        // --- Fine-Tune Step ---
+        else if (!fineTuneStepDiv.classList.contains("hidden")) {
+          const slider = document.getElementById("fineTuneSlider");
+          if (document.activeElement === slider) {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") return; // Allow default slider behavior
+          }
+          if (event.key === "Enter") {
+            document.getElementById("confirmSelectionBtn").click();
+            handled = true;
+          }
+          if (event.key === "Backspace") {
+            document.getElementById("backToCoarseBtn").click();
+            handled = true;
+          }
+        }
+        // --- Confidence Step ---
+        else if (!confidenceStepDiv.classList.contains("hidden")) {
+          let newIndex = currentFocusedIndex;
+          if (event.key === "ArrowLeft") {
+            if (newIndex > 0) newIndex--;
+            handled = true;
+          } else if (event.key === "ArrowRight") {
+            if (newIndex < currentFocusableElements.length - 1) newIndex++;
+            handled = true;
+          }
+          if (newIndex !== currentFocusedIndex) updateKeyboardFocus(newIndex);
+
+          if (event.key === "Enter" && currentFocusedIndex > -1) {
+            currentFocusableElements[currentFocusedIndex].click();
+            if (!document.getElementById("confirmConfidenceBtn").disabled) {
+              document.getElementById("confirmConfidenceBtn").click();
+            }
+            handled = true;
+          }
+        }
+        if (handled) event.preventDefault();
+      }
+
+      function handleVVIQ_Keys(event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          const backButton = vviqScreen.querySelector("#vviqBackToMenuBtn");
+          if (backButton) {
+            backButton.click();
+          }
+          return;
+        }
+
+        let handled = false;
+        const itemScreenVisible = !vviqScreen
+          .querySelector("#vviqItemScreen")
+          .classList.contains("hidden");
+        const submitBtn = vviqScreen.querySelector("#vviqSubmitBtn");
+
+        // --- Part 1: Your Correct State Handling ---
+        // Check for the final submit screen FIRST.
+        if (submitBtn && submitBtn.style.display !== "none") {
+          if (event.key === "Enter") {
+            submitBtn.click();
+            handled = true;
+          }
+        }
+        // Then, handle the item rating screen.
+        else if (itemScreenVisible) {
+          // --- Part 2: My "brute-force" synchronization logic for arrow keys ---
+          currentFocusableElements = Array.from(
+            vviqScreen.querySelectorAll(".likert-button")
+          );
+          const visuallyFocusedEl = vviqScreen.querySelector(".keyboard-focus");
+          currentFocusedIndex = visuallyFocusedEl
+            ? currentFocusableElements.indexOf(visuallyFocusedEl)
+            : -1;
+
+          let newIndex = currentFocusedIndex;
+
+          if (event.key === "ArrowLeft") {
+            if (newIndex === -1)
+              newIndex = 2; // If nothing focused, start from middle
+            else if (newIndex > 0) newIndex--;
+            handled = true;
+          } else if (event.key === "ArrowRight") {
+            if (newIndex === -1)
+              newIndex = 2; // If nothing focused, start from middle
+            else if (newIndex < currentFocusableElements.length - 1) newIndex++;
+            handled = true;
+          }
+
+          if (newIndex !== currentFocusedIndex) {
+            updateKeyboardFocus(newIndex);
+          }
+
+          // --- Part 3: The rest of the working logic for the item screen ---
+          if (["1", "2", "3", "4", "5"].includes(event.key)) {
+            const buttonToClick = vviqScreen.querySelector(
+              `.likert-button[data-value="${event.key}"]`
+            );
+            if (buttonToClick) buttonToClick.click();
+            handled = true;
+          } else if (event.key === "Enter") {
+            const nextBtn = document.getElementById("vviqNextBtn");
+            if (currentFocusedIndex > -1) {
+              currentFocusableElements[currentFocusedIndex].click();
+            }
+            if (nextBtn && !nextBtn.disabled) {
+              nextBtn.click();
+            }
+            handled = true;
+          }
+        }
+        // Finally, handle the instruction screens.
+        else {
+          if (event.key === "Enter") {
+            const nextBtn = document.getElementById("vviqNextBtn");
+            if (nextBtn && nextBtn.style.display !== "none") {
+              nextBtn.click();
+            }
+            handled = true;
+          }
+        }
+        if (handled) event.preventDefault();
+      }
+    </script>
+  </body>
+</html>
