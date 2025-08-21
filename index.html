@@ -712,11 +712,7 @@
       <div class="instruction-content">
       <p data-lang-key="paramIntroText"></p>
       </div>
-      <img
-        src="images/instructions/visual_qualities_diagram.png"
-        alt="Diagram showing the six visual qualities"
-        class="instruction-diagram"
-      />
+      <img id="qualitiesDiagramImg" src="" alt="Diagram showing the six visual qualities" class="instruction-diagram">
       <button
         id="paramIntroContinueBtn"
         data-lang-key="continueButton"
@@ -2338,6 +2334,11 @@
             sourceDiagram.src = `images/instructions/image_source_diagram_${lang}.png`;
         }
 
+        const qualitiesDiagram = document.getElementById('qualitiesDiagramImg');
+        if (qualitiesDiagram) {
+            qualitiesDiagram.src = `images/instructions/visual_qualities_diagram_${lang}.png`;
+        }
+
         if (!parameterSelectorDiv.classList.contains("hidden")) {
           populateParameterSelector();
         }
@@ -2994,7 +2995,8 @@
 
                 // --- THIS IS THE FIX ---
                 // It now correctly gets the 'demo' instruction text from the new 'instructions' object.
-                document.getElementById('paramDemoTitle').textContent = `Quality ${currentDemoIndex + 1} of 6: ${paramConfig.name[lang]}`;
+                // REPLACE it with this line
+document.getElementById('paramDemoTitle').textContent = `${lang === 'en' ? 'Quality' : 'Cualidad'} ${currentDemoIndex + 1} ${lang === 'en' ? 'of' : 'de'} 6: ${paramConfig.name[lang]}`;
                 document.getElementById('paramDemoText').innerHTML = paramConfig.instructions.demo[lang];
 
                 // --- The rest of the function is unchanged ---
