@@ -29,6 +29,11 @@
         max-width: 800px;
         margin-top: 20px;
       }
+      .instruction-content {
+          max-width: 700px;  /* Constrains the width of the text for readability */
+          margin: 20px auto; /* Provides consistent spacing and centering */
+          line-height: 1.5;  /* Improves line spacing */
+      }
       /* This is the new top-level wrapper for our split-screen view */
       /* REPLACEMENT CSS RULES */
 
@@ -353,6 +358,7 @@
       #holdImageInstructionScreen,
       #conditionInstructionScreen {
         display: flex;
+        text-align: center;
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -627,6 +633,9 @@
             text-align: center;   /* ADD THIS LINE */
             display: block;
         }
+        #breakScreen {
+            text-align: center;
+        }
     </style>
   </head>
   <body id="htmlTag" lang="en">
@@ -641,7 +650,9 @@
 
     <div id="mainMenu" class="main-container">
       <h1 data-lang-key="mainMenuTitle"></h1>
+      <div class="instruction-content">
       <p data-lang-key="mainMenuWelcome"></p>
+      </div>
       <button id="testParameterBtn" data-lang-key="testParamButton"></button
       ><br />
       <button id="testVVIQBtn">VVIQ-2</button><br />
@@ -666,7 +677,9 @@
     <!-- The Welcome Screen -->
     <div id="welcomeScreen" class="main-container hidden">
       <h1 data-lang-key="welcomeTitle">Welcome!</h1>
+      <div class="instruction-content">
       <p data-lang-key="welcomeInstructions"></p>
+      </div>
       <button id="welcomeContinueBtn" data-lang-key="continueButton">
         Continue
       </button>
@@ -679,14 +692,11 @@
     <!-- The How-To Explanation Screen -->
     <div id="howToScreen" class="main-container hidden">
       <h2 data-lang-key="howToTitle">How the Task Works</h2>
-      <div style="text-align: left; max-width: 600px; margin: 20px auto">
+      <div class="instruction-content">
+      <!-- <div style="text-align: left; max-width: 600px; margin: 20px auto"> -->
         <p data-lang-key="howToStep1"></p>
       </div>
-      <img
-        src="images/instructions/image_source_diagram.png"
-        alt="Diagram..."
-        class="instruction-diagram"
-      />
+      <img id="sourceDiagramImg" src="" alt="Diagram showing the three image sources" class="instruction-diagram">
       <!-- <div style="text-align: left; max-width: 600px; margin: 20px auto">
         <p data-lang-key="howToStep2"></p>
         <p data-lang-key="howToStep3"></p>
@@ -699,7 +709,9 @@
     <!-- Screen 3: Parameter Intro -->
     <div id="paramIntroScreen" class="main-container hidden">
       <h2 data-lang-key="paramIntroTitle"></h2>
+      <div class="instruction-content">
       <p data-lang-key="paramIntroText"></p>
+      </div>
       <img
         src="images/instructions/visual_qualities_diagram.png"
         alt="Diagram showing the six visual qualities"
@@ -746,7 +758,9 @@
     <!-- Screen 11: Practice Intro -->
     <div id="practiceIntroScreen" class="main-container hidden">
       <h2 data-lang-key="practiceIntroTitle"></h2>
+      <div class="instruction-content">
       <p data-lang-key="practiceIntroText"></p>
+      </div>
       <button
         id="practiceIntroContinueBtn"
         data-lang-key="continueButton"
@@ -761,14 +775,18 @@
     <div id="tutorialPromptScreen" class="main-container hidden">
       <img id="tutorialPromptIcon" class="header-icon" src="" alt="Tutorial Icon">  
       <h2 data-lang-key="tutorialPromptTitle"></h2>
+      <div class="instruction-content">
         <p data-lang-key="tutorialPromptText"></p>
+        </div>
         <button id="tutorialStartBtn" data-lang-key="continueButton"></button>
         <button class="back-button back-to-menu-btn" data-lang-key="backToMenuButton"></button>
     </div>
 
     <div id="readyScreen" class="main-container hidden">
       <h2 data-lang-key="readyTitle"></h2>
+      <div class="instruction-content">
       <p data-lang-key="readyText"></p>
+      </div>
       <button
         id="startExperimentBtn"
         data-lang-key="startExperimentButton"
@@ -1377,12 +1395,12 @@
           filename: "image01.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a recent, vivid memory of relaxing in a LIVING ROOM with friends or family present. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria reciente y vívida de estar relajándose en una SALA DE ESTAR con amigos o familiares. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL a time you were relaxing with friends or family in a living room</b>. <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA una vez que te estabas relajando con amigos o familiares en un salón</b>. <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a quiet, empty LIVING ROOM in the middle of the day, with sunlight coming through a window. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine una SALA DE ESTAR tranquila y vacía a mediodía, con la luz del sol entrando por una ventana. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a decorated living room with people sitting on a sofa</b>. <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA el salón de una casa, decorado, con gente sentada en un sofá</b>. <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1392,12 +1410,12 @@
           filename: "image03.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a specific, vivid memory of being in a CLASSROOM, listening to a lesson. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria específica y vívida de estar en un AULA, escuchando una lección. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL an empty classroom from a school you attended.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA un aula vacía de un colegio al que fuiste.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine an old, empty CLASSROOM after school, with chalk dust on the blackboard. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine un AULA vieja y vacía después de clases, con polvo de tiza en la pizarra. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE an empty classroom, with chairs, desks, and a blackboard.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un aula vacía, con sillas, pupitres y una pizarra.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1407,12 +1425,12 @@
           filename: "image04.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a recent, vivid memory of pushing a shopping cart through a busy SUPERMARKET. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria reciente y vívida de estar empujando un carrito de compras en un SUPERMERCADO concurrido. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL a time you were shopping for groceries in a busy supermarket you know well.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA una vez que estabas haciendo la compra en un supermercado concurrido que conoces bien.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine standing in a SUPERMARKET aisle late at night, with almost no one else around. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine que está en el pasillo de un SUPERMERCADO por la noche, casi sin nadie más alrededor. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a busy supermarket with people shopping for groceries.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un supermercado concurrido con gente haciendo la compra.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1422,12 +1440,12 @@
           filename: "image08.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of looking for a specific item in a SUPERMARKET AISLE. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de estar buscando un artículo específico en un PASILLO DE SUPERMERCADO. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL looking for something in a specific aisle of a supermarket you know well.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA buscar algo en un pasillo específico de un supermercado que conoces bien.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a brightly lit and perfectly organized SUPERMARKET AISLE that is completely empty. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine un PASILLO DE SUPERMERCADO perfectamente ordenado y muy iluminado, que está completamente vacío. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a supermarket aisle with shelves full of products.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un pasillo de supermercado con estanterías llenas de productos.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1437,12 +1455,12 @@
           filename: "image09.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of having a conversation in a comfortable LIVING ROOM. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de tener una conversación en una SALA DE ESTAR cómoda. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL the living room of a place where you have lived.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA el salón de un lugar en el que has vivido.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a minimalist LIVING ROOM with modern furniture and no personal items. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine una SALA DE ESTAR minimalista con muebles modernos y sin objetos personales. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a cozy living room with a sofa and a table.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un salón acogedor con un sofá y una mesa.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1452,12 +1470,12 @@
           filename: "image12.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of working on a group project with other students in a CLASSROOM. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de trabajar en un proyecto grupal con otros estudiantes en un AULA. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL being in a full classroom during a lesson at a school you attended.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA estar en un aula llena durante una clase en un colegio al que fuiste.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine the first day of school, in a CLASSROOM filled with students finding their seats. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine el primer día de clases, en un AULA llena de estudiantes buscando sus asientos. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los los ojos y presione Continuar.",
+              en: "<b>IMAGINE a classroom full of students listening to their teacher.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un aula llena de estudiantes escuchando a su profesor/a.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los los ojos y presione Continuar.",
             },
           },
         },
@@ -1468,12 +1486,12 @@
           filename: "image02.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of walking down an empty CITY STREET early in the morning. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de caminar por una CALLE de una CIUDAD vacía temprano en la mañana. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL walking down an empty street early in the morning in a city you know well.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA caminar temprano por la mañana por una calle vacía de una ciudad que conoces bien.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a wide CITY STREET in a futuristic city, with sleek, silent vehicles. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine una CALLE ancha en una CIUDAD futurista, con vehículos elegantes y silenciosos. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE an empty street in a historic European city, early in the morning.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA una calle vacía en una ciudad histórica europea, temprano por la mañana.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1483,12 +1501,12 @@
           filename: "image05.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of standing on a BEACH, feeling the spray from the waves. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de estar en una PLAYA, sintiendo la brisa de las olas. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL being on a quiet beach that you have visited before.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA estar en una playa tranquila que hayas visitado antes.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a secret BEACH on a tropical island, with a hidden waterfall and no footprints in the sand. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine una PLAYA secreta en una isla tropical, con una cascada escondida y sin huellas en la arena. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a remote, scenic beach with a cliff or waterfall.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA estar en una playa remota y pintoresca con un acantilado o una cascada.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1498,12 +1516,12 @@
           filename: "image06.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of having a picnic or relaxing in a lush, green PARK. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de tener un picnic o relajarse en un PARQUE verde y frondoso. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL a time you visited a botanical garden or a park with many different types of plants.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA una vez que visitaste un jardín botánico o un parque con muchos tipos de plantas diferentes.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a vast botanical PARK with many strange and colorful exotic plants you've never seen before. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine un vasto PARQUE botánico con muchas plantas exóticas, extrañas y coloridas que nunca ha visto. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a lush, green botanical garden with a variety of trees and plants.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un jardín botánico frondoso y verde con una variedad de árboles y plantas.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1513,12 +1531,12 @@
           filename: "image07.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of a pleasant walk through a PARK on a cool autumn day. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de un paseo agradable por un PARQUE en un día fresco de otoño. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL a time you saw someone walking in a park you know well.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA una vez que viste a alguien paseando por un parque que conoces bien.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a PARK in the middle of winter, with bare trees and a light dusting of snow on the ground. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine un PARQUE en pleno invierno, con árboles sin hojas y una fina capa de nieve en el suelo. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a person walking through a park during autumn.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA una persona caminando por un parque en otoño.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1528,12 +1546,12 @@
           filename: "image10.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of being in a crowd on a BUSY CITY STREET. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de estar entre una multitud en una CALLE CONCURRIDA de una CIUDAD. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL a time you were waiting to cross a busy street in a city you know well.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA una vez que estabas esperando para cruzar una calle concurrida en una ciudad que conoces bien.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a BUSY CITY STREET during a parade, with confetti in the air and music playing. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine una CALLE CONCURRIDA de una CIUDAD durante un desfile, con confeti en el aire y música sonando. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a crowd of people crossing a busy street in a large city.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA una multitud de gente cruzando una calle concurrida en una gran ciudad.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -1543,12 +1561,12 @@
           filename: "image11.jpg",
           prompts: {
             episodic_recall: {
-              en: "Please recall a vivid memory of playing or building a sandcastle on a sunny BEACH. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, recuerde una memoria vívida de jugar o construir un castillo de arena en una PLAYA soleada. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>RECALL a child you know playing on a beach.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>REMEMORA un niño/a que conoces jugando en la playa.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
             scene_imagination: {
-              en: "Please imagine a BEACH at sunset, with the sky full of orange and purple colors. Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
-              es: "Por favor, imagine una PLAYA al atardecer, con el cielo lleno de colores naranjas y morados. Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
+              en: "<b>IMAGINE a young child playing on a sandy beach.</b> <p></p>Close your eyes to form a clear image. When you have it, open your eyes and press Continue.",
+              es: "<b>IMAGINA un niño/a pequeño/a jugando en una playa de arena.</b> <p></p>Cierre los ojos para formar una imagen clara. Cuando la tenga, abra los ojos y presione Continuar.",
             },
           },
         },
@@ -2312,6 +2330,13 @@
           lang === "en" ? "block" : "none";
         document.getElementById("orientationText_es").style.display =
           lang === "es" ? "block" : "none";
+        
+          // --- ADD THIS NEW BLOCK to update language-specific images ---
+        const sourceDiagram = document.getElementById('sourceDiagramImg');
+        if (sourceDiagram) {
+            // Construct the new path based on the selected language (e.g., 'en' or 'es')
+            sourceDiagram.src = `images/instructions/image_source_diagram_${lang}.png`;
+        }
 
         if (!parameterSelectorDiv.classList.contains("hidden")) {
           populateParameterSelector();
@@ -2450,23 +2475,28 @@
         //preloadTrialImages(currentTrialData.base_image_id);
 
         const conditionName = {
-          en: currentTrialData.condition.replace(/_/g, " "),
+          en: 
+            currentTrialData.condition === "perceptual_recall"
+              ? "Remember Photo"
+              : currentTrialData.condition === "episodic_recall"
+              ? "Recall Memory"
+              : "Imagine Scene",
           es:
             currentTrialData.condition === "perceptual_recall"
-              ? "Recuerdo Perceptual"
+              ? "Recordar Foto"
               : currentTrialData.condition === "episodic_recall"
-              ? "Recuerdo Episódico"
-              : "Imaginación de Escena",
+              ? "Rememorar Recuerdo"
+              : "Imaginar Escena",
         }[currentLanguage];
 
         let titlePrefix =
           currentTaskMode === "test"
             ? "Test Mode"
-            : `Trial ${currentGlobalTrialIndex + 1} of ${
+            : `${currentGlobalTrialIndex + 1} / ${
                 currentSessionTrials.length
               }`;
         conditionInstructionTitleH2.textContent = `${titlePrefix}: ${conditionName}`;
-        conditionInstructionTextP.textContent =
+        conditionInstructionTextP.innerHTML =
           currentTrialData.condition_instruction[currentLanguage];
         showDiv(conditionInstructionScreenDiv);
         // Start preloading the assets for this specific trial
