@@ -878,7 +878,7 @@
         <div id="coarseStep" class="coarse-selection control-group">
           <p>
             <span data-lang-key="vimCoarsePrompt" class="hidden"></span>
-            <strong id="coarseParamName"></strong>:
+            <span id="coarseParamName"></span>
           </p>
 
           <button data-level-key="low">
@@ -901,7 +901,7 @@
         <div id="fineTuneStep" class="fine-tuning control-group hidden">
           <p>
             <span data-lang-key="fineTunePrompt" class="hidden"></span>
-            <strong id="fineTuneParamName"></strong>:
+            <span id="fineTuneParamName"></span>
           </p>
           <input type="range" id="fineTuneSlider" min="1" max="7" value="4" />
           <!-- This is the line you correctly fixed -->
@@ -1038,7 +1038,7 @@
 `,
           testParamButton: "ViVIM Task Tutorial",
           startTaskButton: "Start ViVIM Task",
-          paramSelectorTitle: "Select Parameter to Test",
+          paramSelectorTitle: "Select Quality to Test",
           conditionInstructionTitle: "Instructions: {condition} Task",
           trialContinueButton: "Continue",
           holdImagePrompt_recall:
@@ -1098,9 +1098,10 @@
                     <b>2. Fine-Tuning:</b> Next, you will use a slider to make a more precise match.<br><br>
                     <b>3. Confidence Rating:</b> Finally, you will rate how confident you were in your match.
                 </p>
+                <p>We understand that the image on the screen may not perfectly match the visual qualities of the image in your mind's eye. Your goal is not to find an exact replica, but to make the <b>best possible approximation</b>. Please choose the settings that feel closest to your internal experience.</p>
             `,
             tutorialPromptTitle: "Practice Trial: Instructions",
-            tutorialPromptText: "For this practice trial, please imagine <b>a sunny day at a park with green trees.</b><br><br>Please close your eyes to form a clear and stable mental image. When you have it, open your eyes and press Continue.",
+            tutorialPromptText: "For this practice trial, please: <b>IMAGINE a father playing with this infant son at a park.</b><br><br>Please close your eyes to form a clear and stable mental image. When you have it, open your eyes and press Continue.",
           tutorialVimInstruction: "This is a practice round. Please try to match the <b>Brightness</b> of the mental image you are holding in your mind.",
           startPracticeButton: "Continue",
           readyTitle: "Practice Complete",
@@ -1122,7 +1123,7 @@
 `,
           testParamButton: "Tutorial Tarea IVIV",
           startTaskButton: "Comenzar Tarea IVIV",
-          paramSelectorTitle: "Seleccione el Parámetro a Probar",
+          paramSelectorTitle: "Seleccione el Cualidad a Probar",
           conditionInstructionTitle: "Instrucciones: Tarea de {condition}",
           trialContinueButton: "Continuar",
           holdImagePrompt_recall:
@@ -1183,9 +1184,10 @@
                     <b>2. Ajuste Fino:</b> Luego, usará un deslizador para hacer un ajuste más preciso.<br><br>
                     <b>3. Calificación de Confianza:</b> Finalmente, calificará qué tan seguro/a estaba de su ajuste.
                 </p>
+                <p>Entendemos que la imagen en la pantalla puede no coincidir perfectamente con las cualidades visuales de la imagen en su mente. Su objetivo no es encontrar una réplica exacta, sino realizar la <b>mejor aproximación posible</b>. Por favor, elija los ajustes que sienta más cercanos a su experiencia interna.</p>
             `,
             tutorialPromptTitle: "Ensayo de Práctica: Instrucciones",
-            tutorialPromptText: "Para este ensayo de práctica, por favor imagine <b>un día soleado en un parque con árboles verdes.</b><br><br>Por favor, cierre los ojos para formar una imagen clara y estable. Cuando la tenga, abra los ojos y presione Continuar.",
+            tutorialPromptText: "Para este ensayo de práctica, por favor: <b>IMAGINE un padre jugando con su hijo pequeño en un parque.</b><br><br>Por favor, cierre los ojos para formar una imagen clara y estable. Cuando la tenga, abra los ojos y presione Continuar.",
           tutorialVimInstruction: "Esta es una ronda de práctica. Por favor, intente igualar el <b>Brillo</b> de la imagen mental que tiene en su mente.",
           startPracticeButton: "Continuar",
           readyTitle: "Práctica Completada",
@@ -1272,12 +1274,16 @@
                     name: { en: "Brightness", es: "Brillo" }, levels: 21, coarse: { low: 4, mid: 11, high: 18 },
                     instructions: {
                         demo: {
-                            en: `How <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p>`,
+                            en: `How <b>bright or dim</b> the scene appeared in your mind. <p>In the interactive demo, notice how moving the slider changes the image from dark (<b>Low Brightness</b>) to bright (<b>High Brightness</b>).</p><p>Use your mouse or arrow keys to move the slider.</p>`,
                             es: `Qué tan <b>brillante u oscuro</b> parecía la escena en su mente. <p>En la demostración interactiva, observe cómo al mover el deslizador la imagen cambia de oscura (<b>Bajo Brillo</b>) a brillante (<b>Alto Brillo</b>).</p>`
                         },
                         tutorial: {
-                            coarse:   { en: "PRACTICE: First, select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image.", es: "PRÁCTICA: Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental." },
-                            fineTune: { en: "PRACTICE: Great! Now, use the slider to fine-tune the <b>Brightness</b> for a more precise match.", es: "PRÁCTICA: ¡Genial! Ahora, use el deslizador para ajustar el <b>Brillo</b> de forma más precisa." }
+                            coarse:   { en: "Use your mouse or Arrow + Enter keys to select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image. <p>Notice that if you have no clear impression of such quality (in this case Brightness), you may choose so.</p>", es: "Usando el ratón o las flechas del teclado y la tecla Intro, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental. <p>Si no tuviera una impresión clara de la cualidad en cuestión (en este caso Brillo), puede seleccionar la opción correspondiente.</p>" },
+                            fineTune: { en: "Now, use your mouse or Arrow + Enter keys to move the slider to fine-tune the <b>Brightness</b> for a more precise match. <p>You may also go back to Coarse selection by clicking the button or pressing the Backspace key</p>", es: "Ahora, use el ratón o las flechas del teclado y la tecla Intro para mover el deslizador para ajustar el <b>Brillo</b> de forma más precisa. <p>También es posible retroceder a la selección anterior haciendo click en el botón o pulsando la tecla Retroceso.</p>" },
+                            confidence: {
+                                            en: "Finally, please rate how confident you are that the image you adjusted is a good match for your mental image.",
+                                            es: "Finalmente, por favor califique qué tan seguro/a está de que la imagen que ajustó se corresponde con su imagen mental."
+                                        }
                         },
                         task: {
                             coarse:   { en: "First, select the button (Low, Medium, or High) that best represents the overall <b>Brightness</b> of your mental image.", es: "Primero, seleccione el botón (Bajo, Medio o Alto) que mejor represente el <b>Brillo</b> general de su imagen mental." },
@@ -2730,7 +2736,7 @@
             const lang = currentLanguage;
 
             // Set the main parameter title
-            document.getElementById('currentParamDisplay').textContent = `${lang === 'en' ? 'Parameter' : 'Parámetro'}: ${paramConfig.name[lang]}`;
+            document.getElementById('currentParamDisplay').textContent = `${lang === 'en' ? 'Quality' : 'Cualidad'}: ${paramConfig.name[lang]}`;
 
 
             // --- THIS IS THE NEW INTEGRATED LOGIC ---
@@ -4030,6 +4036,21 @@ document.getElementById('paramDemoTitle').textContent = `${lang === 'en' ? 'Qual
         // Hide the individual buttons from the previous step
         backToCoarseBtn.classList.add("hidden");
         confirmSelectionBtn.classList.add("hidden");
+
+        const paramConfig = PARAMETERS[currentParameterKey];
+        const lang = currentLanguage;
+        let instructionText = '';
+
+        // Check if we are in the tutorial and if a specific tutorial confidence string exists
+        if (currentTaskMode === 'tutorial' && paramConfig.instructions.tutorial.confidence) {
+            instructionText = paramConfig.instructions.tutorial.confidence[lang];
+        } else {
+            // Otherwise, use the standard confidence prompt from LANG_STRINGS
+            instructionText = LANG_STRINGS[lang].confidencePrompt;
+        }
+        
+        // Set the instruction text
+        document.getElementById('confidencePrompt').textContent = instructionText;
 
         // Show the confidence UI elements
         confidenceStepDiv.classList.remove("hidden");
