@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VIM Task</title>
+    <title>ViVIM Task</title>
     <link rel="icon" type="image/png" href="images/instructions/icon_blurriness.png">
     <style>
       body {
@@ -117,7 +117,7 @@
             margin-right: auto;
         }
 
-        /* 4. Center the interactive elements within the VIM controls panel */
+        /* 4. Center the interactive elements within the ViVIM controls panel */
         .coarse-selection, 
         .fine-tuning,
         .confidence-rating,
@@ -1030,14 +1030,14 @@
       const LANG_STRINGS = {
         en: {
           // --- Existing Strings ---
-          mainMenuTitle: "Visual Imagery Matching (VIM) Task",
+          mainMenuTitle: "Vividness in Visual Imagery Matching (ViVIM) Task",
           mainMenuWelcome: `
     <p>This application is a research tool designed to measure the qualities of visual imagery. It was created by Luis Eudave at the University of Navarra.</p>
-    <p>You can use this interface to test the <b>Visual Imagery Matching (VIM) Task</b> and the <b>Vividness of Visual Imagery Questionnaire (VVIQ-2)</b>.</p>
+    <p>You can use this interface to test the <b>Vividness in Visual Imagery Matching (ViVIM) Task</b> and the <b>Vividness of Visual Imagery Questionnaire (VVIQ-2)</b>.</p>
     <p>This project is open source. You can find the code and documentation at the <a href="https://github.com/negatoscope/VIM_prototype" target="_blank">GitHub repository</a>.</p>
 `,
-          testParamButton: "VIM Task Tutorial",
-          startTaskButton: "Start VIM Task",
+          testParamButton: "ViVIM Task Tutorial",
+          startTaskButton: "Start ViVIM Task",
           paramSelectorTitle: "Select Parameter to Test",
           conditionInstructionTitle: "Instructions: {condition} Task",
           trialContinueButton: "Continue",
@@ -1114,14 +1114,14 @@
         },
         es: {
           // --- Existing Strings ---
-          mainMenuTitle: "Tarea de Ajuste de Imaginación Visual (AIV)",
+          mainMenuTitle: "Tarea de Igualación de Viveza de Imágenes Visuales (IVIV)",
           mainMenuWelcome: `
     <p>Esta aplicación es una herramienta de investigación diseñada para medir las cualidades de la imaginación visual. Ha sido creada por Luis Eudave en la Universidad de Navarra.</p>
-    <p>Puede utilizar esta interfaz para probar la <b>Tarea de Ajuste de Imaginación Visual (AIV)</b> y el <b>Cuestionario de Viveza de la Imaginación Visual (VVIQ-2)</b>.</p>
-    <p>Este proyecto es de código abierto. Puede encontrar el código y la documentación en el <a href="https://github.com/negatoscope/VIM_prototype" target="_blank">repositorio de GitHub</a>.</p>
+    <p>Puede utilizar esta interfaz para probar la <b>Tarea de Igualación de Viveza de Imágenes Visuales (IVIV)</b> y el <b>Cuestionario de Viveza de la Imaginación Visual (VVIQ-2)</b>.</p>
+    <p>Este proyecto es de código abierto. Puede encontrar el código y la documentación en el <a href="https://github.com/negatoscope/ViVIM" target="_blank">repositorio de GitHub</a>.</p>
 `,
-          testParamButton: "Tutorial Tarea AIV",
-          startTaskButton: "Comenzar Tarea AIV",
+          testParamButton: "Tutorial Tarea IVIV",
+          startTaskButton: "Comenzar Tarea IVIV",
           paramSelectorTitle: "Seleccione el Parámetro a Probar",
           conditionInstructionTitle: "Instrucciones: Tarea de {condition}",
           trialContinueButton: "Continuar",
@@ -2073,7 +2073,7 @@
           );
         }
 
-        // Add all the VIM variant images needed
+        // Add all the ViVIM variant images needed
         const realParameters = Object.keys(PARAMETERS).filter(
           (p) => p !== "attention_check"
         );
@@ -2520,7 +2520,7 @@
         }
       });
 
-      // --- Pre-VIM Task Flow ---
+      // --- Pre-ViVIM Task Flow ---
       function startPreVimPhase(trialData) {
         // currentTrialResponses = {
         //   trial_id: trialData.trial_id,
@@ -2574,7 +2574,7 @@
           beginVimRating();
       });
 
-      // --- VIM Parameter Rating Functions ---
+      // --- ViVIM Parameter Rating Functions ---
 
       function beginVimRating() {
         if (currentTaskMode === "tutorial") {
@@ -2651,7 +2651,7 @@
           }
 
           // --- THIS IS THE NEW BREAK LOGIC ---
-          // This code now runs ONLY at the end of a main task trial (VIM or Attention Check)
+          // This code now runs ONLY at the end of a main task trial (ViVIM or Attention Check)
 
           // Count how many MAIN (non-attention-check) trials have been completed
           const mainTrialsCompleted = allCollectedResponses.length;
@@ -2730,7 +2730,8 @@
             const lang = currentLanguage;
 
             // Set the main parameter title
-            currentParamDisplay.textContent = paramConfig.name[lang];
+            document.getElementById('currentParamDisplay').textContent = `${lang === 'en' ? 'Parameter' : 'Parámetro'}: ${paramConfig.name[lang]}`;
+
 
             // --- THIS IS THE NEW INTEGRATED LOGIC ---
             // 1. Determine which instruction string to use based on the current task mode
@@ -3094,7 +3095,7 @@ document.getElementById('paramDemoTitle').textContent = `${lang === 'en' ? 'Qual
           showDiv(practiceIntroScreen);
           //showPracticeIntroScreen();
         } else if (onboardingStep === 5) {
-          // Start the actual practice VIM trial
+          // Start the actual practice ViVIM trial
           startTutorial();
         } else if (onboardingStep === 6) {
           // Show the "Ready" screen
@@ -3226,7 +3227,7 @@ document.getElementById('paramDemoTitle').textContent = `${lang === 'en' ? 'Qual
         // 5. Create a temporary anchor element to trigger the download
         const a = document.createElement("a");
         a.href = url;
-        a.download = `VIM_results_session_${sessionID}.json`; // Set the filename
+        a.download = `ViVIM_results_session_${sessionID}.json`; // Set the filename
         document.body.appendChild(a); // Append to body to ensure it's clickable
         a.click(); // Programmatically click the link
 
@@ -3604,7 +3605,7 @@ document.getElementById('paramDemoTitle').textContent = `${lang === 'en' ? 'Qual
           finalScores = vviqResponses.map((r) => r.response);
         }
 
-        // Create the final data payload, combining VIM and VVIQ (if any)
+        // Create the final data payload, combining ViVIM and VVIQ (if any)
         const finalDataObject = {
           sessionID: sessionID,
           vim_results: allCollectedResponses,
