@@ -636,6 +636,39 @@
         #breakScreen {
             text-align: center;
         }
+
+        #orientationOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #f4f4f4; /* Same as body background */
+            z-index: 1000; /* Highest z-index */
+            display: none; /* Hidden by default on desktops */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .orientation-message {
+            padding: 20px;
+        }
+
+        .orientation-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            fill: #333;
+        }
+
+        /* This is the magic: It will only apply these styles on devices that are 
+          in portrait mode AND are narrow (like a phone) */
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            #orientationOverlay {
+                display: flex; /* This SHOWS the overlay */
+            }
+        }
     </style>
   </head>
   <body id="htmlTag" lang="en">
@@ -1012,6 +1045,18 @@
           horizontal.
         </p>
       </div>
+    </div>
+
+    <div id="orientationOverlay">
+        <div class="orientation-message">
+            <!-- A simple "rotate" icon (SVG) -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="orientation-icon">
+                <path d="M16.49,4.26l-1.41,1.41c1.62,1.62,2.5,3.81,2.5,6.08c0,1.39-0.32,2.7-0.91,3.86l1.4,1.42c0.77-1.46,1.18-3.08,1.18-4.83C19.25,8.07,18.27,5.98,16.49,4.26z M17.65,2.85l1.41-1.41C21.32,3.7,22.75,6.2,22.75,9c0,2.18-0.63,4.27-1.76,6.09l-1.46-1.46C20.59,12.13,21.25,10.61,21.25,9C21.25,6.86,20.04,4.9,17.65,2.85z M4.75,9c0-2.27,0.88-4.45,2.5-6.08L5.84,1.51C3.73,3.7,2.75,6.2,2.75,9c0,2.18,0.63,4.27,1.76,6.09l1.46-1.46C5.41,12.13,4.75,10.61,4.75,9z M12,7c-2.21,0-4,1.79-4,4s1.79,4,4,4s4-1.79,4-4S14.21,7,12,7z"/>
+            </svg>
+            <!-- We will use JS to show the correct language -->
+            <p id="orientationText_en">For the best experience, please rotate your device to landscape mode.</p>
+            <p id="orientationText_es" style="display: none;">Para una mejor experiencia, por favor gire su dispositivo a modo horizontal.</p>
+        </div>
     </div>
 
     <script>
@@ -2345,6 +2390,10 @@
             qualitiesDiagram.src = `images/instructions/visual_qualities_diagram_${lang}.png`;
         }
 
+        // Update the text in the orientation overlay
+        document.getElementById('orientationText_en').style.display = (lang === 'en') ? 'block' : 'none';
+        document.getElementById('orientationText_es').style.display = (lang === 'es') ? 'block' : 'none';
+
         if (!parameterSelectorDiv.classList.contains("hidden")) {
           populateParameterSelector();
         }
@@ -3359,6 +3408,10 @@ document.getElementById('paramDemoTitle').textContent = `${lang === 'en' ? 'Qual
       ];
 
       function startOnboarding() {
+          // Request fullscreen when the user starts the main flow
+          document.documentElement.requestFullscreen().catch(err => {
+              console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+          });                   
           onboardingStep = 0;
           currentDemoIndex = 0;
           runOnboardingStep();
