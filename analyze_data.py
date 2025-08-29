@@ -1,5 +1,6 @@
 import pandas as pd
-from scipy.stats import zscore, pearsonr
+from scipy.stats import zscore, pearsonr, ttest_rel
+from itertools import combinations
 
 # --- Configuration ---
 CSV_PATH = "VIM Experiment Data - Data.csv"
@@ -39,6 +40,32 @@ def analyze_vim_data(filepath):
     is_blurriness = (df_clean['parameter'] == 'blurriness')
     df_clean.loc[is_blurriness, 'selected_level'] = 22 - df_clean.loc[is_blurriness, 'selected_level']
 
+    # --- NEW: Generate Subject-Level Raw Score Table ---
+    print("\n--- Individual Participant Raw Score Summary ---")
+    print("Table 0: Mean Raw Scores by Participant (Scale 1-21):")
+    print("(Note: Blurriness is reverse-scored)\n")
+
+    # Use pivot_table to get sessionID as rows, parameters as columns, and mean raw score as values
+    subject_raw_summary = df_clean.pivot_table(
+        index='sessionID',
+        columns='parameter',
+        values='selected_level',
+        aggfunc='mean'
+    )
+
+    # Define the desired order of columns to match the request
+    param_order = INTENSITY_PARAMS + SPECIFICITY_PARAMS
+    # Ensure all expected columns are present, fill missing with NaN if necessary
+    for col in param_order:
+        if col not in subject_raw_summary:
+            subject_raw_summary[col] = pd.NA
+    subject_raw_summary = subject_raw_summary[param_order] # Reorder columns
+
+    # Print the resulting table
+    print(subject_raw_summary.to_string(float_format="%.2f"))
+    print("\n" + "="*50 + "\n") # Add a separator for clarity before the main analysis begins
+
+
     # 4. Within-Participant Z-Scoring
     df_clean['z_score'] = df_clean.groupby('sessionID')['selected_level'].transform(lambda x: zscore(x, nan_policy='omit'))
 
@@ -53,9 +80,8 @@ def analyze_vim_data(filepath):
     # 6. Generate VIM Summary Tables
     # (Table 1: Raw Scores)
     raw_summary = df_clean.groupby(['condition', 'parameter'])['selected_level'].mean().unstack()
-    param_order = INTENSITY_PARAMS + SPECIFICITY_PARAMS
     raw_summary = raw_summary[param_order]
-    print("\n--- VIM Task Results ---")
+    print("--- VIM Task Results ---")
     print("Table 1: Mean Raw Scores by Condition (Scale 1-21):")
     print("(Note: Blurriness is reverse-scored, where 21 = sharpest)\n")
     print(raw_summary.to_string(float_format="%.2f"))
@@ -71,8 +97,59 @@ def analyze_vim_data(filepath):
     print("(Positive values are above participant's average; Negative are below)\n")
     print(summary_table_z.to_string(float_format="%.3f"))
 
+    # --- Section B: VIM Pairwise Comparisons (Corrected for Proper N) ---
+    print("\n\n--- VIM Pairwise Comparisons (Paired T-Tests) ---")
+    print("Comparing conditions for each measure using within-participant z-scores.")
+    print("Note: N represents the number of participants included in each specific comparison.\n")
 
-    # --- Section B: VVIQ Analysis & Correlation ---
+    # --- Step 1: Aggregate the data FIRST ---
+    # Calculate the mean score for each participant for each measure and condition.
+    # This ensures we have one value per participant per condition, which is required for a paired t-test.
+    participant_means = final_scores_z.groupby(['sessionID', 'condition', 'measure'])['score'].mean().reset_index()
+
+    # Get unique measures to loop through
+    all_measures = ordered_columns_z
+
+    # --- Step 2: Loop through each measure and perform the t-tests ---
+    for measure in all_measures:
+        print(f"--- Measure: {measure} ---")
+
+        # Filter the aggregated data for the current measure
+        measure_data = participant_means[participant_means['measure'] == measure]
+
+        # Pivot the table so that each row is a participant and each column is a condition's score.
+        wide_measure_data = measure_data.pivot(index='sessionID', columns='condition', values='score')
+
+        # Get all unique pairs of conditions to compare
+        condition_pairs = combinations(wide_measure_data.columns, 2)
+
+        for cond1, cond2 in condition_pairs:
+            # Select the aggregated scores for the two conditions
+            cond1_scores = wide_measure_data[cond1]
+            cond2_scores = wide_measure_data[cond2]
+
+            # The t-test function with nan_policy='omit' handles participants who might be missing
+            # data for one of the conditions. It runs the test only on complete pairs.
+            t_stat, p_value = ttest_rel(cond1_scores, cond2_scores, nan_policy='omit')
+
+            # To get the correct 'n', we count how many participants have a valid score in BOTH columns.
+            valid_n = len(wide_measure_data[[cond1, cond2]].dropna())
+
+            # Check if we have enough data to run a meaningful test
+            if valid_n < 2:
+                print(f"  {cond1:<18} vs. {cond2:<18}: Not enough complete participant data to test.")
+                continue
+
+            # A final check in case the remaining valid pairs had zero variance
+            if pd.isna(t_stat):
+                print(f"  {cond1:<18} vs. {cond2:<18}: Result is NaN, likely because the variance of differences is zero.")
+            else:
+                # This now prints the CORRECT number of participants (n).
+                print(f"  {cond1:<18} vs. {cond2:<18}: t = {t_stat:+.3f}, p = {p_value:.3f}  (n={valid_n})")
+        print() # Add a blank line for readability
+
+
+    # --- Section C: VVIQ Analysis & Correlation ---
     
     # 7. Load and Score VVIQ Data
     df_vviq = df[df['trial_id'] == 'VVIQ'].copy()
