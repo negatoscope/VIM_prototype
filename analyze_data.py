@@ -3,29 +3,37 @@ from scipy.stats import zscore, pearsonr, ttest_rel
 from itertools import combinations
 
 # --- Configuration ---
-CSV_PATH = "VIM Experiment Data - Data.csv"
+# This URL is constructed to directly export YOUR SPECIFIC Google Sheet as a CSV file.
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1DmUF3NcYdlHPqYfa4kIMSLx5XTkdNDA_Qsz_fsGOawI/export?format=csv"
+
 INTENSITY_PARAMS = ['brightness', 'contrast', 'saturation']
 SPECIFICITY_PARAMS = ['blurriness', 'detailedness', 'precision']
 # --- End Configuration ---
 
 
-def analyze_vim_data(filepath):
+def analyze_vim_data(url):
     """
-    Reads, cleans, and analyzes the VIM and VVIQ data according to the pre-registered plan.
+    Reads, cleans, and analyzes the VIM and VVIQ data from a Google Sheet.
     """
     print("--- Starting Full Data Analysis ---")
 
-    # 1. Load Data
+    # 1. Load Data from Google Sheet
     try:
-        df = pd.read_csv(filepath)
-        print(f"Successfully loaded data from {filepath}. Found {len(df)} rows.")
-    except FileNotFoundError:
-        print(f"ERROR: The file was not found at {filepath}")
+        # Using engine='python' is crucial for handling complex, user-generated text
+        # that can cause parsing errors like the ones you've seen.
+        df = pd.read_csv(url, engine='python')
+        print(f"Successfully loaded data from Google Sheet. Found {len(df)} rows.")
+    except Exception as e:
+        print(f"ERROR: Could not load data from the Google Sheet URL.")
+        print(f"Please ensure the link is correct and that the sheet is public or has link sharing enabled.")
+        print(f"Error details: {e}")
         return
 
     # --- Section A: VIM Analysis ---
 
     # 2. Preprocessing and Cleaning VIM Data
+    # Ensure 'trial_id' is treated as a string to prevent errors with .str accessor
+    df['trial_id'] = df['trial_id'].astype(str)
     df_vim = df[df['trial_id'].str.startswith('main_', na=False)].copy()
     
     # Report number of subjects found in the file
@@ -40,7 +48,7 @@ def analyze_vim_data(filepath):
     is_blurriness = (df_clean['parameter'] == 'blurriness')
     df_clean.loc[is_blurriness, 'selected_level'] = 22 - df_clean.loc[is_blurriness, 'selected_level']
 
-    # --- NEW: Generate Subject-Level Raw Score Table ---
+    # --- Generate Subject-Level Raw Score Table ---
     print("\n--- Individual Participant Raw Score Summary ---")
     print("Table 0: Mean Raw Scores by Participant (Scale 1-21):")
     print("(Note: Blurriness is reverse-scored)\n")
@@ -104,7 +112,6 @@ def analyze_vim_data(filepath):
 
     # --- Step 1: Aggregate the data FIRST ---
     # Calculate the mean score for each participant for each measure and condition.
-    # This ensures we have one value per participant per condition, which is required for a paired t-test.
     participant_means = final_scores_z.groupby(['sessionID', 'condition', 'measure'])['score'].mean().reset_index()
 
     # Get unique measures to loop through
@@ -128,8 +135,7 @@ def analyze_vim_data(filepath):
             cond1_scores = wide_measure_data[cond1]
             cond2_scores = wide_measure_data[cond2]
 
-            # The t-test function with nan_policy='omit' handles participants who might be missing
-            # data for one of the conditions. It runs the test only on complete pairs.
+            # The t-test function with nan_policy='omit' handles participants who might be missing data
             t_stat, p_value = ttest_rel(cond1_scores, cond2_scores, nan_policy='omit')
 
             # To get the correct 'n', we count how many participants have a valid score in BOTH columns.
@@ -144,14 +150,14 @@ def analyze_vim_data(filepath):
             if pd.isna(t_stat):
                 print(f"  {cond1:<18} vs. {cond2:<18}: Result is NaN, likely because the variance of differences is zero.")
             else:
-                # This now prints the CORRECT number of participants (n).
                 print(f"  {cond1:<18} vs. {cond2:<18}: t = {t_stat:+.3f}, p = {p_value:.3f}  (n={valid_n})")
-        print() # Add a blank line for readability
+        print() 
 
 
     # --- Section C: VVIQ Analysis & Correlation ---
     
-    # 7. Load and Score VVIQ Data
+    # Load and Score VVIQ Data
+    df['trial_id'] = df['trial_id'].astype(str)
     df_vviq = df[df['trial_id'] == 'VVIQ'].copy()
     if not df_vviq.empty:
         # The 32 scores are in columns 'vviq_1' through 'vviq_32'. We sum them up.
@@ -169,7 +175,7 @@ def analyze_vim_data(filepath):
         print(f"\n--- VVIQ Analysis ---")
         print(f"Scored VVIQ data for {len(vviq_scores)} participants.")
 
-        # 8. Display VVIQ Descriptive Statistics
+        # Display VVIQ Descriptive Statistics
         vviq_mean = vviq_scores['vviq_total_score'].mean()
         vviq_std = vviq_scores['vviq_total_score'].std()
         vviq_min = vviq_scores['vviq_total_score'].min()
@@ -180,13 +186,20 @@ def analyze_vim_data(filepath):
         print(f"  - Std. Dev.: {vviq_std:.2f}")
         print(f"  - Range: {vviq_min:.0f} - {vviq_max:.0f}\n")
         
-        # 8. Correlate VVIQ with VIM scores
+        # Correlate VVIQ with VIM scores
         
-        # First, calculate the mean score for each measure for each participant.
-        participant_means_by_condition = final_scores_z.groupby(['sessionID', 'condition', 'measure'])['score'].mean().unstack()
-        
+        # We can reuse the 'participant_means' DataFrame from the t-test section
+        participant_means_by_condition = participant_means.pivot_table(
+            index='sessionID', 
+            columns=['condition', 'measure'], 
+            values='score'
+        ).reset_index()
+        # Flatten the multi-level column headers
+        participant_means_by_condition.columns = ['_'.join(col).strip() if isinstance(col, tuple) and col[1] else col[0] for col in participant_means_by_condition.columns.values]
+
+
         # Merge the VVIQ scores with the mean VIM scores
-        merged_data = pd.merge(participant_means_by_condition.reset_index(), vviq_scores, on='sessionID')
+        merged_data = pd.merge(participant_means_by_condition, vviq_scores, on='sessionID')
 
         print("\nTable 4: Pearson Correlations with Total VVIQ Score (by Condition):\n")
         
@@ -194,7 +207,7 @@ def analyze_vim_data(filepath):
         conditions_to_analyze = ['perceptual_recall', 'episodic_recall', 'scene_imagination']
         for condition in conditions_to_analyze:
             print(f"--- Condition: {condition} ---")
-            condition_data = merged_data[merged_data['condition'] == condition]
+            condition_data = merged_data
             
             # Check if we have enough data to run a correlation (at least 2 data points)
             if len(condition_data) < 2:
@@ -202,10 +215,13 @@ def analyze_vim_data(filepath):
                 continue
 
             for measure in ordered_columns_z:
-                if measure in condition_data.columns and not condition_data[measure].isnull().all():
-                    r, p_value = pearsonr(condition_data[measure], condition_data['vviq_total_score'])
+                # Construct the column name based on how pandas pivots
+                measure_col_name = f'{condition}_{measure}'
+                if measure_col_name in condition_data.columns and not condition_data[measure_col_name].isnull().all():
+                    # Calculate correlation between the specific measure in this condition and the VVIQ score
+                    r, p_value = pearsonr(condition_data[measure_col_name], condition_data['vviq_total_score'])
                     print(f"  {measure:>15}: r = {r:+.3f}, p = {p_value:.3f}")
-            print() # Add a blank line for readability
+            print()
 
     else:
         print("\n--- VVIQ Analysis ---")
@@ -214,4 +230,4 @@ def analyze_vim_data(filepath):
 
 # --- Run the analysis ---
 if __name__ == "__main__":
-    analyze_vim_data(CSV_PATH)
+    analyze_vim_data(GOOGLE_SHEET_URL)
